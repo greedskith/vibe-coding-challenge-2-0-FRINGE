@@ -140,6 +140,19 @@ function matchDoc(doc: any, query: any): boolean {
         return actual === item;
       });
       if (!matched) return false;
+    } else if (expected && typeof expected === "object" && "$nin" in expected && Array.isArray(expected.$nin)) {
+      const ninList = expected.$nin;
+      const matched = ninList.some((item: any) => {
+        if (actual instanceof ObjectId || item instanceof ObjectId) {
+          return actual?.toString() === item?.toString();
+        }
+        return actual === item;
+      });
+      if (matched) return false;
+    } else if (expected && typeof expected === "object" && "$exists" in expected) {
+      const exists = Boolean(expected.$exists);
+      const actualExists = actual !== undefined;
+      if (actualExists !== exists) return false;
     } else if (expected && typeof expected === "object" && "$regex" in expected) {
       const exp = expected as any;
       const reg = exp.$regex instanceof RegExp ? exp.$regex : new RegExp(exp.$regex, exp.$options);
@@ -174,13 +187,15 @@ export class LocalCollection {
 
     return {
       sort(sortObj: Record<string, 1 | -1>) {
-        const [sortKey, sortDir] = Object.entries(sortObj)[0] || [];
-        if (sortKey) {
+        const entries = Object.entries(sortObj);
+        if (entries.length > 0) {
           sortedDocs.sort((a, b) => {
-            const valA = a[sortKey] ?? "";
-            const valB = b[sortKey] ?? "";
-            if (valA < valB) return sortDir === 1 ? -1 : 1;
-            if (valA > valB) return sortDir === 1 ? 1 : -1;
+            for (const [sortKey, sortDir] of entries) {
+              const valA = a[sortKey]?.toString() ?? "";
+              const valB = b[sortKey]?.toString() ?? "";
+              if (valA < valB) return sortDir === 1 ? -1 : 1;
+              if (valA > valB) return sortDir === 1 ? 1 : -1;
+            }
             return 0;
           });
         }

@@ -43,7 +43,7 @@ async function runDeepVerification() {
   // TEST 2: GET /api/sessions - verify descending sort and populated player names
   console.log("▶ [TEST 2] GET /api/sessions - Populated player names & sort...");
   const getReq = new NextRequest("http://localhost:3000/api/sessions");
-  const getRes = await getSessions();
+  const getRes = await getSessions(getReq);
   const sessionsList = await getRes.json();
   if (!Array.isArray(sessionsList) || sessionsList.length === 0) {
     throw new Error("Expected non-empty array of sessions");

@@ -10,8 +10,12 @@ export async function GET(req: NextRequest) {
     if (req.url) {
       const { searchParams } = new URL(req.url);
       const sportParam = searchParams.get("sport");
+      const dateParam = searchParams.get("date");
       if (sportParam) {
         query.sport = { $regex: new RegExp(`^${sportParam.trim()}$`, "i") };
+      }
+      if (dateParam) {
+        query.date = dateParam.trim();
       }
     }
 
@@ -74,23 +78,32 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "At least one player score is required" }, { status: 400 });
     }
 
+    const seenPlayerIds = new Set<string>();
     for (const entry of scores) {
       if (!entry?.playerId || !ObjectId.isValid(entry.playerId)) {
         return NextResponse.json({ error: "Each score must have a valid playerId" }, { status: 400 });
       }
+      const pIdStr = entry.playerId.toString();
+      if (seenPlayerIds.has(pIdStr)) {
+        return NextResponse.json({ error: "Duplicate playerId in scores list" }, { status: 400 });
+      }
+      seenPlayerIds.add(pIdStr);
     }
 
     const db = await getDb();
 
     // STRICT CHECK 2: Verify attendance on this match date
-    // Match sport-specific session first, falling back to date
+    // Match sport-specific session first, falling back only to legacy sessions without a sport field
     const matchSport = (sport || "Football").trim();
     let session = await db.collection("sessions").findOne({
       date: date.trim(),
       sport: { $regex: new RegExp(`^${matchSport}$`, "i") },
     });
     if (!session) {
-      session = await db.collection("sessions").findOne({ date: date.trim() });
+      session = await db.collection("sessions").findOne({
+        date: date.trim(),
+        $or: [{ sport: { $exists: false } }, { sport: null }],
+      });
     }
 
     if (session && Array.isArray(session.attendance)) {

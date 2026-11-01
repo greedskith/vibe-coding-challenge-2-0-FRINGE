@@ -85,7 +85,27 @@ async function runPhase4DeepVerification() {
   if (resInvalidId.status !== 400) {
     throw new Error(`Expected 400 for invalid playerId, got ${resInvalidId.status}`);
   }
-  console.log("  ✓ Invalid playerId format refused with HTTP 400\n");
+  console.log("  ✓ Invalid playerId format refused with HTTP 400");
+
+  // 1d. Duplicate playerId in scores array
+  const duplicateIdReq = new NextRequest("http://localhost:3000/api/matches", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      date: "2026-11-20",
+      sport: "Football",
+      opponent: "Test FC",
+      scores: [
+        { playerId: p1Id, score: 1 },
+        { playerId: p1Id, score: 2 },
+      ],
+    }),
+  });
+  const resDuplicateId = await postMatch(duplicateIdReq);
+  if (resDuplicateId.status !== 400) {
+    throw new Error(`Expected 400 for duplicate playerId in scores, got ${resDuplicateId.status}`);
+  }
+  console.log("  ✓ Duplicate playerId in scores refused with HTTP 400\n");
 
   // -------------------------------------------------------------
   // TEST 2: CHECK 2 Strict Absent Refusal & Valid Recording
@@ -278,12 +298,55 @@ async function runPhase4DeepVerification() {
   if (crossFbSuccess.status !== 201) {
     throw new Error(`Expected 201 for P1 in Football match, got ${crossFbSuccess.status}`);
   }
-  console.log("  ✓ P1 accepted in Football match (present in Football session)\n");
+  console.log("  ✓ P1 accepted in Football match (present in Football session)");
+
+  // Cross-sport check 4: Date 2026-11-22 has ONLY a Football session (P2 absent in Football).
+  // A Cricket match for P2 on 2026-11-22 MUST NOT be refused by the Football session!
+  const fbOnlyReq = new NextRequest("http://localhost:3000/api/sessions", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ date: "2026-11-22", sport: "Football" }),
+  });
+  const fbOnlyRes = await postSession(fbOnlyReq);
+  const fbOnlySession = await fbOnlyRes.json();
+  await patchSession(
+    new NextRequest(`http://localhost:3000/api/sessions/${fbOnlySession._id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ playerId: p1Id, status: "present" }),
+    }),
+    { params: Promise.resolve({ id: fbOnlySession._id.toString() }) }
+  );
+
+  // Record Cricket match on 2026-11-22 with P2 scoring 120 runs (high score test)
+  const cricketIsolatedRes = await postMatch(
+    new NextRequest("http://localhost:3000/api/matches", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        date: "2026-11-22",
+        sport: "Cricket",
+        opponent: "Bokaro CC",
+        outcome: "win",
+        scores: [{ playerId: p2Id, score: 120 }],
+      }),
+    })
+  );
+  if (cricketIsolatedRes.status !== 201) {
+    const errBody = await cricketIsolatedRes.json();
+    throw new Error(`Expected 201 for isolated Cricket match, got ${cricketIsolatedRes.status}: ${JSON.stringify(errBody)}`);
+  }
+  const cricketIsolatedData = await cricketIsolatedRes.json();
+  if (cricketIsolatedData.scores[0].score !== 120) {
+    throw new Error(`Expected score 120 for cricket match, got ${cricketIsolatedData.scores[0].score}`);
+  }
+  console.log("  ✓ Cricket match accepted without false rejection from Football session on same date");
+  console.log("  ✓ High cricket score (120 runs) recorded cleanly\n");
 
   // -------------------------------------------------------------
-  // TEST 4: GET /api/matches (Sort & Player Name Population)
+  // TEST 4: GET /api/matches & GET /api/sessions (Sort, Population & Query Filtering)
   // -------------------------------------------------------------
-  console.log("▶ [TEST 4] GET /api/matches Populated Names & Query Filtering...");
+  console.log("▶ [TEST 4] GET /api/matches & Sessions Populated Names & Query Filtering...");
 
   const allMatchesReq = new NextRequest("http://localhost:3000/api/matches");
   const allMatchesRes = await getMatches(allMatchesReq);
@@ -319,7 +382,16 @@ async function runPhase4DeepVerification() {
   if (!allCricket || cricketMatches.length === 0) {
     throw new Error(`Sport query filter failed: expected all Cricket matches, got ${JSON.stringify(cricketMatches)}`);
   }
-  console.log(`  ✓ Query param ?sport=Cricket successfully filtered to ${cricketMatches.length} Cricket fixtures\n`);
+  console.log(`  ✓ Query param ?sport=Cricket successfully filtered to ${cricketMatches.length} Cricket fixtures`);
+
+  // Verify GET /api/sessions?date=...&sport=... query filtering
+  const filterSessionsReq = new NextRequest("http://localhost:3000/api/sessions?date=2026-11-21&sport=Cricket");
+  const filterSessionsRes = await getSessions(filterSessionsReq);
+  const filterSessions = await filterSessionsRes.json();
+  if (!Array.isArray(filterSessions) || filterSessions.length !== 1 || (filterSessions[0].sport || "").toLowerCase() !== "cricket") {
+    throw new Error(`Expected 1 Cricket session on 2026-11-21, got ${JSON.stringify(filterSessions)}`);
+  }
+  console.log(`  ✓ GET /api/sessions?date=...&sport=... accurately filtered session\n`);
 
   // -------------------------------------------------------------
   // TEST 5: Route Parity & Dynamic Export

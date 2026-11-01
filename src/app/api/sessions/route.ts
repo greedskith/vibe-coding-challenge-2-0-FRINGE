@@ -1,10 +1,29 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
     const db = await getDb();
-    const sessions = await db.collection("sessions").find().sort({ date: -1 }).toArray();
+    const query: any = {};
+
+    if (req?.url) {
+      const { searchParams } = new URL(req.url);
+      const dateParam = searchParams.get("date");
+      const sportParam = searchParams.get("sport");
+      const statusParam = searchParams.get("status");
+
+      if (dateParam) {
+        query.date = dateParam.trim();
+      }
+      if (sportParam) {
+        query.sport = { $regex: new RegExp(`^${sportParam.trim()}$`, "i") };
+      }
+      if (statusParam) {
+        query.status = statusParam.trim();
+      }
+    }
+
+    const sessions = await db.collection("sessions").find(query).sort({ date: -1 }).toArray();
 
     // Populate player names if players exist
     const allPlayerIds: any[] = [];

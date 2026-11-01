@@ -631,12 +631,11 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
     targetDate: string,
     targetSport = sport
   ) => {
-    const sessionForDate =
-      sessions.find(
-        (s) =>
-          s.date === targetDate &&
-          (s.sport || "").toLowerCase() === targetSport.toLowerCase()
-      ) || sessions.find((s) => s.date === targetDate);
+    const sessionForDate = sessions.find(
+      (s) =>
+        s.date === targetDate &&
+        (!s.sport || (s.sport || "").toLowerCase() === (targetSport || "").toLowerCase())
+    );
     if (!sessionForDate || !Array.isArray(sessionForDate.attendance)) return false;
     const record = sessionForDate.attendance.find((a: any) => {
       const id = a.playerId?._id
@@ -648,12 +647,11 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
   };
 
   const syncMatchEligiblePlayers = (targetDate: string, targetSport: string) => {
-    const sessionForDate =
-      sessions.find(
-        (s) =>
-          s.date === targetDate &&
-          (s.sport || "").toLowerCase() === targetSport.toLowerCase()
-      ) || sessions.find((s) => s.date === targetDate);
+    const sessionForDate = sessions.find(
+      (s) =>
+        s.date === targetDate &&
+        (!s.sport || (s.sport || "").toLowerCase() === (targetSport || "").toLowerCase())
+    );
 
     const relevantPlayers = players.filter(
       (p) => !targetSport || (p.sport || "").toLowerCase() === targetSport.toLowerCase()
@@ -698,6 +696,16 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
   const handleRecordMatch = async (e: React.FormEvent) => {
     e.preventDefault();
     setMatchError(null);
+
+    const sessionForDate = sessions.find(
+      (s) =>
+        s.date === newMatchDate &&
+        (!s.sport || (s.sport || "").toLowerCase() === (newMatchSport || "").toLowerCase())
+    );
+    if (!sessionForDate || sessionForDate.status !== "closed") {
+      setMatchError("No session found. Open and close a session first.");
+      return;
+    }
 
     const scoresPayload: { playerId: string; score: number }[] = [];
     const eligiblePlayers = players.filter(
@@ -1658,22 +1666,6 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                           score: sc.score || 0,
                         };
                       });
-
-                      const priya = players.find(
-                        (pl) => pl.name === "Priya Murmu" && pl.sport === m.sport
-                      );
-                      if (
-                        priya &&
-                        !matchPlayerIds.has(priya._id?.toString()) &&
-                        (m.opponent === "Bokaro FC" || m.opponent === "Tata FA")
-                      ) {
-                        squad.push({
-                          id: priya._id?.toString(),
-                          name: priya.name,
-                          initials: "PM",
-                          score: 0,
-                        });
-                      }
 
                       return (
                         <div key={m._id?.toString()} className="relative">
@@ -3078,18 +3070,18 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                 const sessionDoc = sessions.find(
                   (s) =>
                     s.date === newMatchDate &&
-                    (s.sport || "").toLowerCase() === newMatchSport.toLowerCase()
-                ) || sessions.find((s) => s.date === newMatchDate);
+                    (!s.sport || (s.sport || "").toLowerCase() === (newMatchSport || "").toLowerCase())
+                );
 
                 if (!sessionDoc) {
                   return (
                     <div className="rounded-lg border border-zinc-800 bg-zinc-900/60 p-3 text-xs text-zinc-400 space-y-1">
                       <div className="flex items-center gap-1.5 font-medium text-zinc-300">
                         <AlertCircle className="size-3.5 text-zinc-400" />
-                        <span>No session found for {newMatchDate}</span>
+                        <span>No session found for {newMatchDate} ({newMatchSport})</span>
                       </div>
                       <p className="text-[11px] text-zinc-500">
-                        Please open and record attendance first in the Attendance tab to establish athlete eligibility.
+                        No session found. Open and close a session first in Attendance to establish athlete eligibility.
                       </p>
                     </div>
                   );
@@ -3235,7 +3227,7 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                               }}
                               disabled={isAbsent || !isChecked}
                               min={0}
-                              max={99}
+                              max={newMatchSport === "Cricket" ? 500 : 99}
                             />
                           </div>
                         </div>
