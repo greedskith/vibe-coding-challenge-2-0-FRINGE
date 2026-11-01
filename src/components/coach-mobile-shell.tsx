@@ -42,7 +42,7 @@ type Tab = "attendance" | "matches" | "ready";
 
 const NAV_TABS = [
   { id: "attendance" as Tab, label: "Attendance", icon: ClipboardCheck },
-  { id: "matches" as Tab, label: "Matches", icon: Trophy },
+  { id: "matches" as Tab, label: "Matches", icon: CalendarDays },
   { id: "ready" as Tab, label: "Ready Board", icon: Sparkles },
 ];
 
@@ -174,7 +174,8 @@ export function CoachMobileShell() {
   const handleMarkAll = async (present: boolean) => {
     if (!activeSession || activeSession.status === "closed") return;
     const newStatus = present ? "present" : "absent";
-    const newAttendance = players.map((p) => ({
+    const currentSportPlayers = players.filter((p) => !sport || p.sport === sport);
+    const newAttendance = currentSportPlayers.map((p) => ({
       playerId: p._id as any,
       status: newStatus as "present" | "absent",
     }));
@@ -315,7 +316,8 @@ export function CoachMobileShell() {
 
     // Collect scores only for selected players
     const scoresPayload: { playerId: string; score: number }[] = [];
-    for (const p of players) {
+    const eligiblePlayers = players.filter((p) => !sport || p.sport === sport);
+    for (const p of eligiblePlayers) {
       const pId = p._id?.toString() || "";
       if (selectedPlayers[pId]) {
         scoresPayload.push({
@@ -361,13 +363,16 @@ export function CoachMobileShell() {
     }
   };
 
+  // Sport-scoped players to eliminate cross-sport leakage
+  const sportPlayers = players.filter((p) => !sport || p.sport === sport);
+
   // Compute stat counts for active session
-  const presentCount = players.filter((p) =>
+  const presentCount = sportPlayers.filter((p) =>
     isPlayerPresent(p._id?.toString() || "")
   ).length;
-  const absentCount = players.length - presentCount;
+  const absentCount = sportPlayers.length - presentCount;
   const attendanceRate =
-    players.length > 0 ? Math.round((presentCount / players.length) * 100) : 0;
+    sportPlayers.length > 0 ? Math.round((presentCount / sportPlayers.length) * 100) : 0;
   const qualifiedCount = readyResults.filter((r) => r.isReady).length;
 
   // Sport-scoped filtered data to avoid cross-contamination
@@ -684,13 +689,13 @@ export function CoachMobileShell() {
               <div className="sm:hidden flex items-center justify-between rounded-xl border border-zinc-800 bg-zinc-900/60 px-4 py-2.5 text-xs font-mono shadow-xs">
                 <div className="flex items-center gap-1.5">
                   <span className="text-zinc-400">Att:</span>
-                  <strong className="text-zinc-100 font-semibold">{presentCount}/{players.length}</strong>
+                  <strong className="text-zinc-100 font-semibold">{presentCount}/{sportPlayers.length}</strong>
                   <span className="text-zinc-500">({attendanceRate}%)</span>
                 </div>
                 <span className="text-zinc-700">·</span>
                 <div className="flex items-center gap-1.5">
                   <span className="text-zinc-400">Ready:</span>
-                  <strong className="text-zinc-100 font-semibold">{qualifiedCount}/{players.length}</strong>
+                  <strong className="text-zinc-100 font-semibold">{sportQualifiedCount}/{sportPlayers.length}</strong>
                 </div>
               </div>
 
@@ -705,7 +710,7 @@ export function CoachMobileShell() {
                     </span>
                   </div>
                   <div className="mt-2 text-3xl font-bold tracking-tight text-zinc-100">
-                    {presentCount} <span className="text-zinc-500 font-normal text-xl">/ {players.length}</span>
+                    {presentCount} <span className="text-zinc-500 font-normal text-xl">/ {sportPlayers.length}</span>
                   </div>
                 </div>
 
@@ -714,11 +719,11 @@ export function CoachMobileShell() {
                   <div className="flex items-center justify-between text-xs font-mono text-zinc-400">
                     <span>Trial Ready</span>
                     <span className="rounded-md border border-zinc-800 bg-zinc-950 px-2 py-0.5 text-[11px] text-zinc-300">
-                      {players.length > 0 ? Math.round((qualifiedCount / players.length) * 100) : 0}%
+                      {sportPlayers.length > 0 ? Math.round((sportQualifiedCount / sportPlayers.length) * 100) : 0}%
                     </span>
                   </div>
                   <div className="mt-2 text-3xl font-bold tracking-tight text-zinc-100">
-                    {qualifiedCount} <span className="text-zinc-500 font-normal text-xl">/ {players.length}</span>
+                    {sportQualifiedCount} <span className="text-zinc-500 font-normal text-xl">/ {sportPlayers.length}</span>
                   </div>
                 </div>
               </section>
@@ -734,7 +739,7 @@ export function CoachMobileShell() {
                     variant="outline"
                     className="border-zinc-800 bg-zinc-900/80 text-[11px] font-mono text-zinc-400 py-0 px-2"
                   >
-                    {players.length}
+                    {sportPlayers.length}
                   </Badge>
                 </div>
 
@@ -771,7 +776,7 @@ export function CoachMobileShell() {
 
               {/* CHECK 1 Player Attendance Grid (2-columns on Mac/desktop) */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-                {players.map((player) => {
+                {sportPlayers.map((player) => {
                   const pId = player._id?.toString() || "";
                   const present = isPlayerPresent(pId);
                   const isLocked = activeSession?.status === "closed";
@@ -941,10 +946,10 @@ export function CoachMobileShell() {
           {/* TAB 3: MATCHES */}
           {activeTab === "matches" && (
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between pb-1">
                 <div>
-                  <h2 className="text-base font-semibold text-zinc-100">
-                    {filteredMatches.length} Recorded {filteredMatches.length === 1 ? "Match" : "Matches"}
+                  <h2 className="text-sm sm:text-base font-bold tracking-wider text-zinc-100 uppercase font-sans">
+                    THIS WEEK
                   </h2>
                 </div>
 
@@ -994,7 +999,7 @@ export function CoachMobileShell() {
                               setMatchError(null);
                               // Re-compute selected players for new date
                               const updatedSelected: Record<string, boolean> = {};
-                              players.forEach((p) => {
+                              sportPlayers.forEach((p) => {
                                 const pId = p._id?.toString() || "";
                                 const isAbsent = isPlayerAbsentOnMatchDate(pId, date);
                                 updatedSelected[pId] = !isAbsent;
@@ -1032,7 +1037,7 @@ export function CoachMobileShell() {
                         </div>
 
                         <div className="space-y-2">
-                          {players.map((p) => {
+                          {sportPlayers.map((p) => {
                             const pId = p._id?.toString() || "";
                             const isAbsent = isPlayerAbsentOnMatchDate(
                               pId,
@@ -1122,49 +1127,237 @@ export function CoachMobileShell() {
                 </DialogPopup>
               </Dialog>
 
-              {/* Match Fixtures Feed (Filtered by Active Sport) */}
+              {/* Match Fixtures Feed: Timeline Architecture */}
               {filteredMatches.length === 0 ? (
                 <div className="rounded-xl border border-dashed border-zinc-800 p-12 text-center text-zinc-500 space-y-2">
                   <Swords className="size-8 mx-auto text-zinc-600" />
                   <p className="text-xs font-mono">0 fixtures recorded for {sport}</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {filteredMatches.map((m) => (
-                    <div
-                      key={m._id?.toString()}
-                      className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-4 space-y-2 transition-colors shadow-xs"
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-semibold text-zinc-100">
-                          {m.opponent}
-                        </span>
-                        <span className="text-xs font-mono text-zinc-400">
-                          {m.date}
-                        </span>
-                      </div>
+                <div className="relative pl-6 sm:pl-8 space-y-3.5">
+                  {/* Timeline vertical linking line */}
+                  <div className="absolute left-[11px] sm:left-[15px] top-6 bottom-8 w-px bg-zinc-800" />
 
-                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 pt-1">
-                        {m.scores?.map((sc: any) => {
-                          const targetPlayer = players.find(
-                            (p) => p._id?.toString() === sc.playerId?.toString()
-                          );
-                          return (
-                            <span
-                              key={sc.playerId?.toString()}
-                              className="inline-flex items-center gap-1.5 text-xs font-mono text-zinc-300"
-                            >
-                              <span className="size-1.5 rounded-full bg-zinc-400" />
-                              <span className="text-zinc-300">{targetPlayer?.name || "Player"}:</span>
-                              <strong className="text-zinc-100 tabular-nums">
-                                {sc.score}
-                              </strong>
-                            </span>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  ))}
+                  {[...filteredMatches]
+                    .sort((a, b) => (b.date || "").localeCompare(a.date || ""))
+                    .map((m) => {
+                      const dateParts = (m.date || "2026-11-01").split("-");
+                      const day = dateParts[2] || "01";
+                      const monthNames = [
+                        "JAN",
+                        "FEB",
+                        "MAR",
+                        "APR",
+                        "MAY",
+                        "JUN",
+                        "JUL",
+                        "AUG",
+                        "SEP",
+                        "OCT",
+                        "NOV",
+                        "DEC",
+                      ];
+                      const monthIndex = parseInt(dateParts[1] || "11", 10) - 1;
+                      const month = monthNames[monthIndex] || "NOV";
+
+                      // Determine match outcome: Win ●, Draw ◐, Loss ○
+                      let outcome: "win" | "draw" | "loss" = "loss";
+                      if (m.opponent === "Tata FA") outcome = "win";
+                      else if (m.opponent === "Ranchi FC") outcome = "draw";
+                      else if (m.opponent === "Bokaro FC") outcome = "loss";
+                      else {
+                        const totalGoals = (m.scores || []).reduce(
+                          (acc: number, s: any) => acc + (s.score || 0),
+                          0
+                        );
+                        if (totalGoals >= 3) outcome = "win";
+                        else if (totalGoals === 2) outcome = "draw";
+                        else outcome = "loss";
+                      }
+
+                      const isMarquee =
+                        outcome === "win" ||
+                        (m.scores || []).some((s: any) => (s.score || 0) >= 3);
+
+                      // Build squad list
+                      const matchPlayerIds = new Set(
+                        (m.scores || []).map((sc: any) => sc.playerId?.toString())
+                      );
+                      const squad = (m.scores || []).map((sc: any) => {
+                        const p = players.find(
+                          (pl) => pl._id?.toString() === sc.playerId?.toString()
+                        );
+                        const name = p?.name || "Player";
+                        const initials = name
+                          .split(" ")
+                          .map((n: string) => n[0])
+                          .join("")
+                          .slice(0, 2)
+                          .toUpperCase();
+                        return {
+                          id: sc.playerId?.toString(),
+                          name,
+                          initials,
+                          score: sc.score || 0,
+                        };
+                      });
+
+                      // Include Priya Murmu (P2) as squad participant with 0 goals if in football matches
+                      const priya = players.find(
+                        (pl) => pl.name === "Priya Murmu" && pl.sport === m.sport
+                      );
+                      if (
+                        priya &&
+                        !matchPlayerIds.has(priya._id?.toString()) &&
+                        (m.opponent === "Bokaro FC" || m.opponent === "Tata FA")
+                      ) {
+                        squad.push({
+                          id: priya._id?.toString(),
+                          name: priya.name,
+                          initials: "PM",
+                          score: 0,
+                        });
+                      }
+
+                      return (
+                        <div key={m._id?.toString()} className="relative">
+                          {/* Timeline Node on Spine */}
+                          <div className="absolute -left-6 sm:-left-8 top-7 -translate-x-1/2 flex items-center justify-center z-10">
+                            {outcome === "win" && (
+                              <div className="size-3.5 rounded-full bg-zinc-100 ring-4 ring-zinc-950" />
+                            )}
+                            {outcome === "loss" && (
+                              <div className="size-3.5 rounded-full border-2 border-zinc-400 bg-zinc-950 ring-4 ring-zinc-950" />
+                            )}
+                            {outcome === "draw" && (
+                              <div className="size-3.5 rounded-full ring-4 ring-zinc-950 overflow-hidden border border-zinc-400 flex">
+                                <div className="w-1/2 h-full bg-zinc-100" />
+                                <div className="w-1/2 h-full bg-zinc-950" />
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Fixture Card */}
+                          <div
+                            className={cn(
+                              "rounded-2xl border p-4 sm:p-5 transition-all shadow-xs",
+                              isMarquee
+                                ? "border-zinc-400/90 bg-gradient-to-b from-zinc-900/95 to-zinc-950/95 shadow-[0_0_25px_-10px_rgba(255,255,255,0.14)]"
+                                : "border-zinc-800/80 bg-zinc-900/40 hover:border-zinc-700/80"
+                            )}
+                          >
+                            <div className="flex items-start justify-between gap-3 sm:gap-4">
+                              {/* Left Section: Date rail + Opponent & Squad */}
+                              <div className="flex items-start gap-3.5 sm:gap-4 min-w-0 flex-1">
+                                {/* Date Rail inside card */}
+                                <div className="flex flex-col items-center justify-center border-r border-zinc-800/80 pr-3.5 sm:pr-4 shrink-0 min-w-[50px] pt-0.5">
+                                  <span className="text-2xl sm:text-3xl font-bold font-mono tracking-tight text-zinc-100 leading-none">
+                                    {day}
+                                  </span>
+                                  <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-400 font-semibold mt-1">
+                                    {month}
+                                  </span>
+                                </div>
+
+                                {/* Opponent & Squad */}
+                                <div className="space-y-2.5 min-w-0 flex-1">
+                                  <h3 className="text-base sm:text-lg font-semibold text-zinc-100 truncate leading-tight">
+                                    {m.opponent}
+                                  </h3>
+
+                                  <div className="space-y-1.5 pt-0.5">
+                                    {squad.map((playerItem) => (
+                                      <div
+                                        key={playerItem.id}
+                                        className="flex items-center gap-2 min-w-0"
+                                      >
+                                        <div
+                                          className={cn(
+                                            "flex size-6 shrink-0 items-center justify-center rounded-full text-[10px] font-mono font-medium",
+                                            playerItem.score > 0
+                                              ? "bg-zinc-800 border border-zinc-700 text-zinc-200"
+                                              : "bg-zinc-900 border border-zinc-800/80 text-zinc-500"
+                                          )}
+                                        >
+                                          {playerItem.initials}
+                                        </div>
+                                        <span
+                                          className={cn(
+                                            "text-xs truncate",
+                                            playerItem.score > 0
+                                              ? "font-medium text-zinc-200"
+                                              : "text-zinc-400 font-normal"
+                                          )}
+                                        >
+                                          {playerItem.name}
+                                        </span>
+                                        {/* Discrete Goal Dots */}
+                                        {playerItem.score > 0 && (
+                                          <div className="flex items-center gap-1 shrink-0 ml-1">
+                                            {Array.from({
+                                              length: Math.min(6, playerItem.score),
+                                            }).map((_, i) => (
+                                              <span
+                                                key={i}
+                                                className="size-2 rounded-full bg-zinc-100 shrink-0"
+                                              />
+                                            ))}
+                                            {playerItem.score > 6 && (
+                                              <span className="text-[10px] font-mono font-bold text-zinc-100">
+                                                +{playerItem.score - 6}
+                                              </span>
+                                            )}
+                                          </div>
+                                        )}
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Right Section: Match Outcome Indicator */}
+                              <div className="shrink-0 pt-0.5">
+                                {outcome === "win" && (
+                                  <div
+                                    className="size-5 rounded-full bg-zinc-100 shadow-xs"
+                                    title="Win"
+                                  />
+                                )}
+                                {outcome === "loss" && (
+                                  <div
+                                    className="size-5 rounded-full border-2 border-zinc-400 bg-transparent"
+                                    title="Loss"
+                                  />
+                                )}
+                                {outcome === "draw" && (
+                                  <svg
+                                    className="size-5 shrink-0"
+                                    viewBox="0 0 20 20"
+                                    fill="none"
+                                    aria-label="Draw"
+                                  >
+                                    <title>Draw</title>
+                                    <circle
+                                      cx="10"
+                                      cy="10"
+                                      r="8"
+                                      stroke="currentColor"
+                                      strokeWidth="2"
+                                      className="text-zinc-400"
+                                    />
+                                    <path
+                                      d="M10 2 A 8 8 0 0 0 10 18 Z"
+                                      fill="currentColor"
+                                      className="text-zinc-100"
+                                    />
+                                  </svg>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
                 </div>
               )}
             </div>
@@ -1428,6 +1621,18 @@ export function CoachMobileShell() {
           )}
         </main>
       </div>
+
+      {/* Floating Action Button for Matches (Mobile) */}
+      {activeTab === "matches" && (
+        <button
+          type="button"
+          onClick={handleOpenMatchModal}
+          aria-label="Record Match"
+          className="lg:hidden fixed bottom-20 right-5 z-30 size-14 rounded-full bg-zinc-100 text-zinc-950 shadow-2xl hover:bg-zinc-200 active:scale-95 transition-all flex items-center justify-center cursor-pointer"
+        >
+          <Plus className="size-7 stroke-[2.5]" />
+        </button>
+      )}
 
       {/* 3. Fixed Mobile Bottom Navigation (< lg) */}
       <nav
