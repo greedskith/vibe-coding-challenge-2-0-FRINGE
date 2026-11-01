@@ -908,16 +908,15 @@ export function CoachMobileShell() {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-base font-semibold text-zinc-100">Fixtures & Scoring</h2>
-                  <p className="text-xs text-zinc-400">
-                    {filteredMatches.length} recorded {filteredMatches.length === 1 ? "match" : "matches"} for {sport}
-                  </p>
+                  <h2 className="text-base font-semibold text-zinc-100">
+                    {filteredMatches.length} Recorded {filteredMatches.length === 1 ? "Match" : "Matches"}
+                  </h2>
                 </div>
 
                 <button
                   type="button"
                   onClick={handleOpenMatchModal}
-                  className="flex items-center gap-1.5 rounded-lg bg-zinc-100 px-3 py-1.5 text-xs font-semibold text-zinc-950 hover:bg-zinc-200 transition-colors cursor-pointer"
+                  className="hidden lg:flex items-center gap-1.5 rounded-lg bg-zinc-100 px-3 py-1.5 text-xs font-semibold text-zinc-950 hover:bg-zinc-200 transition-colors cursor-pointer"
                 >
                   <Plus className="size-3.5" />
                   Record Match
@@ -1099,7 +1098,7 @@ export function CoachMobileShell() {
                   {filteredMatches.map((m) => (
                     <div
                       key={m._id?.toString()}
-                      className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-3.5 sm:p-4 space-y-2.5 shadow-xs"
+                      className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-4 space-y-2 transition-colors shadow-xs"
                     >
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-semibold text-zinc-100">
@@ -1110,7 +1109,7 @@ export function CoachMobileShell() {
                         </span>
                       </div>
 
-                      <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-zinc-800/80">
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 pt-1">
                         {m.scores?.map((sc: any) => {
                           const targetPlayer = players.find(
                             (p) => p._id?.toString() === sc.playerId?.toString()
@@ -1118,9 +1117,10 @@ export function CoachMobileShell() {
                           return (
                             <span
                               key={sc.playerId?.toString()}
-                              className="inline-flex items-center gap-1 rounded-md border border-zinc-800 bg-zinc-950 px-2 py-0.5 text-xs font-mono text-zinc-300"
+                              className="inline-flex items-center gap-1.5 text-xs font-mono text-zinc-300"
                             >
-                              <span>{targetPlayer?.name || "Player"}:</span>
+                              <span className="size-1.5 rounded-full bg-zinc-400" />
+                              <span className="text-zinc-300">{targetPlayer?.name || "Player"}:</span>
                               <strong className="text-zinc-100 tabular-nums">
                                 {sc.score}
                               </strong>
