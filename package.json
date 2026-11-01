@@ -11,7 +11,8 @@
     "verify": "tsx src/scripts/verify-checks.ts",
     "verify:phase2": "tsx src/scripts/test-phase-2.ts",
     "verify:phase3": "tsx src/scripts/test-phase-3-deep.ts",
-    "verify:phase4": "tsx src/scripts/test-phase-4-deep.ts"
+    "verify:phase4": "tsx src/scripts/test-phase-4-deep.ts",
+    "verify:live": "tsx src/scripts/verify-live.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",
