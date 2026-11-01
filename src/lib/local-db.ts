@@ -269,6 +269,18 @@ export class LocalCollection {
     return { modifiedCount: 0, matchedCount: 0 };
   }
 
+  async deleteOne(filter: any = {}) {
+    const store = loadStore();
+    const docs = store[this.colName] || [];
+    const idx = docs.findIndex((d) => matchDoc(d, filter));
+    if (idx >= 0) {
+      docs.splice(idx, 1);
+      saveStore();
+      return { deletedCount: 1 };
+    }
+    return { deletedCount: 0 };
+  }
+
   async deleteMany(filter: any = {}) {
     const store = loadStore();
     const originalLen = (store[this.colName] || []).length;

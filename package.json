@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "seed": "tsx src/scripts/seed.ts",
-    "verify": "tsx src/scripts/verify-checks.ts"
+    "verify": "tsx src/scripts/verify-checks.ts",
+    "verify:phase2": "tsx src/scripts/test-phase-2.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",

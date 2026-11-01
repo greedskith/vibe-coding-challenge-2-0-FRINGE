@@ -20,7 +20,9 @@ if (uri) {
     clientPromise = client.connect();
   }
 } else {
-  clientPromise = Promise.reject(new Error('Missing environment variable: "MONGODB_URI"'));
+  const p = Promise.reject(new Error('Missing environment variable: "MONGODB_URI"'));
+  p.catch(() => {});
+  clientPromise = p;
 }
 
 export default clientPromise;

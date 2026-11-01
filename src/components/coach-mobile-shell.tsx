@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
+import Link from "next/link";
 import { signOut } from "next-auth/react";
 import {
   ClipboardCheck,
@@ -518,6 +519,14 @@ export function CoachMobileShell() {
                 </button>
               );
             })}
+
+            <Link
+              href="/coach/players"
+              className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-xs font-medium text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200 transition-colors"
+            >
+              <Users className="size-4 shrink-0 text-zinc-400" />
+              <span>Manage Players</span>
+            </Link>
           </nav>
         </div>
 
@@ -1715,6 +1724,15 @@ export function CoachMobileShell() {
               </li>
             );
           })}
+          <li className="flex-1">
+            <Link
+              href="/coach/players"
+              className="relative flex w-full flex-col items-center gap-1 py-2.5 text-[11px] font-medium text-zinc-500 hover:text-zinc-300 transition-colors"
+            >
+              <Users className="size-4" />
+              <span>Players</span>
+            </Link>
+          </li>
         </ul>
       </nav>
     </div>
