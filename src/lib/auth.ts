@@ -14,9 +14,10 @@ export const authOptions: NextAuthOptions = {
       async authorize(credentials) {
         if (!credentials?.username || !credentials?.password) return null;
 
+        const username = credentials.username.trim();
         const db = await getDb();
         const user = await db.collection("users").findOne({
-          username: credentials.username,
+          username: { $regex: new RegExp(`^${username}$`, "i") },
         });
 
         if (!user) return null;
