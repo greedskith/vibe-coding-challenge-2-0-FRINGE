@@ -38,11 +38,10 @@ import { CossToggleGroup4 } from "@/components/p-toggle-group-4";
 import { Player, Session, Match, ReadyResult } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
-type Tab = "attendance" | "roster" | "matches" | "ready";
+type Tab = "attendance" | "matches" | "ready";
 
 const NAV_TABS = [
   { id: "attendance" as Tab, label: "Attendance", icon: ClipboardCheck },
-  { id: "roster" as Tab, label: "Roster", icon: Users },
   { id: "matches" as Tab, label: "Matches", icon: Trophy },
   { id: "ready" as Tab, label: "Ready Board", icon: Sparkles },
 ];
@@ -454,18 +453,23 @@ export function CoachMobileShell() {
         {/* Sidebar Footer User Area */}
         <div className="border-t border-zinc-800/80 pt-4 px-2">
           <div className="flex items-center justify-between">
-            <div className="min-w-0 pr-2">
-              <p className="text-xs font-medium text-zinc-200 truncate">
-                Head Coach
-              </p>
-              <p className="text-[10px] font-mono text-zinc-500 truncate">
-                {activeSession ? `${activeSession.date} · ${activeSession.status}` : "No session"}
-              </p>
+            <div className="flex items-center gap-2.5 min-w-0 pr-2">
+              <div className="flex size-8 shrink-0 items-center justify-center rounded-full border border-zinc-700 bg-zinc-800 text-xs font-semibold text-zinc-200 font-mono">
+                HC
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs font-semibold text-zinc-200 truncate">
+                  Coach
+                </p>
+                <p className="text-[10px] text-zinc-500 font-mono truncate">
+                  Dumka Academy
+                </p>
+              </div>
             </div>
             <button
               type="button"
               onClick={() => signOut({ callbackUrl: "/login" })}
-              className="rounded-lg border border-zinc-800 bg-zinc-900/60 p-2 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100 transition-colors cursor-pointer"
+              className="rounded-lg border border-zinc-800 bg-zinc-900/60 p-2 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100 transition-colors cursor-pointer shrink-0"
               title="Sign Out"
             >
               <LogOut className="size-4" />
@@ -520,16 +524,36 @@ export function CoachMobileShell() {
               className="h-7.5"
             />
 
-            {activeSession && (
-              <div className="flex items-center gap-1.5 rounded-lg border border-zinc-800 bg-zinc-900/60 px-2 py-1 text-[11px] font-mono text-zinc-300 shrink-0">
-                <CalendarDays className="size-3 text-zinc-400" />
-                <span>{activeSession.date}</span>
-                <span className="text-zinc-600">·</span>
-                <span className={activeSession.status === "closed" ? "text-zinc-500" : "text-zinc-200 font-medium"}>
-                  {activeSession.status === "closed" ? "Locked" : "Open"}
+            <div className="flex items-center gap-1.5 shrink-0">
+              {activeSession && (
+                <div className="flex items-center gap-1.5 rounded-lg border border-zinc-800 bg-zinc-900/60 px-2 py-1 text-[11px] font-mono text-zinc-300">
+                  <CalendarDays className="size-3 text-zinc-400" />
+                  <span>{activeSession.date}</span>
+                </div>
+              )}
+              {activeSession && activeSession.status !== "closed" ? (
+                <button
+                  type="button"
+                  onClick={handleLockSession}
+                  className="rounded-lg border border-zinc-700 bg-zinc-800 px-2 py-1 text-[11px] font-medium text-zinc-200 hover:bg-zinc-700 transition-colors cursor-pointer"
+                  title="Lock Session"
+                >
+                  <Lock className="size-3" />
+                </button>
+              ) : activeSession ? (
+                <span className="rounded-lg border border-zinc-800 bg-zinc-900 px-2 py-1 text-[11px] font-mono text-zinc-500">
+                  <Lock className="size-3 inline" />
                 </span>
-              </div>
-            )}
+              ) : null}
+              <button
+                type="button"
+                onClick={() => setNewSessionOpen(true)}
+                className="rounded-lg bg-zinc-100 px-2 py-1 text-[11px] font-semibold text-zinc-950 hover:bg-zinc-200 transition-colors cursor-pointer"
+                title="New Session"
+              >
+                <Plus className="size-3" />
+              </button>
+            </div>
           </div>
         </header>
 
@@ -545,9 +569,9 @@ export function CoachMobileShell() {
             </span>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5">
             {activeSession && (
-              <div className="flex items-center gap-2 rounded-lg border border-zinc-800 bg-zinc-900/50 px-3 py-1 text-xs font-mono text-zinc-300">
+              <div className="flex items-center gap-2 rounded-lg border border-zinc-800 bg-zinc-900/50 px-3 py-1.5 text-xs font-mono text-zinc-300">
                 <CalendarDays className="size-3.5 text-zinc-400" />
                 <span>{activeSession.date}</span>
                 <span className="text-zinc-600">·</span>
@@ -559,25 +583,34 @@ export function CoachMobileShell() {
 
             {/* Quick Action Buttons on Desktop */}
             {activeTab === "attendance" && (
-              <button
-                type="button"
-                onClick={() => setNewSessionOpen(true)}
-                className="flex items-center gap-1.5 rounded-lg bg-zinc-100 px-3 py-1.5 text-xs font-semibold text-zinc-950 hover:bg-zinc-200 transition-colors cursor-pointer"
-              >
-                <Plus className="size-3.5" />
-                Open Session
-              </button>
-            )}
-
-            {activeTab === "roster" && (
-              <button
-                type="button"
-                onClick={() => setNewPlayerOpen(true)}
-                className="flex items-center gap-1.5 rounded-lg bg-zinc-100 px-3 py-1.5 text-xs font-semibold text-zinc-950 hover:bg-zinc-200 transition-colors cursor-pointer"
-              >
-                <Plus className="size-3.5" />
-                Add Athlete
-              </button>
+              <>
+                {activeSession && activeSession.status !== "closed" && (
+                  <button
+                    type="button"
+                    onClick={handleLockSession}
+                    className="flex items-center gap-1.5 rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs font-medium text-zinc-200 hover:bg-zinc-700 transition-colors cursor-pointer"
+                  >
+                    <Lock className="size-3.5 text-zinc-400" />
+                    Lock Session
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setNewPlayerOpen(true)}
+                  className="flex items-center gap-1.5 rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-1.5 text-xs font-medium text-zinc-200 hover:bg-zinc-800 transition-colors cursor-pointer"
+                >
+                  <Plus className="size-3.5" />
+                  Add Athlete
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setNewSessionOpen(true)}
+                  className="flex items-center gap-1.5 rounded-lg bg-zinc-100 px-3 py-1.5 text-xs font-semibold text-zinc-950 hover:bg-zinc-200 transition-colors cursor-pointer"
+                >
+                  <Plus className="size-3.5" />
+                  Open Session
+                </button>
+              </>
             )}
 
             {activeTab === "matches" && (
@@ -607,7 +640,7 @@ export function CoachMobileShell() {
                 {players.length}
               </div>
               <p className="mt-1 text-xs text-zinc-500 font-mono truncate">
-                {sport} athletes
+                {players.length === 1 ? "1 athlete" : `${players.length} athletes`}
               </p>
             </div>
 
@@ -621,7 +654,7 @@ export function CoachMobileShell() {
                 {presentCount}
               </div>
               <p className="mt-1 text-xs text-zinc-500 font-mono truncate">
-                {activeSession ? `${attendanceRate}% active rate` : "No active session"}
+                {attendanceRate}% rate
               </p>
             </div>
 
@@ -635,7 +668,7 @@ export function CoachMobileShell() {
                 {absentCount}
               </div>
               <p className="mt-1 text-xs text-zinc-500 font-mono truncate">
-                Restricted from match
+                unmarked
               </p>
             </div>
 
@@ -649,135 +682,70 @@ export function CoachMobileShell() {
                 {qualifiedCount}
               </div>
               <p className="mt-1 text-xs text-zinc-500 font-mono truncate">
-                ≥75% att & ≥2 matches
+                qualified
               </p>
             </div>
           </section>
 
-          {/* TAB 1: ATTENDANCE */}
+          {/* TAB 1: ATTENDANCE (DESK) */}
           {activeTab === "attendance" && (
             <div className="space-y-4">
-              {/* Session Control Bar */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-zinc-800 bg-zinc-900/60 p-4 shadow-xs">
-                <div className="flex items-center gap-3">
-                  <div className="flex size-9 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-950 text-zinc-300">
-                    <CalendarDays className="size-4 text-zinc-400" />
-                  </div>
-                  <div>
-                    <div className="text-sm font-semibold text-zinc-200">
-                      {activeSession?.date || "No session open"}
-                    </div>
-                    <div className="text-xs text-zinc-500 font-mono">
-                      {sport} · {activeSession?.status === "closed" ? "Locked (Read-Only)" : "Active Session"}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2 pt-2 sm:pt-0 border-t sm:border-t-0 border-zinc-800">
-                  {activeSession?.status === "closed" ? (
-                    <Badge
-                      variant="outline"
-                      className="border-zinc-700 bg-zinc-800/80 text-zinc-300 gap-1.5 text-xs font-mono py-1 px-3"
-                    >
-                      <Lock className="size-3 text-zinc-400" />
-                      Locked
-                    </Badge>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={handleLockSession}
-                      disabled={!activeSession}
-                      className="flex items-center gap-1.5 rounded-lg border border-zinc-700 bg-zinc-800/90 px-3 py-1.5 text-xs font-medium text-zinc-200 transition-colors hover:bg-zinc-700 cursor-pointer disabled:opacity-40"
-                    >
-                      <Lock className="size-3.5 text-zinc-400" />
-                      Lock Session
-                    </button>
-                  )}
-
-                  {/* Open Session Dialog */}
-                  <Dialog open={newSessionOpen} onOpenChange={setNewSessionOpen}>
-                    <DialogTrigger
-                      className="flex items-center gap-1.5 rounded-lg bg-zinc-100 px-3 py-1.5 text-xs font-semibold text-zinc-950 hover:bg-zinc-200 transition-colors cursor-pointer"
-                      title="Open Session"
-                    >
-                      <Plus className="size-3.5" />
-                      <span>New Session</span>
-                    </DialogTrigger>
-                    <DialogPopup className="sm:max-w-sm bg-zinc-950 border-zinc-800 text-zinc-100">
-                      <DialogHeader>
-                        <DialogTitle className="text-base font-semibold text-zinc-100">
-                          Open Training Session
-                        </DialogTitle>
-                        <DialogDescription className="text-xs text-zinc-400">
-                          Create a new attendance roll for {sport}.
-                        </DialogDescription>
-                      </DialogHeader>
-                      <form onSubmit={handleOpenSession} className="space-y-4 pt-2">
-                        <DialogPanel className="space-y-3">
-                          <div className="space-y-1.5">
-                            <label className="text-xs font-medium text-zinc-400 block">
-                              Session Date
-                            </label>
-                            <input
-                              type="date"
-                              value={newSessionDate}
-                              onChange={(e) => setNewSessionDate(e.target.value)}
-                              required
-                              className="h-10 w-full rounded-lg border border-zinc-800 bg-zinc-900 px-3 text-xs text-zinc-100 focus:border-zinc-500 focus:outline-none"
-                            />
-                          </div>
-                        </DialogPanel>
-                        <DialogFooter variant="bare" className="flex gap-2 pt-2">
-                          <DialogClose className="flex-1 rounded-lg border border-zinc-800 bg-zinc-900 py-2 text-xs font-medium text-zinc-300 hover:bg-zinc-800 transition-colors cursor-pointer">
-                            Cancel
-                          </DialogClose>
-                          <button
-                            type="submit"
-                            className="flex-1 rounded-lg bg-zinc-100 py-2 text-xs font-semibold text-zinc-950 hover:bg-zinc-200 transition-colors cursor-pointer"
-                          >
-                            Open Session
-                          </button>
-                        </DialogFooter>
-                      </form>
-                    </DialogPopup>
-                  </Dialog>
-                </div>
-              </div>
-
-              {/* Roster & Quick Mark Row */}
+              {/* Athletes Bar & Quick Mark Row */}
               <div className="flex items-center justify-between px-1">
-                <span className="text-xs font-medium text-zinc-400 font-mono">
-                  Athletes ({players.length})
-                </span>
-                {activeSession?.status !== "closed" && (
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => handleMarkAll(true)}
-                      className="rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-1 text-xs font-medium text-zinc-300 hover:bg-zinc-800 transition-colors cursor-pointer font-mono"
-                    >
-                      All present
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleMarkAll(false)}
-                      className="rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-1 text-xs font-medium text-zinc-400 hover:bg-zinc-800 transition-colors cursor-pointer font-mono"
-                    >
-                      Clear
-                    </button>
-                  </div>
-                )}
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-semibold text-zinc-100">
+                    Athletes
+                  </span>
+                  <Badge
+                    variant="outline"
+                    className="border-zinc-800 bg-zinc-900/80 text-[11px] font-mono text-zinc-400 py-0 px-2"
+                  >
+                    {players.length}
+                  </Badge>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  {activeSession?.status !== "closed" && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => handleMarkAll(true)}
+                        className="rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-1 text-xs font-medium text-zinc-300 hover:bg-zinc-800 transition-colors cursor-pointer font-mono"
+                      >
+                        All present
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleMarkAll(false)}
+                        className="rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-1 text-xs font-medium text-zinc-400 hover:bg-zinc-800 transition-colors cursor-pointer font-mono"
+                      >
+                        Clear
+                      </button>
+                    </>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setNewPlayerOpen(true)}
+                    className="flex items-center gap-1.5 rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-1 text-xs font-medium text-zinc-200 hover:bg-zinc-800 transition-colors cursor-pointer"
+                  >
+                    <Plus className="size-3.5" />
+                    <span>Add Athlete</span>
+                  </button>
+                </div>
               </div>
 
-              {/* CHECK 1 Player Attendance List */}
-              <ul className="flex flex-col gap-2.5">
+              {/* CHECK 1 Player Attendance Grid (2-columns on Mac/desktop) */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                 {players.map((player, idx) => {
                   const pId = player._id?.toString() || "";
                   const present = isPlayerPresent(pId);
                   const isLocked = activeSession?.status === "closed";
+                  const readyInfo = readyResults.find(
+                    (r) => r.player._id?.toString() === pId
+                  );
 
                   return (
-                    <li
+                    <div
                       key={pId}
                       className={cn(
                         "flex items-center justify-between gap-4 rounded-xl border p-3.5 sm:p-4 transition-colors shadow-xs",
@@ -802,6 +770,9 @@ export function CoachMobileShell() {
                       </div>
 
                       <div className="flex items-center gap-3 shrink-0">
+                        {readyInfo?.isReady && (
+                          <CossBadge16 isReady={true} />
+                        )}
                         <span
                           className={cn(
                             "text-xs font-medium font-mono",
@@ -819,141 +790,107 @@ export function CoachMobileShell() {
                           }
                         />
                       </div>
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
-          )}
-
-          {/* TAB 2: ROSTER */}
-          {activeTab === "roster" && (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-base font-semibold text-zinc-100">Roster Management</h2>
-                  <p className="text-xs text-zinc-400">
-                    {players.length} athletes enrolled in {sport}
-                  </p>
-                </div>
-
-                {/* Add Athlete Dialog */}
-                <Dialog open={newPlayerOpen} onOpenChange={setNewPlayerOpen}>
-                  <DialogTrigger className="flex items-center gap-1.5 rounded-lg bg-zinc-100 px-3 py-1.5 text-xs font-semibold text-zinc-950 hover:bg-zinc-200 transition-colors cursor-pointer">
-                    <Plus className="size-3.5" />
-                    Add Athlete
-                  </DialogTrigger>
-                  <DialogPopup className="sm:max-w-sm bg-zinc-950 border-zinc-800 text-zinc-100">
-                    <DialogHeader>
-                      <DialogTitle className="text-base font-semibold text-zinc-100">
-                        Enroll Athlete
-                      </DialogTitle>
-                      <DialogDescription className="text-xs text-zinc-400">
-                        Register a new athlete in the {sport} roster.
-                      </DialogDescription>
-                    </DialogHeader>
-                    <form onSubmit={handleAddPlayer} className="space-y-4 pt-2">
-                      <DialogPanel className="space-y-3">
-                        <div className="space-y-1.5">
-                          <label className="text-xs font-medium text-zinc-400 block">
-                            Full Name
-                          </label>
-                          <input
-                            type="text"
-                            value={newPlayerName}
-                            onChange={(e) => setNewPlayerName(e.target.value)}
-                            placeholder="e.g. Ramesh Hansda"
-                            required
-                            className="h-10 w-full rounded-lg border border-zinc-800 bg-zinc-900 px-3 text-xs text-zinc-100 placeholder:text-zinc-600 focus:border-zinc-500 focus:outline-none"
-                          />
-                        </div>
-                        <div className="space-y-1.5">
-                          <label className="text-xs font-medium text-zinc-400 block">
-                            Age
-                          </label>
-                          <input
-                            type="number"
-                            value={newPlayerAge}
-                            onChange={(e) => setNewPlayerAge(Number(e.target.value))}
-                            min={10}
-                            max={30}
-                            required
-                            className="h-10 w-full rounded-lg border border-zinc-800 bg-zinc-900 px-3 text-xs text-zinc-100 focus:border-zinc-500 focus:outline-none"
-                          />
-                        </div>
-                      </DialogPanel>
-                      <DialogFooter variant="bare" className="flex gap-2 pt-2">
-                        <DialogClose className="flex-1 rounded-lg border border-zinc-800 bg-zinc-900 py-2 text-xs font-medium text-zinc-300 hover:bg-zinc-800 transition-colors cursor-pointer">
-                          Cancel
-                        </DialogClose>
-                        <button
-                          type="submit"
-                          className="flex-1 rounded-lg bg-zinc-100 py-2 text-xs font-semibold text-zinc-950 hover:bg-zinc-200 transition-colors cursor-pointer"
-                        >
-                          Enroll
-                        </button>
-                      </DialogFooter>
-                    </form>
-                  </DialogPopup>
-                </Dialog>
-              </div>
-
-              {/* Roster Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {players.map((player, idx) => {
-                  const pId = player._id?.toString() || "";
-                  const readyInfo = readyResults.find(
-                    (r) => r.player._id?.toString() === pId
-                  );
-                  const isReady = readyInfo?.isReady ?? false;
-                  const initials = player.name
-                    .split(" ")
-                    .map((n) => n[0])
-                    .join("")
-                    .slice(0, 2)
-                    .toUpperCase();
-
-                  return (
-                    <div
-                      key={pId}
-                      className="flex items-center justify-between gap-3.5 rounded-xl border border-zinc-800 bg-zinc-900/50 p-4 shadow-xs"
-                    >
-                      <div className="flex items-center gap-3.5 min-w-0 flex-1">
-                        <div className="flex size-10 shrink-0 items-center justify-center rounded-full border border-zinc-700 bg-zinc-800 font-semibold text-xs text-zinc-200">
-                          {initials}
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-semibold text-zinc-100">
-                            {player.name}
-                          </p>
-                          <p className="text-xs text-zinc-400 font-normal truncate mt-0.5">
-                            <span>{player.sport} · Age {player.age}</span>
-                            <span className="sm:hidden text-zinc-500 font-mono ml-1.5">
-                              · {readyInfo ? `${readyInfo.attendancePct}% · ${readyInfo.matchCount}M` : "0% · 0M"}
-                            </span>
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-2 shrink-0">
-                        <Badge
-                          variant="outline"
-                          className="border-zinc-800 bg-zinc-950 text-zinc-400 text-xs font-mono py-0.5 px-2 hidden sm:inline-flex"
-                        >
-                          {readyInfo ? `${readyInfo.attendancePct}%` : "0%"}
-                        </Badge>
-                        <Badge
-                          variant="outline"
-                          className="border-zinc-800 bg-zinc-950 text-zinc-400 text-xs font-mono py-0.5 px-2 hidden sm:inline-flex"
-                        >
-                          {readyInfo ? `${readyInfo.matchCount}M` : "0M"}
-                        </Badge>
-                        <CossBadge16 isReady={isReady} />
-                      </div>
                     </div>
                   );
                 })}
               </div>
+
+              {/* Add Athlete Dialog */}
+              <Dialog open={newPlayerOpen} onOpenChange={setNewPlayerOpen}>
+                <DialogPopup className="sm:max-w-sm bg-zinc-950 border-zinc-800 text-zinc-100">
+                  <DialogHeader>
+                    <DialogTitle className="text-base font-semibold text-zinc-100">
+                      Enroll Athlete
+                    </DialogTitle>
+                    <DialogDescription className="text-xs text-zinc-400">
+                      Register a new athlete in the {sport} roster.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <form onSubmit={handleAddPlayer} className="space-y-4 pt-2">
+                    <DialogPanel className="space-y-3">
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-medium text-zinc-400 block">
+                          Full Name
+                        </label>
+                        <input
+                          type="text"
+                          value={newPlayerName}
+                          onChange={(e) => setNewPlayerName(e.target.value)}
+                          placeholder="e.g. Ramesh Hansda"
+                          required
+                          className="h-10 w-full rounded-lg border border-zinc-800 bg-zinc-900 px-3 text-xs text-zinc-100 placeholder:text-zinc-600 focus:border-zinc-500 focus:outline-none"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-medium text-zinc-400 block">
+                          Age
+                        </label>
+                        <input
+                          type="number"
+                          value={newPlayerAge}
+                          onChange={(e) => setNewPlayerAge(Number(e.target.value))}
+                          min={10}
+                          max={30}
+                          required
+                          className="h-10 w-full rounded-lg border border-zinc-800 bg-zinc-900 px-3 text-xs text-zinc-100 focus:border-zinc-500 focus:outline-none"
+                        />
+                      </div>
+                    </DialogPanel>
+                    <DialogFooter variant="bare" className="flex gap-2 pt-2">
+                      <DialogClose className="flex-1 rounded-lg border border-zinc-800 bg-zinc-900 py-2 text-xs font-medium text-zinc-300 hover:bg-zinc-800 transition-colors cursor-pointer">
+                        Cancel
+                      </DialogClose>
+                      <button
+                        type="submit"
+                        className="flex-1 rounded-lg bg-zinc-100 py-2 text-xs font-semibold text-zinc-950 hover:bg-zinc-200 transition-colors cursor-pointer"
+                      >
+                        Enroll
+                      </button>
+                    </DialogFooter>
+                  </form>
+                </DialogPopup>
+              </Dialog>
+
+              {/* Open Session Dialog */}
+              <Dialog open={newSessionOpen} onOpenChange={setNewSessionOpen}>
+                <DialogPopup className="sm:max-w-sm bg-zinc-950 border-zinc-800 text-zinc-100">
+                  <DialogHeader>
+                    <DialogTitle className="text-base font-semibold text-zinc-100">
+                      Open Training Session
+                    </DialogTitle>
+                    <DialogDescription className="text-xs text-zinc-400">
+                      Create a new attendance roll for {sport}.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <form onSubmit={handleOpenSession} className="space-y-4 pt-2">
+                    <DialogPanel className="space-y-3">
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-medium text-zinc-400 block">
+                          Session Date
+                        </label>
+                        <input
+                          type="date"
+                          value={newSessionDate}
+                          onChange={(e) => setNewSessionDate(e.target.value)}
+                          required
+                          className="h-10 w-full rounded-lg border border-zinc-800 bg-zinc-900 px-3 text-xs text-zinc-100 focus:border-zinc-500 focus:outline-none"
+                        />
+                      </div>
+                    </DialogPanel>
+                    <DialogFooter variant="bare" className="flex gap-2 pt-2">
+                      <DialogClose className="flex-1 rounded-lg border border-zinc-800 bg-zinc-900 py-2 text-xs font-medium text-zinc-300 hover:bg-zinc-800 transition-colors cursor-pointer">
+                        Cancel
+                      </DialogClose>
+                      <button
+                        type="submit"
+                        className="flex-1 rounded-lg bg-zinc-100 py-2 text-xs font-semibold text-zinc-950 hover:bg-zinc-200 transition-colors cursor-pointer"
+                      >
+                        Open Session
+                      </button>
+                    </DialogFooter>
+                  </form>
+                </DialogPopup>
+              </Dialog>
             </div>
           )}
 
