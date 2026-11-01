@@ -1,0 +1,298 @@
+import { ObjectId } from "mongodb";
+import fs from "fs";
+import path from "path";
+
+const DATA_DIR = path.join(process.cwd(), ".data");
+const DATA_FILE = path.join(DATA_DIR, "academy-desk.json");
+
+interface LocalStore {
+  users: any[];
+  players: any[];
+  sessions: any[];
+  matches: any[];
+}
+
+function getInitialStore(): LocalStore {
+  const p1Id = new ObjectId("650000000000000000000001");
+  const p2Id = new ObjectId("650000000000000000000002");
+  const p3Id = new ObjectId("650000000000000000000003");
+
+  return {
+    players: [
+      { _id: p1Id, name: "Rohit Kumar", age: 17, sport: "Football" },
+      { _id: p2Id, name: "Priya Murmu", age: 16, sport: "Football" },
+      { _id: p3Id, name: "Amit Soren", age: 18, sport: "Football" },
+    ],
+    users: [
+      {
+        _id: new ObjectId("650000000000000000000011"),
+        username: "coach",
+        password: "$2b$10$UE5oJy7Ne7ZBnYdLNMeTiOxUCS7PHlOxaHNI5iK8mc5Tx7HBUQrRW",
+        role: "coach",
+        name: "Coach",
+      },
+      {
+        _id: new ObjectId("650000000000000000000012"),
+        username: "scout",
+        password: "$2b$10$SChvTmRJKXcFWTp32DxmkuLc4law0.OxlRB0hloIYZgPNx1GP9r1C",
+        role: "scout",
+        name: "Scout",
+      },
+      {
+        _id: new ObjectId("650000000000000000000013"),
+        username: "rohit",
+        password: "$2b$10$aneNvsyTuqfHHIjRgFmNUO6455v2aFYxPWqcUm9aszVJni.c6aAnq",
+        role: "player",
+        name: "Rohit Kumar",
+        playerId: p1Id,
+      },
+    ],
+    sessions: [],
+    matches: [],
+  };
+}
+
+let memoryStore: LocalStore | null = null;
+
+function loadStore(): LocalStore {
+  if (memoryStore) return memoryStore;
+
+  try {
+    if (fs.existsSync(DATA_FILE)) {
+      const raw = fs.readFileSync(DATA_FILE, "utf-8");
+      const parsed = JSON.parse(raw);
+      // Re-hydrate ObjectIds
+      const rehydrate = (docs: any[]) =>
+        (docs || []).map((d) => {
+          if (d._id && typeof d._id === "string") {
+            try {
+              d._id = new ObjectId(d._id);
+            } catch {}
+          }
+          if (d.playerId && typeof d.playerId === "string") {
+            try {
+              d.playerId = new ObjectId(d.playerId);
+            } catch {}
+          }
+          if (Array.isArray(d.attendance)) {
+            d.attendance = d.attendance.map((a: any) => ({
+              ...a,
+              playerId: typeof a.playerId === "string" ? new ObjectId(a.playerId) : a.playerId,
+            }));
+          }
+          if (Array.isArray(d.scores)) {
+            d.scores = d.scores.map((s: any) => ({
+              ...s,
+              playerId: typeof s.playerId === "string" ? new ObjectId(s.playerId) : s.playerId,
+            }));
+          }
+          return d;
+        });
+
+      memoryStore = {
+        users: rehydrate(parsed.users),
+        players: rehydrate(parsed.players),
+        sessions: rehydrate(parsed.sessions),
+        matches: rehydrate(parsed.matches),
+      };
+      return memoryStore;
+    }
+  } catch (err) {
+    console.warn("Could not load local db file, initializing fresh store:", err);
+  }
+
+  memoryStore = getInitialStore();
+  saveStore();
+  return memoryStore;
+}
+
+function saveStore() {
+  if (!memoryStore) return;
+  try {
+    if (!fs.existsSync(DATA_DIR)) {
+      fs.mkdirSync(DATA_DIR, { recursive: true });
+    }
+    fs.writeFileSync(DATA_FILE, JSON.stringify(memoryStore, null, 2), "utf-8");
+  } catch (err) {
+    // Non-blocking in read-only or restricted environments
+  }
+}
+
+function matchDoc(doc: any, query: any): boolean {
+  if (!query || Object.keys(query).length === 0) return true;
+
+  for (const [key, expected] of Object.entries(query)) {
+    if (key === "$or" && Array.isArray(expected)) {
+      if (!expected.some((subQuery) => matchDoc(doc, subQuery))) return false;
+      continue;
+    }
+
+    const actual = doc[key];
+
+    if (expected instanceof RegExp) {
+      if (typeof actual !== "string" || !expected.test(actual)) return false;
+    } else if (expected && typeof expected === "object" && "$regex" in expected) {
+      const exp = expected as any;
+      const reg = exp.$regex instanceof RegExp ? exp.$regex : new RegExp(exp.$regex, exp.$options);
+      if (typeof actual !== "string" || !reg.test(actual)) return false;
+    } else if (actual instanceof ObjectId || expected instanceof ObjectId) {
+      if (actual?.toString() !== expected?.toString()) return false;
+    } else if (actual !== expected) {
+      return false;
+    }
+  }
+  return true;
+}
+
+export class LocalCollection {
+  private colName: keyof LocalStore;
+
+  constructor(colName: keyof LocalStore) {
+    this.colName = colName;
+  }
+
+  private getDocs(): any[] {
+    const store = loadStore();
+    if (!store[this.colName]) {
+      store[this.colName] = [];
+    }
+    return store[this.colName];
+  }
+
+  find(query: any = {}) {
+    const docs = this.getDocs().filter((d) => matchDoc(d, query));
+    let sortedDocs = [...docs];
+
+    return {
+      sort(sortObj: Record<string, 1 | -1>) {
+        const [sortKey, sortDir] = Object.entries(sortObj)[0] || [];
+        if (sortKey) {
+          sortedDocs.sort((a, b) => {
+            const valA = a[sortKey] ?? "";
+            const valB = b[sortKey] ?? "";
+            if (valA < valB) return sortDir === 1 ? -1 : 1;
+            if (valA > valB) return sortDir === 1 ? 1 : -1;
+            return 0;
+          });
+        }
+        return this;
+      },
+      async toArray() {
+        return JSON.parse(JSON.stringify(sortedDocs)).map((d: any) => {
+          if (d._id) d._id = new ObjectId(d._id);
+          if (d.playerId) d.playerId = new ObjectId(d.playerId);
+          if (Array.isArray(d.attendance)) {
+            d.attendance = d.attendance.map((a: any) => ({
+              ...a,
+              playerId: new ObjectId(a.playerId),
+            }));
+          }
+          if (Array.isArray(d.scores)) {
+            d.scores = d.scores.map((s: any) => ({
+              ...s,
+              playerId: new ObjectId(s.playerId),
+            }));
+          }
+          return d;
+        });
+      },
+    };
+  }
+
+  async findOne(query: any = {}) {
+    const doc = this.getDocs().find((d) => matchDoc(d, query));
+    if (!doc) return null;
+    const cloned = JSON.parse(JSON.stringify(doc));
+    if (cloned._id) cloned._id = new ObjectId(cloned._id);
+    if (cloned.playerId) cloned.playerId = new ObjectId(cloned.playerId);
+    if (Array.isArray(cloned.attendance)) {
+      cloned.attendance = cloned.attendance.map((a: any) => ({
+        ...a,
+        playerId: new ObjectId(a.playerId),
+      }));
+    }
+    if (Array.isArray(cloned.scores)) {
+      cloned.scores = cloned.scores.map((s: any) => ({
+        ...s,
+        playerId: new ObjectId(s.playerId),
+      }));
+    }
+    return cloned;
+  }
+
+  async insertOne(doc: any) {
+    const docs = this.getDocs();
+    const inserted = {
+      ...doc,
+      _id: doc._id instanceof ObjectId ? doc._id : new ObjectId(),
+    };
+    docs.push(inserted);
+    saveStore();
+    return { insertedId: inserted._id };
+  }
+
+  async insertMany(docsToAdd: any[]) {
+    const docs = this.getDocs();
+    const insertedIds: Record<number, ObjectId> = {};
+    docsToAdd.forEach((doc, idx) => {
+      const inserted = {
+        ...doc,
+        _id: doc._id instanceof ObjectId ? doc._id : new ObjectId(),
+      };
+      docs.push(inserted);
+      insertedIds[idx] = inserted._id;
+    });
+    saveStore();
+    return { insertedIds };
+  }
+
+  async updateOne(filter: any, update: any, options: { upsert?: boolean } = {}) {
+    const docs = this.getDocs();
+    const idx = docs.findIndex((d) => matchDoc(d, filter));
+
+    if (idx >= 0) {
+      if (update.$set) {
+        Object.assign(docs[idx], update.$set);
+      }
+      saveStore();
+      return { modifiedCount: 1, matchedCount: 1 };
+    } else if (options.upsert) {
+      const newDoc = {
+        ...filter,
+        ...(update.$set || {}),
+        _id: new ObjectId(),
+      };
+      docs.push(newDoc);
+      saveStore();
+      return { modifiedCount: 0, matchedCount: 0, upsertedId: newDoc._id };
+    }
+    return { modifiedCount: 0, matchedCount: 0 };
+  }
+
+  async deleteMany(filter: any = {}) {
+    const store = loadStore();
+    const originalLen = (store[this.colName] || []).length;
+    store[this.colName] = (store[this.colName] || []).filter((d) => !matchDoc(d, filter));
+    const deletedCount = originalLen - store[this.colName].length;
+    saveStore();
+    return { deletedCount };
+  }
+
+  async countDocuments(filter: any = {}) {
+    return this.getDocs().filter((d) => matchDoc(d, filter)).length;
+  }
+}
+
+export class LocalDb {
+  collection(name: string): LocalCollection {
+    return new LocalCollection(name as keyof LocalStore);
+  }
+
+  async command(_cmd: any) {
+    return { ok: 1 };
+  }
+}
+
+export function getLocalDb(): LocalDb {
+  return new LocalDb();
+}

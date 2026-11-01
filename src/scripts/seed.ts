@@ -1,17 +1,34 @@
-import { MongoClient } from "mongodb";
+import { getDb } from "../lib/db";
+import { ObjectId } from "mongodb";
 import bcrypt from "bcryptjs";
 import * as dotenv from "dotenv";
 
 dotenv.config({ path: ".env.local" });
 
 async function seed() {
-  if (!process.env.MONGODB_URI) {
-    throw new Error("MONGODB_URI is not set");
-  }
+  const db = await getDb();
 
-  const client = new MongoClient(process.env.MONGODB_URI);
-  await client.connect();
-  const db = client.db("academy-desk");
+  // Seed 3 Players if none exist
+  const existingPlayers = await db.collection("players").find().toArray();
+  let player1Id: ObjectId;
+  let player2Id: ObjectId;
+  let player3Id: ObjectId;
+
+  if (existingPlayers.length < 3) {
+    await db.collection("players").deleteMany({});
+    const res = await db.collection("players").insertMany([
+      { name: "Rohit Kumar", age: 17, sport: "Football" },
+      { name: "Priya Murmu", age: 16, sport: "Football" },
+      { name: "Amit Soren", age: 18, sport: "Football" },
+    ]);
+    player1Id = res.insertedIds[0];
+    player2Id = res.insertedIds[1];
+    player3Id = res.insertedIds[2];
+  } else {
+    player1Id = existingPlayers[0]._id;
+    player2Id = existingPlayers[1]._id;
+    player3Id = existingPlayers[2]._id;
+  }
 
   // Coach
   await db.collection("users").updateOne(
@@ -41,11 +58,25 @@ async function seed() {
     { upsert: true }
   );
 
+  // Player (Rohit)
+  await db.collection("users").updateOne(
+    { username: "rohit" },
+    {
+      $set: {
+        username: "rohit",
+        password: await bcrypt.hash("rohit123", 10),
+        role: "player",
+        name: "Rohit Kumar",
+        playerId: player1Id,
+      },
+    },
+    { upsert: true }
+  );
+
   console.log("✅ Seeded:");
   console.log("   coach / coach123");
   console.log("   scout / scout123");
-
-  await client.close();
+  console.log("   rohit / rohit123");
 }
 
 seed().catch(console.error);
