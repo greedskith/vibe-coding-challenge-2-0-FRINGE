@@ -2,10 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
 import bcrypt from "bcryptjs";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
     const db = await getDb();
-    const players = await db.collection("players").find().sort({ name: 1 }).toArray();
+    const sport = req?.url ? new URL(req.url).searchParams.get("sport") : null;
+    const query = sport ? { sport } : {};
+
+    const players = await db.collection("players").find(query).sort({ name: 1 }).toArray();
     const users = await db.collection("users").find({ role: "player" }).toArray();
 
     const userMap = new Map<string, string>();
@@ -53,9 +56,21 @@ export async function POST(req: NextRequest) {
     const playerResult = await db.collection("players").insertOne(playerDoc);
     const playerId = playerResult.insertedId;
 
-    // 2. Hash password with bcrypt
-    // 3. username = name.toLowerCase().replace(/\s+/g, "-")
-    const username = trimmedName.toLowerCase().replace(/\s+/g, "-");
+    // 2. Derive unique username = name.toLowerCase().replace(/\s+/g, "-")
+    // Disambiguate if username is already taken to prevent account collision and hijacking
+    const baseUsername = trimmedName
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "") || "player";
+
+    let username = baseUsername;
+    let suffix = 1;
+    while (await db.collection("users").findOne({ username })) {
+      suffix++;
+      username = `${baseUsername}${suffix}`;
+    }
+
+    // 3. Hash password with bcrypt
     const rawPassword =
       password && String(password).trim()
         ? String(password).trim()
@@ -63,19 +78,19 @@ export async function POST(req: NextRequest) {
     const hashedPassword = await bcrypt.hash(rawPassword, 10);
 
     // 4. Insert into `users` with { role: "player", playerId: insertedId }
-    await db.collection("users").updateOne(
-      { username },
-      {
-        $set: {
-          username,
-          password: hashedPassword,
-          role: "player",
-          name: trimmedName,
-          playerId,
-        },
-      },
-      { upsert: true }
-    );
+    try {
+      await db.collection("users").insertOne({
+        username,
+        password: hashedPassword,
+        role: "player",
+        name: trimmedName,
+        playerId,
+      });
+    } catch (userErr) {
+      // Roll back player document if user creation failed
+      await db.collection("players").deleteOne({ _id: playerId });
+      throw userErr;
+    }
 
     // 5. Return created player
     const createdPlayer = {

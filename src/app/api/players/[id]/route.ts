@@ -98,7 +98,18 @@ export async function PUT(
     }
 
     const updatedPlayer = await db.collection("players").findOne({ _id: objId });
-    return NextResponse.json(updatedPlayer);
+    if (!updatedPlayer) {
+      return NextResponse.json({ error: "Player not found" }, { status: 404 });
+    }
+
+    const user = await db.collection("users").findOne({
+      $or: [{ playerId: objId }, { playerId: id }],
+    });
+
+    return NextResponse.json({
+      ...updatedPlayer,
+      username: user?.username || updatedPlayer.name.toLowerCase().replace(/\s+/g, "-"),
+    });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
@@ -119,15 +130,14 @@ export async function DELETE(
 
     // Remove player document
     const deletePlayerResult = await db.collection("players").deleteOne({ _id: objId });
+    if (deletePlayerResult.deletedCount === 0) {
+      return NextResponse.json({ error: "Player not found" }, { status: 404 });
+    }
 
     // Remove linked user document (by playerId match)
     await db.collection("users").deleteMany({
       $or: [{ playerId: objId }, { playerId: id }],
     });
-
-    if (deletePlayerResult.deletedCount === 0) {
-      return NextResponse.json({ error: "Player not found" }, { status: 404 });
-    }
 
     return NextResponse.json({
       success: true,

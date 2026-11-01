@@ -352,113 +352,115 @@ export default function CoachPlayersPage() {
               )}
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow className="border-b border-zinc-800/80 hover:bg-transparent">
-                  <TableHead className="w-[300px] text-zinc-400 font-medium text-xs">
-                    Athlete
-                  </TableHead>
-                  <TableHead className="text-zinc-400 font-medium text-xs">
-                    Login Username
-                  </TableHead>
-                  <TableHead className="text-zinc-400 font-medium text-xs">
-                    Age
-                  </TableHead>
-                  <TableHead className="text-zinc-400 font-medium text-xs">
-                    Sport
-                  </TableHead>
-                  <TableHead className="text-right text-zinc-400 font-medium text-xs w-[80px]">
-                    Actions
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredPlayers.map((player) => {
-                  const initials = player.name
-                    .split(" ")
-                    .map((n) => n[0])
-                    .join("")
-                    .slice(0, 2)
-                    .toUpperCase();
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="border-b border-zinc-800/80 hover:bg-transparent">
+                    <TableHead className="min-w-[180px] sm:w-[260px] text-zinc-400 font-medium text-xs">
+                      Athlete
+                    </TableHead>
+                    <TableHead className="text-zinc-400 font-medium text-xs">
+                      Login Username
+                    </TableHead>
+                    <TableHead className="text-zinc-400 font-medium text-xs">
+                      Age
+                    </TableHead>
+                    <TableHead className="text-zinc-400 font-medium text-xs">
+                      Sport
+                    </TableHead>
+                    <TableHead className="text-right text-zinc-400 font-medium text-xs w-[80px]">
+                      Actions
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredPlayers.map((player) => {
+                    const initials = player.name
+                      .split(" ")
+                      .map((n) => n[0])
+                      .join("")
+                      .slice(0, 2)
+                      .toUpperCase();
 
-                  const fallbackUsername = player.name
-                    .toLowerCase()
-                    .replace(/\s+/g, "-");
-                  const displayUsername = player.username || fallbackUsername;
+                    const fallbackUsername = player.name
+                      .toLowerCase()
+                      .replace(/\s+/g, "-");
+                    const displayUsername = player.username || fallbackUsername;
 
-                  return (
-                    <TableRow
-                      key={player._id}
-                      className="border-b border-zinc-800/50 hover:bg-zinc-800/30 transition-colors"
-                    >
-                      <TableCell className="py-3 font-medium">
-                        <div className="flex items-center gap-3">
-                          <div className="flex size-8 shrink-0 items-center justify-center rounded-full border border-zinc-700 bg-zinc-800 font-mono text-xs font-semibold text-zinc-200">
-                            {initials}
+                    return (
+                      <TableRow
+                        key={player._id}
+                        className="border-b border-zinc-800/50 hover:bg-zinc-800/30 transition-colors"
+                      >
+                        <TableCell className="py-3 font-medium">
+                          <div className="flex items-center gap-3">
+                            <div className="flex size-8 shrink-0 items-center justify-center rounded-full border border-zinc-700 bg-zinc-800 font-mono text-xs font-semibold text-zinc-200">
+                              {initials}
+                            </div>
+                            <div className="min-w-0">
+                              <span className="font-semibold text-sm text-zinc-100 block truncate">
+                                {player.name}
+                              </span>
+                              <span className="text-[11px] text-zinc-400 font-mono block">
+                                ID: {player._id.slice(-6)}
+                              </span>
+                            </div>
                           </div>
-                          <div className="min-w-0">
-                            <span className="font-semibold text-sm text-zinc-100 block truncate">
-                              {player.name}
-                            </span>
-                            <span className="text-[11px] text-zinc-400 font-mono block">
-                              ID: {player._id.slice(-6)}
+                        </TableCell>
+
+                        <TableCell className="py-3">
+                          <div className="flex items-center gap-1.5 font-mono text-xs text-zinc-300">
+                            <KeyRound className="size-3 text-zinc-500" />
+                            <span className="bg-zinc-950/80 px-2 py-0.5 rounded border border-zinc-800 text-zinc-300">
+                              {displayUsername}
                             </span>
                           </div>
-                        </div>
-                      </TableCell>
+                        </TableCell>
 
-                      <TableCell className="py-3">
-                        <div className="flex items-center gap-1.5 font-mono text-xs text-zinc-300">
-                          <KeyRound className="size-3 text-zinc-500" />
-                          <span className="bg-zinc-950/80 px-2 py-0.5 rounded border border-zinc-800 text-zinc-300">
-                            {displayUsername}
-                          </span>
-                        </div>
-                      </TableCell>
+                        <TableCell className="py-3 text-xs text-zinc-300 font-mono">
+                          {player.age} yrs
+                        </TableCell>
 
-                      <TableCell className="py-3 text-xs text-zinc-300 font-mono">
-                        {player.age} yrs
-                      </TableCell>
+                        <TableCell className="py-3">
+                          <Badge
+                            variant="outline"
+                            className="capitalize border-zinc-700/80 bg-zinc-800/60 text-zinc-200 text-[11px] font-normal"
+                          >
+                            {player.sport}
+                          </Badge>
+                        </TableCell>
 
-                      <TableCell className="py-3">
-                        <Badge
-                          variant="outline"
-                          className="capitalize border-zinc-700/80 bg-zinc-800/60 text-zinc-200 text-[11px] font-normal"
-                        >
-                          {player.sport}
-                        </Badge>
-                      </TableCell>
-
-                      <TableCell className="py-3 text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger className="inline-flex size-8 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900/80 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-colors cursor-pointer">
-                            <MoreHorizontal className="size-4" />
-                            <span className="sr-only">Actions</span>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-36 bg-zinc-950 border-zinc-800 text-zinc-200">
-                            <DropdownMenuItem
-                              onClick={() => handleOpenEdit(player)}
-                              className="gap-2 cursor-pointer text-xs"
-                            >
-                              <Pencil className="size-3.5 text-zinc-400" />
-                              <span>Edit</span>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              variant="destructive"
-                              onClick={() => handleOpenDelete(player)}
-                              className="gap-2 cursor-pointer text-xs text-red-400 hover:text-red-300 focus:text-red-300"
-                            >
-                              <Trash2 className="size-3.5" />
-                              <span>Delete</span>
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
+                        <TableCell className="py-3 text-right">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger className="inline-flex size-8 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900/80 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-colors cursor-pointer">
+                              <MoreHorizontal className="size-4" />
+                              <span className="sr-only">Actions</span>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-36 bg-zinc-950 border-zinc-800 text-zinc-200">
+                              <DropdownMenuItem
+                                onClick={() => handleOpenEdit(player)}
+                                className="gap-2 cursor-pointer text-xs"
+                              >
+                                <Pencil className="size-3.5 text-zinc-400" />
+                                <span>Edit</span>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                variant="destructive"
+                                onClick={() => handleOpenDelete(player)}
+                                className="gap-2 cursor-pointer text-xs text-red-400 hover:text-red-300 focus:text-red-300"
+                              >
+                                <Trash2 className="size-3.5" />
+                                <span>Delete</span>
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
           )}
         </div>
       </main>
@@ -477,92 +479,94 @@ export default function CoachPlayersPage() {
             </DialogDescription>
           </DialogHeader>
 
-          <form onSubmit={handleAddSubmit} className="space-y-4 pt-2">
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium text-zinc-300 block">
-                Name <span className="text-red-400">*</span>
-              </label>
-              <Input
-                type="text"
-                value={addName}
-                onChange={(e) => setAddName(e.target.value)}
-                placeholder="e.g. Ravi"
-                required
-                className="bg-zinc-900 border-zinc-800 text-zinc-100 placeholder:text-zinc-600 focus:border-zinc-500"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium text-zinc-300 block">
-                Age <span className="text-red-400">*</span>
-              </label>
-              <Input
-                type="number"
-                value={addAge}
-                onChange={(e) => setAddAge(e.target.value)}
-                min={5}
-                max={50}
-                required
-                className="bg-zinc-900 border-zinc-800 text-zinc-100 focus:border-zinc-500"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium text-zinc-300 block">
-                Sport <span className="text-red-400">*</span>
-              </label>
-              <Select
-                value={addSport}
-                onValueChange={(val) => {
-                  if (val) setAddSport(val);
-                }}
-              >
-                <SelectTrigger className="w-full bg-zinc-900 border-zinc-800 text-zinc-100 justify-between">
-                  <SelectValue placeholder="Select sport" />
-                </SelectTrigger>
-                <SelectContent className="bg-zinc-900 border-zinc-800 text-zinc-100">
-                  {SPORTS_OPTIONS.map((s) => (
-                    <SelectItem key={s.value} value={s.value}>
-                      {s.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
+          <form onSubmit={handleAddSubmit}>
+            <div className="space-y-4 px-6 pt-2 pb-4">
+              <div className="space-y-1.5">
                 <label className="text-xs font-medium text-zinc-300 block">
-                  Password <span className="text-red-400">*</span>
+                  Name <span className="text-red-400">*</span>
                 </label>
-                <span className="text-[11px] font-mono text-zinc-500">
-                  Becomes login password
+                <Input
+                  type="text"
+                  value={addName}
+                  onChange={(e) => setAddName(e.target.value)}
+                  placeholder="e.g. Ravi"
+                  required
+                  className="bg-zinc-900 border-zinc-800 text-zinc-100 placeholder:text-zinc-600 focus:border-zinc-500"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-zinc-300 block">
+                  Age <span className="text-red-400">*</span>
+                </label>
+                <Input
+                  type="number"
+                  value={addAge}
+                  onChange={(e) => setAddAge(e.target.value)}
+                  min={5}
+                  max={50}
+                  required
+                  className="bg-zinc-900 border-zinc-800 text-zinc-100 focus:border-zinc-500"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-zinc-300 block">
+                  Sport <span className="text-red-400">*</span>
+                </label>
+                <Select
+                  value={addSport}
+                  onValueChange={(val) => {
+                    if (val) setAddSport(val);
+                  }}
+                >
+                  <SelectTrigger className="w-full bg-zinc-900 border-zinc-800 text-zinc-100 justify-between">
+                    <SelectValue placeholder="Select sport" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-zinc-900 border-zinc-800 text-zinc-100">
+                    {SPORTS_OPTIONS.map((s) => (
+                      <SelectItem key={s.value} value={s.value}>
+                        {s.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-medium text-zinc-300 block">
+                    Password <span className="text-red-400">*</span>
+                  </label>
+                  <span className="text-[11px] font-mono text-zinc-500">
+                    Becomes login password
+                  </span>
+                </div>
+                <Input
+                  type="password"
+                  value={addPassword}
+                  onChange={(e) => setAddPassword(e.target.value)}
+                  placeholder="e.g. ravi123"
+                  required
+                  className="bg-zinc-900 border-zinc-800 text-zinc-100 placeholder:text-zinc-600 focus:border-zinc-500"
+                />
+              </div>
+
+              <div className="rounded-lg border border-zinc-800/80 bg-zinc-900/40 p-3 text-[11px] text-zinc-400 flex items-start gap-2">
+                <ShieldCheck className="size-4 shrink-0 text-emerald-400 mt-0.5" />
+                <span>
+                  Username will be auto-generated from player name (e.g.{" "}
+                  <code className="text-zinc-200">
+                    {addName.trim()
+                      ? addName.trim().toLowerCase().replace(/\s+/g, "-")
+                      : "player-name"}
+                  </code>
+                  ).
                 </span>
               </div>
-              <Input
-                type="password"
-                value={addPassword}
-                onChange={(e) => setAddPassword(e.target.value)}
-                placeholder="e.g. ravi123"
-                required
-                className="bg-zinc-900 border-zinc-800 text-zinc-100 placeholder:text-zinc-600 focus:border-zinc-500"
-              />
             </div>
 
-            <div className="rounded-lg border border-zinc-800/80 bg-zinc-900/40 p-3 text-[11px] text-zinc-400 flex items-start gap-2">
-              <ShieldCheck className="size-4 shrink-0 text-emerald-400 mt-0.5" />
-              <span>
-                Username will be auto-generated from player name (e.g.{" "}
-                <code className="text-zinc-200">
-                  {addName.trim()
-                    ? addName.trim().toLowerCase().replace(/\s+/g, "-")
-                    : "player-name"}
-                </code>
-                ).
-              </span>
-            </div>
-
-            <DialogFooter className="gap-2 pt-2">
+            <DialogFooter className="px-6 py-4 gap-2">
               <DialogClose
                 type="button"
                 className="rounded-lg border border-zinc-800 bg-zinc-900 px-4 py-2 text-xs font-medium text-zinc-300 hover:bg-zinc-800 transition-colors cursor-pointer"
@@ -605,59 +609,61 @@ export default function CoachPlayersPage() {
             </DialogDescription>
           </DialogHeader>
 
-          <form onSubmit={handleEditSubmit} className="space-y-4 pt-2">
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium text-zinc-300 block">
-                Name <span className="text-red-400">*</span>
-              </label>
-              <Input
-                type="text"
-                value={editName}
-                onChange={(e) => setEditName(e.target.value)}
-                required
-                className="bg-zinc-900 border-zinc-800 text-zinc-100 focus:border-zinc-500"
-              />
+          <form onSubmit={handleEditSubmit}>
+            <div className="space-y-4 px-6 pt-2 pb-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-zinc-300 block">
+                  Name <span className="text-red-400">*</span>
+                </label>
+                <Input
+                  type="text"
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  required
+                  className="bg-zinc-900 border-zinc-800 text-zinc-100 focus:border-zinc-500"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-zinc-300 block">
+                  Age <span className="text-red-400">*</span>
+                </label>
+                <Input
+                  type="number"
+                  value={editAge}
+                  onChange={(e) => setEditAge(e.target.value)}
+                  min={5}
+                  max={50}
+                  required
+                  className="bg-zinc-900 border-zinc-800 text-zinc-100 focus:border-zinc-500"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-zinc-300 block">
+                  Sport <span className="text-red-400">*</span>
+                </label>
+                <Select
+                  value={editSport}
+                  onValueChange={(val) => {
+                    if (val) setEditSport(val);
+                  }}
+                >
+                  <SelectTrigger className="w-full bg-zinc-900 border-zinc-800 text-zinc-100 justify-between">
+                    <SelectValue placeholder="Select sport" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-zinc-900 border-zinc-800 text-zinc-100">
+                    {SPORTS_OPTIONS.map((s) => (
+                      <SelectItem key={s.value} value={s.value}>
+                        {s.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium text-zinc-300 block">
-                Age <span className="text-red-400">*</span>
-              </label>
-              <Input
-                type="number"
-                value={editAge}
-                onChange={(e) => setEditAge(e.target.value)}
-                min={5}
-                max={50}
-                required
-                className="bg-zinc-900 border-zinc-800 text-zinc-100 focus:border-zinc-500"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium text-zinc-300 block">
-                Sport <span className="text-red-400">*</span>
-              </label>
-              <Select
-                value={editSport}
-                onValueChange={(val) => {
-                  if (val) setEditSport(val);
-                }}
-              >
-                <SelectTrigger className="w-full bg-zinc-900 border-zinc-800 text-zinc-100 justify-between">
-                  <SelectValue placeholder="Select sport" />
-                </SelectTrigger>
-                <SelectContent className="bg-zinc-900 border-zinc-800 text-zinc-100">
-                  {SPORTS_OPTIONS.map((s) => (
-                    <SelectItem key={s.value} value={s.value}>
-                      {s.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <DialogFooter className="gap-2 pt-2">
+            <DialogFooter className="px-6 py-4 gap-2">
               <DialogClose
                 type="button"
                 className="rounded-lg border border-zinc-800 bg-zinc-900 px-4 py-2 text-xs font-medium text-zinc-300 hover:bg-zinc-800 transition-colors cursor-pointer"
@@ -703,7 +709,7 @@ export default function CoachPlayersPage() {
             </DialogDescription>
           </DialogHeader>
 
-          <DialogFooter className="gap-2 pt-4">
+          <DialogFooter className="px-6 pb-6 pt-4 gap-2">
             <DialogClose
               type="button"
               className="rounded-lg border border-zinc-800 bg-zinc-900 px-4 py-2 text-xs font-medium text-zinc-300 hover:bg-zinc-800 transition-colors cursor-pointer"
