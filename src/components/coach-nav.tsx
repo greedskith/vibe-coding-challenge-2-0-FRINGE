@@ -24,6 +24,9 @@ const navItems = [
   { href: "/coach/ready", label: "Ready Board", icon: Sparkles },
 ];
 
+/**
+ * @deprecated Legacy top navbar with phantom tabs. Replaced by unified CoachMobileShell navigation.
+ */
 export function CoachNav() {
   const pathname = usePathname();
   const { data: session } = useSession();

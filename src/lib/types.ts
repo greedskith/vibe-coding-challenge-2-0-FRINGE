@@ -12,10 +12,11 @@ export interface User {
 }
 
 export interface Player {
-  _id?: ObjectId;
+  _id?: ObjectId | string;
   name: string;
   age: number;
   sport: string;
+  username?: string;
 }
 
 export interface AttendanceEntry {
