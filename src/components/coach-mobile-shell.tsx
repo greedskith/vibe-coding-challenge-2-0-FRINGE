@@ -628,62 +628,32 @@ export function CoachMobileShell() {
 
         {/* Dashboard Main Scrollable Area */}
         <main className="flex-1 p-4 sm:p-6 md:p-8 max-w-6xl mx-auto w-full space-y-6 pb-24 md:pb-8">
-          {/* Multi-column Stat Cards Row (shadcn dashboard-01 inspired) */}
-          <section className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
-            {/* Card 1: Total Roster */}
-            <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-3.5 sm:p-5 shadow-xs">
-              <div className="flex items-center justify-between text-xs font-medium text-zinc-400">
-                <span>Total Roster</span>
-                <Users className="size-4 text-zinc-500" />
+          {/* 2-Card Metric Overview */}
+          <section className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+            {/* Card 1: Attendance */}
+            <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-4 sm:p-5 shadow-xs">
+              <div className="flex items-center justify-between text-xs font-mono text-zinc-400">
+                <span>Attendance</span>
+                <span className="rounded-md border border-zinc-800 bg-zinc-950 px-2 py-0.5 text-[11px] text-zinc-300">
+                  {attendanceRate}%
+                </span>
               </div>
-              <div className="mt-2 text-2xl font-bold tracking-tight text-zinc-100">
-                {players.length}
+              <div className="mt-2 text-2xl sm:text-3xl font-bold tracking-tight text-zinc-100">
+                {presentCount} <span className="text-zinc-500 font-normal text-xl">/ {players.length}</span>
               </div>
-              <p className="mt-1 text-xs text-zinc-500 font-mono truncate">
-                {players.length === 1 ? "1 athlete" : `${players.length} athletes`}
-              </p>
             </div>
 
-            {/* Card 2: Present Today */}
-            <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-3.5 sm:p-5 shadow-xs">
-              <div className="flex items-center justify-between text-xs font-medium text-zinc-400">
-                <span>Present Today</span>
-                <UserCheck className="size-4 text-zinc-500" />
-              </div>
-              <div className="mt-2 text-2xl font-bold tracking-tight text-zinc-100">
-                {presentCount}
-              </div>
-              <p className="mt-1 text-xs text-zinc-500 font-mono truncate">
-                {attendanceRate}% rate
-              </p>
-            </div>
-
-            {/* Card 3: Absent */}
-            <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-3.5 sm:p-5 shadow-xs">
-              <div className="flex items-center justify-between text-xs font-medium text-zinc-400">
-                <span>Absent</span>
-                <UserX className="size-4 text-zinc-500" />
-              </div>
-              <div className="mt-2 text-2xl font-bold tracking-tight text-zinc-100">
-                {absentCount}
-              </div>
-              <p className="mt-1 text-xs text-zinc-500 font-mono truncate">
-                unmarked
-              </p>
-            </div>
-
-            {/* Card 4: Qualified for Trials */}
-            <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-3.5 sm:p-5 shadow-xs">
-              <div className="flex items-center justify-between text-xs font-medium text-zinc-400">
+            {/* Card 2: Trial Ready */}
+            <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-4 sm:p-5 shadow-xs">
+              <div className="flex items-center justify-between text-xs font-mono text-zinc-400">
                 <span>Trial Ready</span>
-                <Sparkles className="size-4 text-zinc-500" />
+                <span className="rounded-md border border-zinc-800 bg-zinc-950 px-2 py-0.5 text-[11px] text-zinc-300">
+                  {players.length > 0 ? Math.round((qualifiedCount / players.length) * 100) : 0}%
+                </span>
               </div>
-              <div className="mt-2 text-2xl font-bold tracking-tight text-zinc-100">
-                {qualifiedCount}
+              <div className="mt-2 text-2xl sm:text-3xl font-bold tracking-tight text-zinc-100">
+                {qualifiedCount} <span className="text-zinc-500 font-normal text-xl">/ {players.length}</span>
               </div>
-              <p className="mt-1 text-xs text-zinc-500 font-mono truncate">
-                qualified
-              </p>
             </div>
           </section>
 
