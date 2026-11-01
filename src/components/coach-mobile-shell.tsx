@@ -370,17 +370,10 @@ export function CoachMobileShell() {
     players.length > 0 ? Math.round((presentCount / players.length) * 100) : 0;
   const qualifiedCount = readyResults.filter((r) => r.isReady).length;
 
-  // Sport-scoped filtered data to avoid cross-contamination
-  const filteredMatches = matches.filter((m) => !sport || m.sport === sport);
-  const filteredReadyResults = readyResults.filter(
-    (r) => !sport || r.player.sport === sport
-  );
-  const sportQualifiedCount = filteredReadyResults.filter((r) => r.isReady).length;
-
   return (
-    <div className="flex min-h-dvh w-full max-w-full overflow-x-hidden bg-zinc-950 text-zinc-50 select-none">
+    <div className="flex min-h-dvh w-full bg-zinc-950 text-zinc-50 select-none">
       {/* 1. Desktop Left Sidebar (Inspired by shadcn dashboard-01) */}
-      <aside className="hidden lg:flex lg:w-64 shrink-0 flex-col justify-between border-r border-zinc-800 bg-zinc-950 p-4 sticky top-0 h-dvh overflow-y-auto">
+      <aside className="hidden md:flex md:w-64 shrink-0 flex-col justify-between border-r border-zinc-800 bg-zinc-950 p-4 sticky top-0 h-dvh overflow-y-auto">
         <div className="space-y-6">
           {/* Academy Branding */}
           <div className="flex items-center gap-3 px-2 py-1">
@@ -486,9 +479,9 @@ export function CoachMobileShell() {
       </aside>
 
       {/* 2. Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 min-h-dvh overflow-x-hidden">
-        {/* Mobile Header (< lg) */}
-        <header className="flex lg:hidden sticky top-0 z-30 flex-col border-b border-zinc-800 bg-zinc-950/95 backdrop-blur">
+      <div className="flex-1 flex flex-col min-w-0 min-h-dvh">
+        {/* Mobile Header (< md) */}
+        <header className="flex md:hidden sticky top-0 z-30 flex-col border-b border-zinc-800 bg-zinc-950/95 backdrop-blur">
           {/* Top Bar: Academy branding, Coach badge, Sign Out */}
           <div className="flex items-center justify-between px-4 py-2.5">
             <div className="flex items-center gap-2.5">
@@ -511,14 +504,15 @@ export function CoachMobileShell() {
             <button
               type="button"
               onClick={() => signOut({ callbackUrl: "/login" })}
-              className="rounded-lg border border-zinc-800 bg-zinc-900/60 p-2 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100 transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 rounded-lg border border-zinc-800 bg-zinc-900/60 px-2.5 py-1 text-xs text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100 transition-colors cursor-pointer"
               title="Sign Out"
             >
               <LogOut className="size-3.5" />
+              <span className="text-[11px] font-mono">Sign Out</span>
             </button>
           </div>
 
-          {/* Sub Bar: Discipline Toggle & Tab-Scoped Actions */}
+          {/* Sub Bar: Discipline Toggle & Active Session Info */}
           <div className="flex items-center justify-between border-t border-zinc-800/60 px-4 py-1.5 bg-zinc-950/60 gap-2">
             <CossToggleGroup4
               value={sport}
@@ -530,63 +524,41 @@ export function CoachMobileShell() {
               className="h-7.5"
             />
 
-            {/* Attendance Tab Controls */}
-            {activeTab === "attendance" && (
-              <div className="flex items-center gap-1.5 shrink-0">
-                {activeSession && (
-                  <div className="flex items-center gap-1.5 rounded-lg border border-zinc-800 bg-zinc-900/60 px-2 py-1 text-[11px] font-mono text-zinc-300">
-                    <CalendarDays className="size-3 text-zinc-400" />
-                    <span>{activeSession.date}</span>
-                  </div>
-                )}
-                {activeSession && activeSession.status !== "closed" ? (
-                  <button
-                    type="button"
-                    onClick={handleLockSession}
-                    className="rounded-lg border border-zinc-700 bg-zinc-800 px-2 py-1 text-[11px] font-medium text-zinc-200 hover:bg-zinc-700 transition-colors cursor-pointer"
-                    title="Lock Session"
-                  >
-                    <Lock className="size-3" />
-                  </button>
-                ) : activeSession ? (
-                  <span className="rounded-lg border border-zinc-800 bg-zinc-900 px-2 py-1 text-[11px] font-mono text-zinc-500">
-                    <Lock className="size-3 inline" />
-                  </span>
-                ) : null}
+            <div className="flex items-center gap-1.5 shrink-0">
+              {activeSession && (
+                <div className="flex items-center gap-1.5 rounded-lg border border-zinc-800 bg-zinc-900/60 px-2 py-1 text-[11px] font-mono text-zinc-300">
+                  <CalendarDays className="size-3 text-zinc-400" />
+                  <span>{activeSession.date}</span>
+                </div>
+              )}
+              {activeSession && activeSession.status !== "closed" ? (
                 <button
                   type="button"
-                  onClick={() => setNewSessionOpen(true)}
-                  className="rounded-lg bg-zinc-100 px-2 py-1 text-[11px] font-semibold text-zinc-950 hover:bg-zinc-200 transition-colors cursor-pointer"
-                  title="New Session"
+                  onClick={handleLockSession}
+                  className="rounded-lg border border-zinc-700 bg-zinc-800 px-2 py-1 text-[11px] font-medium text-zinc-200 hover:bg-zinc-700 transition-colors cursor-pointer"
+                  title="Lock Session"
                 >
-                  <Plus className="size-3" />
+                  <Lock className="size-3" />
                 </button>
-              </div>
-            )}
-
-            {/* Matches Tab Controls */}
-            {activeTab === "matches" && (
+              ) : activeSession ? (
+                <span className="rounded-lg border border-zinc-800 bg-zinc-900 px-2 py-1 text-[11px] font-mono text-zinc-500">
+                  <Lock className="size-3 inline" />
+                </span>
+              ) : null}
               <button
                 type="button"
-                onClick={handleOpenMatchModal}
-                className="flex items-center gap-1 rounded-lg bg-zinc-100 px-2.5 py-1 text-[11px] font-semibold text-zinc-950 hover:bg-zinc-200 transition-colors cursor-pointer shrink-0"
+                onClick={() => setNewSessionOpen(true)}
+                className="rounded-lg bg-zinc-100 px-2 py-1 text-[11px] font-semibold text-zinc-950 hover:bg-zinc-200 transition-colors cursor-pointer"
+                title="New Session"
               >
                 <Plus className="size-3" />
-                <span>Match</span>
               </button>
-            )}
-
-            {/* Ready Board Tab Status */}
-            {activeTab === "ready" && (
-              <span className="text-[11px] font-mono text-zinc-400 shrink-0">
-                {sportQualifiedCount}/{filteredReadyResults.length} Ready
-              </span>
-            )}
+            </div>
           </div>
         </header>
 
-        {/* Desktop Top Header Bar (lg:) */}
-        <header className="hidden lg:flex sticky top-0 z-20 items-center justify-between border-b border-zinc-800/80 bg-zinc-950/80 px-6 sm:px-8 py-3.5 backdrop-blur">
+        {/* Desktop Top Header Bar (md:) */}
+        <header className="hidden md:flex sticky top-0 z-20 items-center justify-between border-b border-zinc-800/80 bg-zinc-950/80 px-8 py-3.5 backdrop-blur">
           <div className="flex items-center gap-3">
             <span className="text-xs font-mono text-zinc-500 uppercase tracking-wider">
               Dashboard
@@ -597,9 +569,9 @@ export function CoachMobileShell() {
             </span>
           </div>
 
-          <div className="flex items-center gap-2.5 shrink-0">
+          <div className="flex items-center gap-2.5">
             {activeSession && (
-              <div className="flex items-center gap-2 rounded-lg border border-zinc-800 bg-zinc-900/50 px-3 py-1.5 text-xs font-mono text-zinc-300 whitespace-nowrap shrink-0">
+              <div className="flex items-center gap-2 rounded-lg border border-zinc-800 bg-zinc-900/50 px-3 py-1.5 text-xs font-mono text-zinc-300">
                 <CalendarDays className="size-3.5 text-zinc-400" />
                 <span>{activeSession.date}</span>
                 <span className="text-zinc-600">·</span>
@@ -611,12 +583,12 @@ export function CoachMobileShell() {
 
             {/* Quick Action Buttons on Desktop */}
             {activeTab === "attendance" && (
-              <div className="flex items-center gap-2 shrink-0">
+              <>
                 {activeSession && activeSession.status !== "closed" && (
                   <button
                     type="button"
                     onClick={handleLockSession}
-                    className="flex items-center gap-1.5 rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs font-medium text-zinc-200 hover:bg-zinc-700 transition-colors cursor-pointer whitespace-nowrap shrink-0"
+                    className="flex items-center gap-1.5 rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs font-medium text-zinc-200 hover:bg-zinc-700 transition-colors cursor-pointer"
                   >
                     <Lock className="size-3.5 text-zinc-400" />
                     Lock Session
@@ -625,7 +597,7 @@ export function CoachMobileShell() {
                 <button
                   type="button"
                   onClick={() => setNewPlayerOpen(true)}
-                  className="flex items-center gap-1.5 rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-1.5 text-xs font-medium text-zinc-200 hover:bg-zinc-800 transition-colors cursor-pointer whitespace-nowrap shrink-0"
+                  className="flex items-center gap-1.5 rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-1.5 text-xs font-medium text-zinc-200 hover:bg-zinc-800 transition-colors cursor-pointer"
                 >
                   <Plus className="size-3.5" />
                   Add Athlete
@@ -633,19 +605,19 @@ export function CoachMobileShell() {
                 <button
                   type="button"
                   onClick={() => setNewSessionOpen(true)}
-                  className="flex items-center gap-1.5 rounded-lg bg-zinc-100 px-3 py-1.5 text-xs font-semibold text-zinc-950 hover:bg-zinc-200 transition-colors cursor-pointer whitespace-nowrap shrink-0"
+                  className="flex items-center gap-1.5 rounded-lg bg-zinc-100 px-3 py-1.5 text-xs font-semibold text-zinc-950 hover:bg-zinc-200 transition-colors cursor-pointer"
                 >
                   <Plus className="size-3.5" />
                   Open Session
                 </button>
-              </div>
+              </>
             )}
 
             {activeTab === "matches" && (
               <button
                 type="button"
                 onClick={handleOpenMatchModal}
-                className="flex items-center gap-1.5 rounded-lg bg-zinc-100 px-3 py-1.5 text-xs font-semibold text-zinc-950 hover:bg-zinc-200 transition-colors cursor-pointer whitespace-nowrap shrink-0"
+                className="flex items-center gap-1.5 rounded-lg bg-zinc-100 px-3 py-1.5 text-xs font-semibold text-zinc-950 hover:bg-zinc-200 transition-colors cursor-pointer"
               >
                 <Plus className="size-3.5" />
                 Record Match
@@ -655,40 +627,39 @@ export function CoachMobileShell() {
         </header>
 
         {/* Dashboard Main Scrollable Area */}
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-6xl mx-auto w-full space-y-6 pb-24 lg:pb-8 overflow-x-hidden">
+        <main className="flex-1 p-4 sm:p-6 md:p-8 max-w-6xl mx-auto w-full space-y-6 pb-24 md:pb-8">
+          {/* 2-Card Metric Overview */}
+          <section className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+            {/* Card 1: Attendance */}
+            <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-4 sm:p-5 shadow-xs">
+              <div className="flex items-center justify-between text-xs font-mono text-zinc-400">
+                <span>Attendance</span>
+                <span className="rounded-md border border-zinc-800 bg-zinc-950 px-2 py-0.5 text-[11px] text-zinc-300">
+                  {attendanceRate}%
+                </span>
+              </div>
+              <div className="mt-2 text-2xl sm:text-3xl font-bold tracking-tight text-zinc-100">
+                {presentCount} <span className="text-zinc-500 font-normal text-xl">/ {players.length}</span>
+              </div>
+            </div>
+
+            {/* Card 2: Trial Ready */}
+            <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-4 sm:p-5 shadow-xs">
+              <div className="flex items-center justify-between text-xs font-mono text-zinc-400">
+                <span>Trial Ready</span>
+                <span className="rounded-md border border-zinc-800 bg-zinc-950 px-2 py-0.5 text-[11px] text-zinc-300">
+                  {players.length > 0 ? Math.round((qualifiedCount / players.length) * 100) : 0}%
+                </span>
+              </div>
+              <div className="mt-2 text-2xl sm:text-3xl font-bold tracking-tight text-zinc-100">
+                {qualifiedCount} <span className="text-zinc-500 font-normal text-xl">/ {players.length}</span>
+              </div>
+            </div>
+          </section>
+
           {/* TAB 1: ATTENDANCE (DESK) */}
           {activeTab === "attendance" && (
-            <div className="space-y-6">
-              {/* 2-Card Metric Overview: Side-by-side on mobile, recovering 100px vertical space */}
-              <section className="grid grid-cols-2 gap-2.5 sm:gap-4">
-                {/* Card 1: Attendance */}
-                <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-3 sm:p-5 shadow-xs">
-                  <div className="flex items-center justify-between text-xs font-mono text-zinc-400">
-                    <span>Attendance</span>
-                    <span className="rounded-md border border-zinc-800 bg-zinc-950 px-1.5 sm:px-2 py-0.5 text-[10px] sm:text-[11px] text-zinc-300">
-                      {attendanceRate}%
-                    </span>
-                  </div>
-                  <div className="mt-1.5 sm:mt-2 text-xl sm:text-3xl font-bold tracking-tight text-zinc-100">
-                    {presentCount} <span className="text-zinc-500 font-normal text-base sm:text-xl">/ {players.length}</span>
-                  </div>
-                </div>
-
-                {/* Card 2: Trial Ready */}
-                <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-3 sm:p-5 shadow-xs">
-                  <div className="flex items-center justify-between text-xs font-mono text-zinc-400">
-                    <span>Trial Ready</span>
-                    <span className="rounded-md border border-zinc-800 bg-zinc-950 px-1.5 sm:px-2 py-0.5 text-[10px] sm:text-[11px] text-zinc-300">
-                      {players.length > 0 ? Math.round((qualifiedCount / players.length) * 100) : 0}%
-                    </span>
-                  </div>
-                  <div className="mt-1.5 sm:mt-2 text-xl sm:text-3xl font-bold tracking-tight text-zinc-100">
-                    {qualifiedCount} <span className="text-zinc-500 font-normal text-base sm:text-xl">/ {players.length}</span>
-                  </div>
-                </div>
-              </section>
-
-              <div className="space-y-4">
+            <div className="space-y-4">
               {/* Athletes Bar & Quick Mark Row */}
               <div className="flex items-center justify-between px-1">
                 <div className="flex items-center gap-2">
@@ -703,20 +674,20 @@ export function CoachMobileShell() {
                   </Badge>
                 </div>
 
-                <div className="flex items-center gap-1.5 sm:gap-2">
+                <div className="flex items-center gap-2">
                   {activeSession?.status !== "closed" && (
                     <>
                       <button
                         type="button"
                         onClick={() => handleMarkAll(true)}
-                        className="rounded-lg border border-zinc-800 bg-zinc-900 px-2.5 py-1 text-xs font-medium text-zinc-300 hover:bg-zinc-800 transition-colors cursor-pointer font-mono whitespace-nowrap"
+                        className="rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-1 text-xs font-medium text-zinc-300 hover:bg-zinc-800 transition-colors cursor-pointer font-mono"
                       >
-                        Mark all
+                        All present
                       </button>
                       <button
                         type="button"
                         onClick={() => handleMarkAll(false)}
-                        className="rounded-lg border border-zinc-800 bg-zinc-900 px-2.5 py-1 text-xs font-medium text-zinc-400 hover:bg-zinc-800 transition-colors cursor-pointer font-mono whitespace-nowrap"
+                        className="rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-1 text-xs font-medium text-zinc-400 hover:bg-zinc-800 transition-colors cursor-pointer font-mono"
                       >
                         Clear
                       </button>
@@ -725,30 +696,23 @@ export function CoachMobileShell() {
                   <button
                     type="button"
                     onClick={() => setNewPlayerOpen(true)}
-                    className="flex items-center gap-1.5 rounded-lg border border-zinc-800 bg-zinc-900 px-2.5 py-1 text-xs font-medium text-zinc-200 hover:bg-zinc-800 transition-colors cursor-pointer whitespace-nowrap"
+                    className="flex items-center gap-1.5 rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-1 text-xs font-medium text-zinc-200 hover:bg-zinc-800 transition-colors cursor-pointer"
                   >
                     <Plus className="size-3.5" />
-                    <span className="hidden sm:inline">Add Athlete</span>
-                    <span className="sm:hidden">Add</span>
+                    <span>Add Athlete</span>
                   </button>
                 </div>
               </div>
 
               {/* CHECK 1 Player Attendance Grid (2-columns on Mac/desktop) */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-                {players.map((player) => {
+                {players.map((player, idx) => {
                   const pId = player._id?.toString() || "";
                   const present = isPlayerPresent(pId);
                   const isLocked = activeSession?.status === "closed";
                   const readyInfo = readyResults.find(
                     (r) => r.player._id?.toString() === pId
                   );
-                  const initials = player.name
-                    .split(" ")
-                    .map((n) => n[0])
-                    .join("")
-                    .slice(0, 2)
-                    .toUpperCase();
 
                   return (
                     <div
@@ -761,19 +725,14 @@ export function CoachMobileShell() {
                       )}
                     >
                       <div className="flex items-center gap-3.5 min-w-0">
-                        <div className="flex size-9 shrink-0 items-center justify-center rounded-full border border-zinc-700 bg-zinc-800 text-xs font-mono font-semibold text-zinc-200">
-                          {initials}
-                        </div>
+                        <span className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900 text-xs font-mono font-medium text-zinc-400">
+                          {idx + 1}
+                        </span>
 
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-2 min-w-0">
-                            <p className="truncate text-sm font-semibold text-zinc-100">
-                              {player.name}
-                            </p>
-                            {readyInfo?.isReady && (
-                              <CossBadge16 isReady={true} className="shrink-0" />
-                            )}
-                          </div>
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-semibold text-zinc-100">
+                            {player.name}
+                          </p>
                           <p className="text-xs text-zinc-400 font-normal">
                             {player.sport} · Age {player.age}
                           </p>
@@ -781,9 +740,12 @@ export function CoachMobileShell() {
                       </div>
 
                       <div className="flex items-center gap-3 shrink-0">
+                        {readyInfo?.isReady && (
+                          <CossBadge16 isReady={true} />
+                        )}
                         <span
                           className={cn(
-                            "text-xs font-medium font-mono w-14 text-right",
+                            "text-xs font-medium font-mono",
                             present ? "text-zinc-200 font-semibold" : "text-zinc-500"
                           )}
                         >
@@ -900,7 +862,6 @@ export function CoachMobileShell() {
                 </DialogPopup>
               </Dialog>
             </div>
-            </div>
           )}
 
           {/* TAB 3: MATCHES */}
@@ -908,15 +869,16 @@ export function CoachMobileShell() {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-base font-semibold text-zinc-100">
-                    {filteredMatches.length} Recorded {filteredMatches.length === 1 ? "Match" : "Matches"}
-                  </h2>
+                  <h2 className="text-base font-semibold text-zinc-100">Fixtures & Scoring</h2>
+                  <p className="text-xs text-zinc-400">
+                    {matches.length} recorded matches for {sport}
+                  </p>
                 </div>
 
                 <button
                   type="button"
                   onClick={handleOpenMatchModal}
-                  className="hidden lg:flex items-center gap-1.5 rounded-lg bg-zinc-100 px-3 py-1.5 text-xs font-semibold text-zinc-950 hover:bg-zinc-200 transition-colors cursor-pointer"
+                  className="flex items-center gap-1.5 rounded-lg bg-zinc-100 px-3 py-1.5 text-xs font-semibold text-zinc-950 hover:bg-zinc-200 transition-colors cursor-pointer"
                 >
                   <Plus className="size-3.5" />
                   Record Match
@@ -1014,8 +976,8 @@ export function CoachMobileShell() {
                                   isAbsent
                                     ? "border-zinc-800/80 bg-zinc-950/60"
                                     : isChecked
-                                      ? "border-zinc-700 bg-zinc-900/80"
-                                      : "border-zinc-800 bg-zinc-900/40"
+                                    ? "border-zinc-700 bg-zinc-900/80"
+                                    : "border-zinc-800 bg-zinc-900/40"
                                 )}
                               >
                                 <div className="flex items-center gap-3 min-w-0 pr-2">
@@ -1087,29 +1049,29 @@ export function CoachMobileShell() {
                 </DialogPopup>
               </Dialog>
 
-              {/* Match Fixtures Feed (Filtered by Active Sport) */}
-              {filteredMatches.length === 0 ? (
+              {/* Match Fixtures Feed */}
+              {matches.length === 0 ? (
                 <div className="rounded-xl border border-dashed border-zinc-800 p-12 text-center text-zinc-500 space-y-2">
                   <Swords className="size-8 mx-auto text-zinc-600" />
-                  <p className="text-xs font-mono">0 fixtures recorded for {sport}</p>
+                  <p className="text-xs font-mono">0 fixtures recorded</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {filteredMatches.map((m) => (
+                  {matches.map((m) => (
                     <div
                       key={m._id?.toString()}
-                      className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-4 space-y-2 transition-colors shadow-xs"
+                      className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-4 space-y-3 shadow-xs"
                     >
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-semibold text-zinc-100">
-                          {m.opponent}
+                          vs {m.opponent}
                         </span>
                         <span className="text-xs font-mono text-zinc-400">
-                          {m.date}
+                          {m.sport} · {m.date}
                         </span>
                       </div>
 
-                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 pt-1">
+                      <div className="flex flex-wrap gap-1.5 pt-2 border-t border-zinc-800">
                         {m.scores?.map((sc: any) => {
                           const targetPlayer = players.find(
                             (p) => p._id?.toString() === sc.playerId?.toString()
@@ -1117,10 +1079,9 @@ export function CoachMobileShell() {
                           return (
                             <span
                               key={sc.playerId?.toString()}
-                              className="inline-flex items-center gap-1.5 text-xs font-mono text-zinc-300"
+                              className="inline-flex items-center gap-1.5 rounded-md border border-zinc-800 bg-zinc-950 px-2 py-0.5 text-xs font-mono text-zinc-300"
                             >
-                              <span className="size-1.5 rounded-full bg-zinc-400" />
-                              <span className="text-zinc-300">{targetPlayer?.name || "Player"}:</span>
+                              <span>{targetPlayer?.name || "Player"}:</span>
                               <strong className="text-zinc-100 tabular-nums">
                                 {sc.score}
                               </strong>
@@ -1138,16 +1099,21 @@ export function CoachMobileShell() {
           {/* TAB 4: READY BOARD */}
           {activeTab === "ready" && (
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-base font-semibold text-zinc-100">Trial Readiness Board</h2>
-                <span className="text-xs font-mono text-zinc-400">
-                  {sportQualifiedCount} of {filteredReadyResults.length} qualified
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div>
+                  <h2 className="text-base font-semibold text-zinc-100">Trial Readiness Board</h2>
+                  <p className="text-xs text-zinc-400">
+                    Qualification Benchmarks: ≥75% session attendance AND ≥2 recorded matches.
+                  </p>
+                </div>
+                <span className="text-xs font-mono text-zinc-400 self-start sm:self-auto">
+                  {qualifiedCount} of {players.length} qualified
                 </span>
               </div>
 
-              {/* Candidates Grid (Filtered by Active Sport) */}
+              {/* Candidates Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {filteredReadyResults.map((item) => {
+                {readyResults.map((item) => {
                   const pId = item.player._id?.toString() || "";
                   const isReady = item.isReady;
                   const initials = item.player.name
@@ -1163,14 +1129,14 @@ export function CoachMobileShell() {
                       className={cn(
                         "rounded-xl border p-4 sm:p-5 space-y-3.5 transition-colors shadow-xs",
                         isReady
-                          ? "border-emerald-500/30 bg-gradient-to-b from-zinc-900/90 to-zinc-950/90 shadow-[0_0_20px_-10px_rgba(16,185,129,0.2)]"
+                          ? "border-zinc-700 bg-zinc-900/70"
                           : "border-zinc-800 bg-zinc-900/40"
                       )}
                     >
                       {/* Header Row: Name & Coss Badge */}
                       <div className="flex items-center justify-between gap-4">
                         <div className="flex items-center gap-3 min-w-0">
-                          <div className="flex size-10 shrink-0 items-center justify-center rounded-full border border-zinc-700 bg-zinc-800 text-zinc-200 font-semibold text-xs font-mono">
+                          <div className="flex size-10 shrink-0 items-center justify-center rounded-full border border-zinc-700 bg-zinc-800 text-zinc-200 font-semibold text-xs">
                             {initials}
                           </div>
                           <div className="min-w-0 flex-1">
@@ -1186,36 +1152,62 @@ export function CoachMobileShell() {
                         <CossBadge16 isReady={isReady} />
                       </div>
 
-                      {/* Attendance & Match Metrics Row (Option A) */}
-                      <div className="flex items-center justify-between text-xs font-mono">
-                        <span className="text-zinc-400">
-                          <strong className="text-zinc-100 font-semibold">{item.attendancePct}%</strong> Attendance
-                        </span>
-                        <span className="text-zinc-400 flex items-center gap-1">
-                          <strong className="text-zinc-100 font-semibold">{item.matchCount}/2</strong> Matches
-                          {item.matchCount >= 2 && <Check className="size-3 text-zinc-100 stroke-[2.5]" />}
-                        </span>
+                      {/* 75% Tick Threshold Bar */}
+                      <div className="space-y-1.5">
+                        <div className="flex justify-between text-xs font-mono">
+                          <span className="text-zinc-400">
+                            Attendance: <strong className="text-zinc-200">{item.attendancePct}%</strong> ({item.sessionsPresent}/{item.sessionsHeld})
+                          </span>
+                          <span className={item.attendancePct >= 75 ? "text-zinc-200 font-semibold" : "text-zinc-500"}>
+                            75% Target |
+                          </span>
+                        </div>
+
+                        {/* Progress bar container with 75% vertical tick mark */}
+                        <div className="relative h-2 w-full rounded-full bg-zinc-800 overflow-hidden">
+                          {/* Fill bar */}
+                          <div
+                            className={cn(
+                              "h-full rounded-full transition-all duration-300",
+                              item.attendancePct >= 75 ? "bg-zinc-100" : "bg-zinc-500"
+                            )}
+                            style={{
+                              width: `${Math.min(100, item.attendancePct)}%`,
+                            }}
+                          />
+                          {/* 75% tick marker with clear contrast */}
+                          <div
+                            className={cn(
+                              "absolute top-0 bottom-0 w-0.5 z-10",
+                              item.attendancePct >= 75 ? "bg-zinc-950" : "bg-zinc-300"
+                            )}
+                            style={{ left: "75%" }}
+                            title="75% Target"
+                          />
+                        </div>
                       </div>
 
-                      {/* Sleek Progress Bar with 75% Target Marker */}
-                      <div className="relative h-1.5 w-full rounded-full bg-zinc-800 overflow-hidden">
-                        <div
-                          className={cn(
-                            "h-full rounded-full transition-all duration-300",
-                            item.attendancePct >= 75 ? "bg-zinc-200" : "bg-zinc-500"
+                      {/* Criteria Badges Footer */}
+                      <div className="flex items-center justify-between pt-2 border-t border-zinc-800 text-xs font-mono">
+                        <div className="flex items-center gap-1.5 text-zinc-300">
+                          <Trophy className="size-3.5 text-zinc-400" />
+                          <span>
+                            {item.matchCount}/2 Matches {item.matchCount >= 2 && <Check className="inline size-3 text-zinc-100" />}
+                          </span>
+                        </div>
+
+                        <div>
+                          {isReady ? (
+                            <span className="text-zinc-200 font-medium flex items-center gap-1">
+                              <Check className="size-3.5 text-zinc-100" />
+                              Ready for Trial
+                            </span>
+                          ) : (
+                            <span className="text-zinc-500 font-mono">
+                              Pending Criteria
+                            </span>
                           )}
-                          style={{
-                            width: `${Math.min(100, item.attendancePct)}%`,
-                          }}
-                        />
-                        <div
-                          className={cn(
-                            "absolute top-0 bottom-0 w-0.5 z-10",
-                            item.attendancePct >= 75 ? "bg-zinc-950" : "bg-zinc-400"
-                          )}
-                          style={{ left: "75%" }}
-                          title="75% Target"
-                        />
+                        </div>
                       </div>
                     </div>
                   );
@@ -1226,10 +1218,10 @@ export function CoachMobileShell() {
         </main>
       </div>
 
-      {/* 3. Fixed Mobile Bottom Navigation (< lg) */}
+      {/* 3. Fixed Mobile Bottom Navigation (< md) */}
       <nav
         aria-label="Primary"
-        className="lg:hidden fixed inset-x-0 bottom-0 z-40 border-t border-zinc-800 bg-zinc-950/95 backdrop-blur pb-[env(safe-area-inset-bottom)]"
+        className="md:hidden fixed inset-x-0 bottom-0 z-40 border-t border-zinc-800 bg-zinc-950/95 backdrop-blur pb-[env(safe-area-inset-bottom)]"
       >
         <ul className="flex items-stretch">
           {NAV_TABS.map((item) => {
