@@ -2,28 +2,36 @@
 
 import React, { useState, useEffect } from "react";
 import { signOut } from "next-auth/react";
-import { Sparkles, LogOut, Trophy, Check, ShieldAlert, UserCheck } from "lucide-react";
+import { LogOut, Trophy, Check, ShieldAlert } from "lucide-react";
 import { CossBadge16 } from "@/components/p-badge-16";
 import { ReadyResult } from "@/lib/types";
 
 export default function ScoutPage() {
   const [candidates, setCandidates] = useState<ReadyResult[]>([]);
 
-  const fetchReadyPlayers = async () => {
-    try {
-      // CHECK 4: Filter strictly readyOnly
-      const res = await fetch("/api/ready?filter=readyOnly");
-      if (res.ok) {
-        const data = await res.json();
-        if (Array.isArray(data)) setCandidates(data);
-      }
-    } catch (err) {
-      console.error("Failed to fetch scout candidates:", err);
-    }
-  };
-
   useEffect(() => {
+    let ignore = false;
+
+    const fetchReadyPlayers = async () => {
+      try {
+        // CHECK 4: Filter strictly readyOnly
+        const res = await fetch("/api/ready?filter=readyOnly");
+        if (res.ok) {
+          const data = await res.json();
+          if (!ignore && Array.isArray(data)) {
+            setCandidates(data);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch scout candidates:", err);
+      }
+    };
+
     fetchReadyPlayers();
+
+    return () => {
+      ignore = true;
+    };
   }, []);
 
   return (

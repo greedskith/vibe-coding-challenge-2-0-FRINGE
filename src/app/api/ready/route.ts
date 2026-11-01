@@ -3,10 +3,39 @@ import { getDb } from "@/lib/db";
 import { ObjectId } from "mongodb";
 import { Player, ReadyResult } from "@/lib/types";
 
-export async function GET(req: NextRequest) {
+export interface EnrichedReadyResult extends ReadyResult {
+  attendanceHistory?: Array<{
+    sessionId: string;
+    date: string;
+    sport: string;
+    status: "PRESENT" | "ABSENT";
+  }>;
+  matchHistory?: Array<{
+    matchId: string;
+    date: string;
+    sport: string;
+    opponent?: string;
+    outcome?: "win" | "draw" | "loss";
+    score?: number;
+    scores?: any[];
+    player1Score: number;
+    player2Score: number;
+  }>;
+}
+
+export async function GET(req: NextRequest): Promise<NextResponse>;
+export async function GET(): Promise<NextResponse>;
+export async function GET(req?: NextRequest): Promise<NextResponse> {
   try {
-    const { searchParams } = new URL(req.url);
+    let searchParams: URLSearchParams;
+    try {
+      searchParams = new URL(req?.url || "http://localhost:3000/api/ready").searchParams;
+    } catch {
+      searchParams = new URL("http://localhost:3000/api/ready").searchParams;
+    }
+
     const filter = searchParams.get("filter"); // e.g. "readyOnly"
+    const readyOnlyParam = searchParams.get("readyOnly"); // e.g. "true"
     const playerId = searchParams.get("playerId");
 
     const db = await getDb();
@@ -29,11 +58,12 @@ export async function GET(req: NextRequest) {
       for (const session of relevantSessions) {
         if (!Array.isArray(session.attendance)) continue;
         const record = session.attendance.find(
-          (a: any) => a.playerId?.toString() === pIdStr
+          (a: any) =>
+            (a.playerId?._id ? a.playerId._id.toString() : a.playerId?.toString()) === pIdStr
         );
         if (record) {
           sessionsHeld++;
-          if (record.status === "present") {
+          if (record.status === "present" || record.status === "PRESENT") {
             sessionsPresent++;
           }
         }
@@ -48,9 +78,13 @@ export async function GET(req: NextRequest) {
         sessionsHeld > 0 ? Math.round((sessionsPresent / sessionsHeld) * 100) : 0;
 
       // Count matches this player participated in
-      const matchCount = matches.filter((m) =>
-        Array.isArray(m.scores) &&
-        m.scores.some((s: any) => s.playerId?.toString() === pIdStr)
+      const matchCount = matches.filter(
+        (m) =>
+          Array.isArray(m.scores) &&
+          m.scores.some(
+            (s: any) =>
+              (s.playerId?._id ? s.playerId._id.toString() : s.playerId?.toString()) === pIdStr
+          )
       ).length;
 
       // STRICT CHECK 3: Attendance >= 75% AND >= 2 matches
@@ -66,18 +100,104 @@ export async function GET(req: NextRequest) {
       };
     });
 
-    let filtered = results;
+    let filtered: EnrichedReadyResult[] = results;
 
-    // CHECK 4: Scout sees only ready players
-    if (filter === "readyOnly") {
-      filtered = filtered.filter((r) => r.isReady);
+    // CHECK 4: Filter strictly to that player and enrich with attendanceHistory and matchHistory
+    if (playerId) {
+      const pIdTarget = playerId.trim();
+      filtered = filtered
+        .filter((r) => r.player._id?.toString() === pIdTarget)
+        .map((r) => {
+          const pIdStr = r.player._id?.toString() || pIdTarget;
+
+          const relevantSessions = sessions.filter(
+            (s) => !s.sport || !r.player.sport || s.sport === r.player.sport
+          );
+
+          let attendanceHistory = relevantSessions
+            .filter(
+              (s) =>
+                Array.isArray(s.attendance) &&
+                s.attendance.some(
+                  (a: any) =>
+                    (a.playerId?._id
+                      ? a.playerId._id.toString()
+                      : a.playerId?.toString()) === pIdStr
+                )
+            )
+            .map((s) => {
+              const record = s.attendance.find(
+                (a: any) =>
+                  (a.playerId?._id
+                    ? a.playerId._id.toString()
+                    : a.playerId?.toString()) === pIdStr
+              );
+              const isPres =
+                record?.status === "present" || record?.status === "PRESENT";
+              return {
+                sessionId: s._id?.toString() || "",
+                date: s.date || "",
+                sport: s.sport || r.player.sport || "Football",
+                status: (isPres ? "PRESENT" : "ABSENT") as "PRESENT" | "ABSENT",
+              };
+            });
+
+          if (attendanceHistory.length === 0 && relevantSessions.length > 0) {
+            attendanceHistory = relevantSessions.map((s) => ({
+              sessionId: s._id?.toString() || "",
+              date: s.date || "",
+              sport: s.sport || r.player.sport || "Football",
+              status: "ABSENT" as const,
+            }));
+          }
+
+          attendanceHistory.sort((a, b) => b.date.localeCompare(a.date));
+
+          const matchHistory = matches
+            .filter(
+              (m) =>
+                Array.isArray(m.scores) &&
+                m.scores.some(
+                  (s: any) =>
+                    (s.playerId?._id
+                      ? s.playerId._id.toString()
+                      : s.playerId?.toString()) === pIdStr
+                )
+            )
+            .map((m) => {
+              const myScoreEntry = m.scores.find(
+                (s: any) =>
+                  (s.playerId?._id
+                    ? s.playerId._id.toString()
+                    : s.playerId?.toString()) === pIdStr
+              );
+              const myScore = Number(myScoreEntry?.score) || 0;
+              return {
+                matchId: m._id?.toString() || "",
+                date: m.date || "",
+                sport: m.sport || r.player.sport || "Football",
+                opponent: m.opponent || "Friendly",
+                outcome: m.outcome,
+                score: myScore,
+                scores: m.scores,
+                player1Score: Number(m.scores?.[0]?.score) || 0,
+                player2Score: Number(m.scores?.[1]?.score) || 0,
+              };
+            })
+            .sort((a, b) => b.date.localeCompare(a.date));
+
+          return {
+            ...r,
+            attendanceHistory,
+            matchHistory,
+          };
+        });
     }
 
-    // CHECK 4: Player sees only their own row
-    if (playerId) {
-      filtered = filtered.filter(
-        (r) => r.player._id?.toString() === playerId.toString()
-      );
+    // CHECK 4 & R1: readyOnly=true or filter=readyOnly
+    const isReadyOnly = readyOnlyParam === "true" || filter === "readyOnly";
+    if (isReadyOnly) {
+      filtered = filtered.filter((r) => r.isReady);
     }
 
     return NextResponse.json(filtered);

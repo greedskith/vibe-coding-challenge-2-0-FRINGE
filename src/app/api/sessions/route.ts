@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
 
-export async function GET(req: NextRequest) {
+export async function GET(req: NextRequest): Promise<NextResponse>;
+export async function GET(): Promise<NextResponse>;
+export async function GET(req?: NextRequest): Promise<NextResponse> {
   try {
     const db = await getDb();
     const query: any = {};

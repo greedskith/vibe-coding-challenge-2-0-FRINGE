@@ -12,8 +12,8 @@ export function CossBadge16({ isReady, className }: ReadyBadgeProps) {
       className={cn(
         "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-medium shrink-0 select-none transition-colors",
         isReady
-          ? "border-emerald-500/30 bg-emerald-950/20 text-emerald-300"
-          : "border-zinc-800/80 bg-zinc-900/50 text-zinc-400",
+          ? "border-zinc-200 bg-zinc-100 text-zinc-950 font-semibold shadow-xs"
+          : "border-zinc-800 bg-zinc-900 text-zinc-400",
         className
       )}
     >
@@ -21,7 +21,7 @@ export function CossBadge16({ isReady, className }: ReadyBadgeProps) {
         aria-hidden="true"
         className={cn(
           "size-1.5 rounded-full shrink-0",
-          isReady ? "bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.5)]" : "bg-zinc-500"
+          isReady ? "bg-zinc-950" : "border border-zinc-600 bg-transparent"
         )}
       />
       <span>{isReady ? "Ready" : "Pending"}</span>

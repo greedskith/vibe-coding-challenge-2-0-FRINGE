@@ -2,15 +2,41 @@
 
 import React, { useState, useEffect } from "react";
 import { signOut, useSession } from "next-auth/react";
-import { User, LogOut, Trophy, Check } from "lucide-react";
+import { User, LogOut, Trophy, Check, Calendar, Activity } from "lucide-react";
 import { CossBadge16 } from "@/components/p-badge-16";
 import { ReadyResult } from "@/lib/types";
+import { cn } from "@/lib/utils";
+
+interface AttendanceRecord {
+  sessionId: string;
+  date: string;
+  sport: string;
+  status: "PRESENT" | "ABSENT";
+}
+
+interface MatchRecord {
+  matchId: string;
+  date: string;
+  sport: string;
+  opponent?: string;
+  outcome?: "win" | "draw" | "loss";
+  score?: number;
+  scores?: Array<{ playerId?: string; score?: number }>;
+  player1Score: number;
+  player2Score: number;
+}
+
+interface EnrichedReadyData extends ReadyResult {
+  attendanceHistory?: AttendanceRecord[];
+  matchHistory?: MatchRecord[];
+}
 
 export default function PlayerPage() {
   const { data: session } = useSession();
-  const [playerData, setPlayerData] = useState<ReadyResult | null>(null);
+  const [playerData, setPlayerData] = useState<EnrichedReadyData | null>(null);
 
-  const playerId = (session?.user as any)?.playerId;
+  const user = session?.user as { playerId?: string; name?: string | null } | undefined;
+  const playerId = user?.playerId;
 
   useEffect(() => {
     if (!playerId) return;
@@ -38,6 +64,8 @@ export default function PlayerPage() {
   const matchCount = playerData?.matchCount ?? 0;
   const sessionsPresent = playerData?.sessionsPresent ?? 0;
   const sessionsHeld = playerData?.sessionsHeld ?? 0;
+  const attendanceHistory = playerData?.attendanceHistory ?? [];
+  const matchHistory = playerData?.matchHistory ?? [];
 
   const athleteName = session?.user?.name || playerData?.player?.name || "Athlete";
   const initials = athleteName
@@ -84,7 +112,7 @@ export default function PlayerPage() {
 
       {/* Main Content Area */}
       <main className="flex-1 px-4 py-6 sm:px-8 sm:py-8">
-        <div className="mx-auto max-w-xl space-y-6">
+        <div className="mx-auto max-w-2xl space-y-6">
           {/* Unified High-Taste Athlete Card */}
           <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-6 sm:p-7 space-y-6 shadow-xs">
             {/* Header: Avatar, Name, Sport/Age, and Ready Badge */}
@@ -115,6 +143,9 @@ export default function PlayerPage() {
                 <div className="mt-1 text-2xl font-bold tracking-tight text-zinc-100">
                   {attendancePct}%
                 </div>
+                <span className="text-[11px] font-mono text-zinc-500 block mt-0.5">
+                  {sessionsPresent} of {sessionsHeld} sessions
+                </span>
               </div>
 
               <div className="rounded-lg border border-zinc-800/80 bg-zinc-950/60 p-3.5">
@@ -123,8 +154,11 @@ export default function PlayerPage() {
                 </span>
                 <div className="mt-1 text-2xl font-bold tracking-tight text-zinc-100 flex items-center gap-1.5">
                   <span>{matchCount}</span>
-                  {matchCount >= 2 && <Check className="size-4 text-zinc-100" />}
+                  {matchCount >= 2 && <Check className="size-4 text-zinc-100 stroke-[2.5]" />}
                 </div>
+                <span className="text-[11px] font-mono text-zinc-500 block mt-0.5">
+                  Target: 2 matches min
+                </span>
               </div>
             </div>
 
@@ -153,6 +187,134 @@ export default function PlayerPage() {
                 />
               </div>
             </div>
+          </div>
+
+          {/* Personal Attendance History */}
+          <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-6 space-y-4 shadow-xs">
+            <div className="flex items-center justify-between border-b border-zinc-800/80 pb-3">
+              <div className="flex items-center gap-2">
+                <Calendar className="size-4 text-zinc-400" />
+                <h3 className="text-sm font-semibold tracking-tight text-zinc-100">
+                  Attendance History
+                </h3>
+              </div>
+              <span className="rounded border border-zinc-800 bg-zinc-950 px-2 py-0.5 text-xs font-mono text-zinc-400">
+                {attendanceHistory.length} Recorded
+              </span>
+            </div>
+
+            {attendanceHistory.length === 0 ? (
+              <div className="rounded-lg border border-dashed border-zinc-800/80 p-8 text-center">
+                <p className="text-xs font-mono text-zinc-500">
+                  No attendance records recorded yet
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {attendanceHistory.map((rec, idx) => {
+                  const isPres = rec.status === "PRESENT";
+                  return (
+                    <div
+                      key={rec.sessionId || `${rec.date}-${idx}`}
+                      className="flex items-center justify-between rounded-lg border border-zinc-800/70 bg-zinc-950/60 px-3.5 py-2.5 transition-colors hover:border-zinc-700"
+                    >
+                      <div className="flex items-center gap-3">
+                        <span
+                          className={cn(
+                            "size-2.5 rounded-full shrink-0 transition-colors",
+                            isPres
+                              ? "bg-zinc-100"
+                              : "border border-zinc-600 bg-transparent"
+                          )}
+                          aria-hidden="true"
+                          title={isPres ? "Present" : "Absent"}
+                        />
+                        <div>
+                          <span className="text-xs font-mono font-medium text-zinc-200">
+                            {rec.date}
+                          </span>
+                          <span className="text-[11px] font-mono text-zinc-400 block">
+                            {rec.sport}
+                          </span>
+                        </div>
+                      </div>
+
+                      <span
+                        className={cn(
+                          "rounded border px-2 py-0.5 text-[11px] font-mono font-medium",
+                          isPres
+                            ? "border-zinc-700 bg-zinc-800/90 text-zinc-200"
+                            : "border-zinc-800/80 bg-zinc-900/40 text-zinc-500"
+                        )}
+                      >
+                        {rec.status}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Match Contributions */}
+          <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-6 space-y-4 shadow-xs">
+            <div className="flex items-center justify-between border-b border-zinc-800/80 pb-3">
+              <div className="flex items-center gap-2">
+                <Activity className="size-4 text-zinc-400" />
+                <h3 className="text-sm font-semibold tracking-tight text-zinc-100">
+                  Match Contributions
+                </h3>
+              </div>
+              <span className="rounded border border-zinc-800 bg-zinc-950 px-2 py-0.5 text-xs font-mono text-zinc-400">
+                {matchHistory.length} Matches
+              </span>
+            </div>
+
+            {matchHistory.length === 0 ? (
+              <div className="rounded-lg border border-dashed border-zinc-800/80 p-8 text-center">
+                <p className="text-xs font-mono text-zinc-500">
+                  No match appearances recorded yet
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {matchHistory.map((m, idx) => (
+                  <div
+                    key={m.matchId || `${m.date}-${idx}`}
+                    className="flex items-center justify-between rounded-lg border border-zinc-800/70 bg-zinc-950/60 p-3.5 transition-colors hover:border-zinc-700"
+                  >
+                    <div className="space-y-0.5 min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-semibold text-zinc-200 truncate">
+                          vs {m.opponent || "Academy Fixture"}
+                        </span>
+                        {m.outcome && (
+                          <span className="rounded border border-zinc-800 bg-zinc-900 px-1.5 py-0.5 text-[10px] font-mono uppercase tracking-wider text-zinc-400">
+                            {m.outcome}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[11px] font-mono text-zinc-400">
+                        {m.sport} · {m.date}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-2 shrink-0 ml-3">
+                      <div className="rounded-md border border-zinc-800 bg-zinc-900/80 px-2.5 py-1 text-right">
+                        <span className="text-[10px] font-mono text-zinc-500 block leading-none">
+                          Score
+                        </span>
+                        <span className="text-xs font-mono font-bold text-zinc-100">
+                          {m.score !== undefined
+                            ? m.score
+                            : `${m.player1Score} - ${m.player2Score}`}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </main>
