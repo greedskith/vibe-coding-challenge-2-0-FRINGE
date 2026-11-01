@@ -61,10 +61,12 @@ const NAV_TABS = [
   { id: "ready" as Tab, label: "Ready Board", icon: Sparkles },
 ];
 
-export function getAgeGroup(age: number): string {
-  if (age <= 15) return "U15";
-  if (age <= 17) return "U17";
-  if (age <= 19) return "U19";
+export function getAgeGroup(age: number | string): string {
+  const num = Number(age);
+  if (isNaN(num) || num <= 0) return "Senior";
+  if (num <= 15) return "U15";
+  if (num <= 17) return "U17";
+  if (num <= 19) return "U19";
   return "Senior";
 }
 
@@ -193,9 +195,31 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
     loadData();
   }, [loadData]);
 
+  // Keep selectedAthlete reactive to players state changes
+  useEffect(() => {
+    if (drawerOpen && selectedAthlete) {
+      const refreshed = players.find(
+        (p) => p._id?.toString() === selectedAthlete._id?.toString()
+      );
+      if (
+        refreshed &&
+        (refreshed.name !== selectedAthlete.name ||
+          refreshed.age !== selectedAthlete.age ||
+          refreshed.sport !== selectedAthlete.sport ||
+          refreshed.username !== selectedAthlete.username)
+      ) {
+        setSelectedAthlete(refreshed);
+      }
+    }
+  }, [players, drawerOpen, selectedAthlete]);
+
   // Synchronize activeSession when sport changes
   const handleSportChange = (newSport: string) => {
     setSport(newSport);
+    setDrawerOpen(false);
+    setSelectedAthlete(null);
+    setDeleteConfirmOpen(false);
+
     const matchedSession =
       sessions.find(
         (s) =>
@@ -361,8 +385,7 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
     const trimmedName = newPlayerName.trim();
     const cleanUsername =
       trimmedName.toLowerCase().replace(/[^a-z0-9]+/g, "-") || "player";
-    const rawPassword =
-      newPlayerPassword.trim() || `${cleanUsername}123`;
+    const explicitPassword = newPlayerPassword.trim() || undefined;
 
     try {
       setIsAddingPlayer(true);
@@ -373,7 +396,7 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
           name: trimmedName,
           age: numAge,
           sport: newPlayerSport || sport,
-          password: rawPassword,
+          ...(explicitPassword ? { password: explicitPassword } : {}),
         }),
       });
 
@@ -389,9 +412,14 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
         data.player?.username ||
         data.credentials?.username ||
         cleanUsername;
+      const createdPassword =
+        data.credentials?.tempPassword ||
+        explicitPassword ||
+        `${createdUsername}123`;
 
       toast.success(
-        `Enrolled ${createdName}. Login: ${createdUsername} / ••••••`
+        `Enrolled ${createdName}. Login: ${createdUsername} / ${createdPassword}`,
+        { duration: 6000 }
       );
       setNewPlayerOpen(false);
       setNewPlayerName("");
@@ -419,13 +447,40 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
     const uname =
       selectedAthlete.username ||
       selectedAthlete.name.toLowerCase().replace(/\s+/g, "-");
+
+    let successful = false;
     try {
-      await navigator.clipboard.writeText(uname);
+      if (typeof navigator !== "undefined" && navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(uname);
+        successful = true;
+      }
+    } catch {
+      successful = false;
+    }
+
+    if (!successful && typeof document !== "undefined") {
+      try {
+        const textArea = document.createElement("textarea");
+        textArea.value = uname;
+        textArea.style.position = "fixed";
+        textArea.style.left = "-999999px";
+        textArea.style.top = "-999999px";
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        successful = document.execCommand("copy");
+        textArea.remove();
+      } catch {
+        successful = false;
+      }
+    }
+
+    if (successful) {
       setCopied(true);
       toast.success(`Copied username "${uname}" to clipboard`);
       setTimeout(() => setCopied(false), 2000);
-    } catch (err) {
-      console.error("Failed to copy:", err);
+    } else {
+      toast.info(`Username: ${uname}`);
     }
   };
 
@@ -628,11 +683,15 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
   // Roster Tab Filtering (by name, age group, or username)
   const filteredRosterPlayers = sportPlayers.filter((p) => {
     if (!rosterSearch.trim()) return true;
-    const q = rosterSearch.toLowerCase();
-    const nameMatch = p.name.toLowerCase().includes(q);
+    const rawQ = rosterSearch.toLowerCase().trim();
+    const normQ = rawQ.replace(/[^a-z0-9]/g, "");
+    const nameMatch = p.name.toLowerCase().includes(rawQ);
     const ageGroup = getAgeGroup(p.age).toLowerCase();
-    const ageMatch = String(p.age).includes(q) || ageGroup.includes(q);
-    const usernameMatch = (p.username || "").toLowerCase().includes(q);
+    const ageMatch =
+      String(p.age).includes(rawQ) ||
+      ageGroup.includes(rawQ) ||
+      (normQ.length > 0 && ageGroup.includes(normQ));
+    const usernameMatch = (p.username || "").toLowerCase().includes(rawQ);
     return nameMatch || ageMatch || usernameMatch;
   });
 
