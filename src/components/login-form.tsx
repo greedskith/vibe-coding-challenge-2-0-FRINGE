@@ -70,21 +70,16 @@ export function LoginForm() {
   return (
     <div className="w-full max-w-sm mx-auto space-y-6">
       {/* Visual Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2.5">
-          <div className="flex size-8 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900 text-zinc-200">
-            <Trophy className="size-4 text-zinc-300" />
-          </div>
-          <div>
-            <h1 className="text-base font-semibold tracking-tight text-zinc-100">
-              Academy Desk
-            </h1>
-            <p className="text-[11px] text-zinc-400 font-mono">Dumka Sports Academy</p>
-          </div>
+      <div className="flex items-center gap-2.5">
+        <div className="flex size-8 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900 text-zinc-200">
+          <Trophy className="size-4 text-zinc-300" />
         </div>
-        <span className="rounded-md border border-zinc-800 bg-zinc-900/60 px-2 py-0.5 text-[10px] font-mono uppercase tracking-wider text-zinc-400">
-          Sign In
-        </span>
+        <div>
+          <h1 className="text-base font-semibold tracking-tight text-zinc-100">
+            Academy Desk
+          </h1>
+          <p className="text-[11px] text-zinc-400 font-mono">Dumka Sports Academy</p>
+        </div>
       </div>
 
       {/* Login Card */}
@@ -108,10 +103,9 @@ export function LoginForm() {
                   setUsername(e.target.value);
                   setActiveRole(null);
                 }}
-                placeholder="Username"
                 required
                 autoComplete="username"
-                className="h-10 w-full rounded-lg border border-zinc-800 bg-zinc-950 pl-10 pr-3 text-sm text-zinc-100 placeholder:text-zinc-600 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-600 transition-colors"
+                className="h-10 w-full rounded-lg border border-zinc-800 bg-zinc-950 pl-10 pr-3 text-sm text-zinc-100 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-600 transition-colors"
               />
             </div>
           </div>
@@ -127,10 +121,9 @@ export function LoginForm() {
                   setPassword(e.target.value);
                   setActiveRole(null);
                 }}
-                placeholder="Password"
                 required
                 autoComplete="current-password"
-                className="h-10 w-full rounded-lg border border-zinc-800 bg-zinc-950 pl-10 pr-3 text-sm text-zinc-100 placeholder:text-zinc-600 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-600 transition-colors"
+                className="h-10 w-full rounded-lg border border-zinc-800 bg-zinc-950 pl-10 pr-3 text-sm text-zinc-100 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-600 transition-colors"
               />
             </div>
           </div>
@@ -152,8 +145,7 @@ export function LoginForm() {
         </form>
 
         {/* Quick Demo Role Pills */}
-        <div className="mt-6 pt-5 border-t border-zinc-800">
-          <p className="text-[11px] font-mono text-zinc-500 mb-2">Quick Sign-in Roles</p>
+        <div className="mt-5 pt-4 border-t border-zinc-800/80">
           <div className="grid grid-cols-3 gap-2">
             <button
               type="button"
