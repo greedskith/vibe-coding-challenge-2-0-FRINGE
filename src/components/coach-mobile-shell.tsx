@@ -371,9 +371,9 @@ export function CoachMobileShell() {
   const qualifiedCount = readyResults.filter((r) => r.isReady).length;
 
   return (
-    <div className="flex min-h-dvh w-full bg-zinc-950 text-zinc-50 select-none">
+    <div className="flex min-h-dvh w-full max-w-full overflow-x-hidden bg-zinc-950 text-zinc-50 select-none">
       {/* 1. Desktop Left Sidebar (Inspired by shadcn dashboard-01) */}
-      <aside className="hidden md:flex md:w-64 shrink-0 flex-col justify-between border-r border-zinc-800 bg-zinc-950 p-4 sticky top-0 h-dvh overflow-y-auto">
+      <aside className="hidden lg:flex lg:w-64 shrink-0 flex-col justify-between border-r border-zinc-800 bg-zinc-950 p-4 sticky top-0 h-dvh overflow-y-auto">
         <div className="space-y-6">
           {/* Academy Branding */}
           <div className="flex items-center gap-3 px-2 py-1">
@@ -479,9 +479,9 @@ export function CoachMobileShell() {
       </aside>
 
       {/* 2. Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 min-h-dvh">
-        {/* Mobile Header (< md) */}
-        <header className="flex md:hidden sticky top-0 z-30 flex-col border-b border-zinc-800 bg-zinc-950/95 backdrop-blur">
+      <div className="flex-1 flex flex-col min-w-0 min-h-dvh overflow-x-hidden">
+        {/* Mobile Header (< lg) */}
+        <header className="flex lg:hidden sticky top-0 z-30 flex-col border-b border-zinc-800 bg-zinc-950/95 backdrop-blur">
           {/* Top Bar: Academy branding, Coach badge, Sign Out */}
           <div className="flex items-center justify-between px-4 py-2.5">
             <div className="flex items-center gap-2.5">
@@ -557,8 +557,8 @@ export function CoachMobileShell() {
           </div>
         </header>
 
-        {/* Desktop Top Header Bar (md:) */}
-        <header className="hidden md:flex sticky top-0 z-20 items-center justify-between border-b border-zinc-800/80 bg-zinc-950/80 px-8 py-3.5 backdrop-blur">
+        {/* Desktop Top Header Bar (lg:) */}
+        <header className="hidden lg:flex sticky top-0 z-20 items-center justify-between border-b border-zinc-800/80 bg-zinc-950/80 px-6 sm:px-8 py-3.5 backdrop-blur">
           <div className="flex items-center gap-3">
             <span className="text-xs font-mono text-zinc-500 uppercase tracking-wider">
               Dashboard
@@ -569,9 +569,9 @@ export function CoachMobileShell() {
             </span>
           </div>
 
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2.5 shrink-0">
             {activeSession && (
-              <div className="flex items-center gap-2 rounded-lg border border-zinc-800 bg-zinc-900/50 px-3 py-1.5 text-xs font-mono text-zinc-300">
+              <div className="flex items-center gap-2 rounded-lg border border-zinc-800 bg-zinc-900/50 px-3 py-1.5 text-xs font-mono text-zinc-300 whitespace-nowrap shrink-0">
                 <CalendarDays className="size-3.5 text-zinc-400" />
                 <span>{activeSession.date}</span>
                 <span className="text-zinc-600">·</span>
@@ -583,12 +583,12 @@ export function CoachMobileShell() {
 
             {/* Quick Action Buttons on Desktop */}
             {activeTab === "attendance" && (
-              <>
+              <div className="flex items-center gap-2 shrink-0">
                 {activeSession && activeSession.status !== "closed" && (
                   <button
                     type="button"
                     onClick={handleLockSession}
-                    className="flex items-center gap-1.5 rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs font-medium text-zinc-200 hover:bg-zinc-700 transition-colors cursor-pointer"
+                    className="flex items-center gap-1.5 rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs font-medium text-zinc-200 hover:bg-zinc-700 transition-colors cursor-pointer whitespace-nowrap shrink-0"
                   >
                     <Lock className="size-3.5 text-zinc-400" />
                     Lock Session
@@ -597,7 +597,7 @@ export function CoachMobileShell() {
                 <button
                   type="button"
                   onClick={() => setNewPlayerOpen(true)}
-                  className="flex items-center gap-1.5 rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-1.5 text-xs font-medium text-zinc-200 hover:bg-zinc-800 transition-colors cursor-pointer"
+                  className="flex items-center gap-1.5 rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-1.5 text-xs font-medium text-zinc-200 hover:bg-zinc-800 transition-colors cursor-pointer whitespace-nowrap shrink-0"
                 >
                   <Plus className="size-3.5" />
                   Add Athlete
@@ -605,19 +605,19 @@ export function CoachMobileShell() {
                 <button
                   type="button"
                   onClick={() => setNewSessionOpen(true)}
-                  className="flex items-center gap-1.5 rounded-lg bg-zinc-100 px-3 py-1.5 text-xs font-semibold text-zinc-950 hover:bg-zinc-200 transition-colors cursor-pointer"
+                  className="flex items-center gap-1.5 rounded-lg bg-zinc-100 px-3 py-1.5 text-xs font-semibold text-zinc-950 hover:bg-zinc-200 transition-colors cursor-pointer whitespace-nowrap shrink-0"
                 >
                   <Plus className="size-3.5" />
                   Open Session
                 </button>
-              </>
+              </div>
             )}
 
             {activeTab === "matches" && (
               <button
                 type="button"
                 onClick={handleOpenMatchModal}
-                className="flex items-center gap-1.5 rounded-lg bg-zinc-100 px-3 py-1.5 text-xs font-semibold text-zinc-950 hover:bg-zinc-200 transition-colors cursor-pointer"
+                className="flex items-center gap-1.5 rounded-lg bg-zinc-100 px-3 py-1.5 text-xs font-semibold text-zinc-950 hover:bg-zinc-200 transition-colors cursor-pointer whitespace-nowrap shrink-0"
               >
                 <Plus className="size-3.5" />
                 Record Match
@@ -627,7 +627,7 @@ export function CoachMobileShell() {
         </header>
 
         {/* Dashboard Main Scrollable Area */}
-        <main className="flex-1 p-4 sm:p-6 md:p-8 max-w-6xl mx-auto w-full space-y-6 pb-24 md:pb-8">
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-6xl mx-auto w-full space-y-6 pb-24 lg:pb-8 overflow-x-hidden">
           {/* TAB 1: ATTENDANCE (DESK) */}
           {activeTab === "attendance" && (
             <div className="space-y-6">
@@ -730,10 +730,15 @@ export function CoachMobileShell() {
                           {idx + 1}
                         </span>
 
-                        <div className="min-w-0">
-                          <p className="truncate text-sm font-semibold text-zinc-100">
-                            {player.name}
-                          </p>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <p className="truncate text-sm font-semibold text-zinc-100">
+                              {player.name}
+                            </p>
+                            {readyInfo?.isReady && (
+                              <CossBadge16 isReady={true} className="shrink-0" />
+                            )}
+                          </div>
                           <p className="text-xs text-zinc-400 font-normal">
                             {player.sport} · Age {player.age}
                           </p>
@@ -741,12 +746,9 @@ export function CoachMobileShell() {
                       </div>
 
                       <div className="flex items-center gap-3 shrink-0">
-                        {readyInfo?.isReady && (
-                          <CossBadge16 isReady={true} />
-                        )}
                         <span
                           className={cn(
-                            "text-xs font-medium font-mono",
+                            "text-xs font-medium font-mono w-14 text-right",
                             present ? "text-zinc-200 font-semibold" : "text-zinc-500"
                           )}
                         >
@@ -1189,10 +1191,10 @@ export function CoachMobileShell() {
         </main>
       </div>
 
-      {/* 3. Fixed Mobile Bottom Navigation (< md) */}
+      {/* 3. Fixed Mobile Bottom Navigation (< lg) */}
       <nav
         aria-label="Primary"
-        className="md:hidden fixed inset-x-0 bottom-0 z-40 border-t border-zinc-800 bg-zinc-950/95 backdrop-blur pb-[env(safe-area-inset-bottom)]"
+        className="lg:hidden fixed inset-x-0 bottom-0 z-40 border-t border-zinc-800 bg-zinc-950/95 backdrop-blur pb-[env(safe-area-inset-bottom)]"
       >
         <ul className="flex items-stretch">
           {NAV_TABS.map((item) => {
