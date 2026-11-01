@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { signOut, useSession } from "next-auth/react";
-import { User, LogOut, Trophy } from "lucide-react";
+import { User, LogOut, Trophy, Check } from "lucide-react";
 import { CossBadge16 } from "@/components/p-badge-16";
 import { ReadyResult } from "@/lib/types";
 
@@ -84,20 +84,20 @@ export default function PlayerPage() {
 
       {/* Main Content Area */}
       <main className="flex-1 px-4 py-6 sm:px-8 sm:py-8">
-        <div className="mx-auto max-w-2xl space-y-6">
+        <div className="mx-auto max-w-xl space-y-6">
           {/* Unified High-Taste Athlete Card */}
-          <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-6 sm:p-8 space-y-6 shadow-xs">
+          <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-6 sm:p-7 space-y-6 shadow-xs">
             {/* Header: Avatar, Name, Sport/Age, and Ready Badge */}
             <div className="flex items-center justify-between gap-4">
-              <div className="flex items-center gap-4 min-w-0 flex-1">
-                <div className="flex size-12 shrink-0 items-center justify-center rounded-full border border-zinc-700 bg-zinc-800 text-zinc-200 font-semibold text-sm">
+              <div className="flex items-center gap-3.5 min-w-0 flex-1">
+                <div className="flex size-11 shrink-0 items-center justify-center rounded-full border border-zinc-700 bg-zinc-800 text-zinc-200 font-semibold text-xs sm:text-sm font-mono">
                   {initials || <User className="size-5 text-zinc-400" />}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <h2 className="text-lg sm:text-xl font-bold tracking-tight text-zinc-100 truncate">
+                  <h2 className="text-base sm:text-lg font-bold tracking-tight text-zinc-100 truncate">
                     {athleteName}
                   </h2>
-                  <p className="text-xs sm:text-sm text-zinc-400 font-normal truncate mt-0.5">
+                  <p className="text-xs text-zinc-400 font-normal truncate mt-0.5">
                     {playerData?.player?.sport || "Multi-sport"} · Age {playerData?.player?.age || 17} · Dumka Academy
                   </p>
                 </div>
@@ -106,29 +106,37 @@ export default function PlayerPage() {
               <CossBadge16 isReady={isReady} className="shrink-0" />
             </div>
 
-            {/* Metrics Row: Two Bold Numbers */}
-            <div className="grid grid-cols-2 gap-4 pt-2 border-t border-zinc-800/80">
-              <div>
-                <span className="text-xs font-mono text-zinc-400 uppercase tracking-wider block">
+            {/* Metrics Row: Two Crisp Tiles */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="rounded-lg border border-zinc-800/80 bg-zinc-950/60 p-3.5">
+                <span className="text-xs font-mono text-zinc-400 block">
                   Attendance
                 </span>
-                <div className="mt-1 text-2xl sm:text-3xl font-bold tracking-tight text-zinc-100">
+                <div className="mt-1 text-2xl font-bold tracking-tight text-zinc-100">
                   {attendancePct}%
                 </div>
               </div>
 
-              <div>
-                <span className="text-xs font-mono text-zinc-400 uppercase tracking-wider block">
-                  Official Matches
+              <div className="rounded-lg border border-zinc-800/80 bg-zinc-950/60 p-3.5">
+                <span className="text-xs font-mono text-zinc-400 block">
+                  Matches Played
                 </span>
-                <div className="mt-1 text-2xl sm:text-3xl font-bold tracking-tight text-zinc-100">
-                  {matchCount}
+                <div className="mt-1 text-2xl font-bold tracking-tight text-zinc-100 flex items-center gap-1.5">
+                  <span>{matchCount}</span>
+                  {matchCount >= 2 && <Check className="size-4 text-zinc-100" />}
                 </div>
               </div>
             </div>
 
-            {/* Visual Gauge with 75% Tick Mark */}
-            <div className="space-y-2 pt-2">
+            {/* Visual Gauge with Correctly Aligned 75% Target */}
+            <div className="space-y-2 pt-1">
+              <div className="flex justify-between items-center text-xs font-mono">
+                <span className="text-zinc-400">Readiness Benchmark</span>
+                <span className={attendancePct >= 75 ? "text-zinc-200 font-semibold" : "text-zinc-400"}>
+                  Target 75%
+                </span>
+              </div>
+
               <div className="relative h-2.5 w-full rounded-full bg-zinc-800 overflow-hidden">
                 <div
                   className={`h-full rounded-full transition-all duration-300 ${
@@ -143,12 +151,6 @@ export default function PlayerPage() {
                   style={{ left: "75%" }}
                   title="75% Target"
                 />
-              </div>
-
-              <div className="flex justify-between text-xs font-mono text-zinc-500">
-                <span>0%</span>
-                <span className="text-zinc-300 font-semibold">75% Target |</span>
-                <span>100%</span>
               </div>
             </div>
           </div>
