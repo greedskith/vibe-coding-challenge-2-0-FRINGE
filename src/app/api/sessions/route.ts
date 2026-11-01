@@ -5,6 +5,37 @@ export async function GET() {
   try {
     const db = await getDb();
     const sessions = await db.collection("sessions").find().sort({ date: -1 }).toArray();
+
+    // Populate player names if players exist
+    const allPlayerIds: any[] = [];
+    sessions.forEach((s) => {
+      if (Array.isArray(s.attendance)) {
+        s.attendance.forEach((a: any) => {
+          if (a.playerId) allPlayerIds.push(a.playerId);
+        });
+      }
+    });
+
+    if (allPlayerIds.length > 0) {
+      const players = await db
+        .collection("players")
+        .find({ _id: { $in: allPlayerIds } })
+        .toArray();
+      const playerMap = new Map(players.map((p) => [p._id.toString(), p.name]));
+
+      const populatedSessions = sessions.map((s) => {
+        if (!Array.isArray(s.attendance)) return s;
+        return {
+          ...s,
+          attendance: s.attendance.map((a: any) => ({
+            ...a,
+            playerName: playerMap.get(a.playerId?.toString()) || a.playerName || "",
+          })),
+        };
+      });
+      return NextResponse.json(populatedSessions);
+    }
+
     return NextResponse.json(sessions);
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
@@ -26,6 +57,24 @@ export async function POST(req: NextRequest) {
     // Check if open session already exists for this date and sport
     const existing = await db.collection("sessions").findOne({ date, sport: sessionSport });
     if (existing) {
+      if (Array.isArray(existing.attendance) && existing.attendance.length > 0) {
+        const playerIds = existing.attendance.map((a: any) => a.playerId);
+        const players = await db
+          .collection("players")
+          .find({ _id: { $in: playerIds } })
+          .toArray();
+        const playerMap = new Map(players.map((p) => [p._id.toString(), p.name]));
+        return NextResponse.json(
+          {
+            ...existing,
+            attendance: existing.attendance.map((a: any) => ({
+              ...a,
+              playerName: playerMap.get(a.playerId?.toString()) || a.playerName || "",
+            })),
+          },
+          { status: 200 }
+        );
+      }
       return NextResponse.json(existing, { status: 200 });
     }
 
@@ -37,6 +86,7 @@ export async function POST(req: NextRequest) {
 
     const attendance = targetPlayers.map((p) => ({
       playerId: p._id,
+      playerName: p.name,
       status: "absent" as const, // default to absent until marked present
     }));
 

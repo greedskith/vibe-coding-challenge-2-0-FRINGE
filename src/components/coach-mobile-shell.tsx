@@ -126,6 +126,7 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
   const [newSessionDate, setNewSessionDate] = useState(
     new Date().toISOString().slice(0, 10)
   );
+  const [newSessionSport, setNewSessionSport] = useState<string>("Football");
 
   const [newPlayerOpen, setNewPlayerOpen] = useState(false);
   const [newPlayerName, setNewPlayerName] = useState("");
@@ -198,7 +199,6 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
             sData.find(
               (s: Session) => (s.sport || "").toLowerCase() === sport.toLowerCase()
             ) ||
-            sData[0] ||
             null;
           return sportSession;
         });
@@ -290,7 +290,7 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
     const updatedSession = { ...activeSession, attendance: updatedAttendance };
     setActiveSession(updatedSession);
     setSessions((prev) =>
-      prev.map((s) => (s._id === activeSession._id ? updatedSession : s))
+      prev.map((s) => (s._id?.toString() === activeSession._id?.toString() ? updatedSession : s))
     );
 
     try {
@@ -302,6 +302,9 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
       if (res.ok) {
         const saved = await res.json();
         setActiveSession(saved);
+        setSessions((prev) =>
+          prev.map((s) => (s._id?.toString() === saved._id?.toString() ? saved : s))
+        );
         fetch("/api/ready")
           .then((r) => r.json())
           .then((data) => Array.isArray(data) && setReadyResults(data));
@@ -330,7 +333,7 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
     const updatedSession = { ...activeSession, attendance: newAttendance };
     setActiveSession(updatedSession);
     setSessions((prev) =>
-      prev.map((s) => (s._id === activeSession._id ? updatedSession : s))
+      prev.map((s) => (s._id?.toString() === activeSession._id?.toString() ? updatedSession : s))
     );
 
     try {
@@ -342,6 +345,9 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
       if (res.ok) {
         const saved = await res.json();
         setActiveSession(saved);
+        setSessions((prev) =>
+          prev.map((s) => (s._id?.toString() === saved._id?.toString() ? saved : s))
+        );
         fetch("/api/ready")
           .then((r) => r.json())
           .then((data) => Array.isArray(data) && setReadyResults(data));
@@ -364,7 +370,7 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
         const locked = await res.json();
         setActiveSession(locked);
         setSessions((prev) =>
-          prev.map((s) => (s._id === locked._id ? locked : s))
+          prev.map((s) => (s._id?.toString() === locked._id?.toString() ? locked : s))
         );
         fetch("/api/ready")
           .then((r) => r.json())
@@ -378,14 +384,18 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
 
   const handleOpenSession = async (e: React.FormEvent) => {
     e.preventDefault();
+    const targetSport = newSessionSport || sport;
     try {
       const res = await fetch("/api/sessions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ date: newSessionDate, sport }),
+        body: JSON.stringify({ date: newSessionDate, sport: targetSport }),
       });
       if (res.ok) {
         const created = await res.json();
+        if (targetSport.toLowerCase() !== sport.toLowerCase()) {
+          setSport(targetSport);
+        }
         setSessions((prev) => [
           created,
           ...prev.filter(
@@ -395,7 +405,7 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
         setActiveSession(created);
         setNewSessionOpen(false);
         toast.success(
-          `Active session set to ${formatDisplayDate(created.date)}`
+          `Active ${targetSport} session set to ${formatDisplayDate(created.date)}`
         );
       } else {
         const err = await res.json();
@@ -409,6 +419,7 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
 
   const handleOpenNewSessionModal = () => {
     setNewSessionDate(new Date().toISOString().slice(0, 10));
+    setNewSessionSport(sport);
     setNewSessionOpen(true);
   };
 
@@ -613,9 +624,12 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
           (s.sport || "").toLowerCase() === sport.toLowerCase()
       ) || sessions.find((s) => s.date === targetDate);
     if (!sessionForDate || !Array.isArray(sessionForDate.attendance)) return false;
-    const record = sessionForDate.attendance.find(
-      (a: any) => a.playerId?.toString() === playerId
-    );
+    const record = sessionForDate.attendance.find((a: any) => {
+      const id = a.playerId?._id
+        ? a.playerId._id.toString()
+        : a.playerId?.toString();
+      return id === playerId;
+    });
     return !record || record.status === "absent";
   };
 
@@ -764,7 +778,11 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
     .filter(
       (s) => !sport || (s.sport || "").toLowerCase() === sport.toLowerCase()
     )
-    .sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+    .sort(
+      (a, b) =>
+        (b.date || "").localeCompare(a.date || "") ||
+        (b._id?.toString() || "").localeCompare(a._id?.toString() || "")
+    );
 
   const renderSessionDropdownContent = () => (
     <DropdownMenuContent
@@ -846,14 +864,17 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
       .filter(
         (s) =>
           (s.sport || "").toLowerCase() === sport.toLowerCase() &&
-          s._id !== activeSession?._id
+          s._id?.toString() !== activeSession?._id?.toString()
       )
       .sort((a, b) => (a.date || "").localeCompare(b.date || ""));
 
     const records: boolean[] = pastSessions.slice(-5).map((s) => {
-      const rec = s.attendance?.find(
-        (a: any) => a.playerId?.toString() === playerId
-      );
+      const rec = s.attendance?.find((a: any) => {
+        const id = a.playerId?._id
+          ? a.playerId._id.toString()
+          : a.playerId?.toString();
+        return id === playerId;
+      });
       return rec?.status === "present";
     });
 
@@ -1039,6 +1060,20 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                         ? formatDisplayDate(activeSession.date)
                         : "Select Session"}
                     </span>
+                    {activeSession && (
+                      <>
+                        <span className="text-zinc-600">·</span>
+                        <span
+                          className={
+                            activeSession.status === "closed"
+                              ? "text-zinc-500"
+                              : "text-emerald-400"
+                          }
+                        >
+                          {activeSession.status === "closed" ? "🔒 Closed" : "🔓 Open"}
+                        </span>
+                      </>
+                    )}
                     <ChevronDown className="size-2.5 text-zinc-500" />
                   </DropdownMenuTrigger>
                   {renderSessionDropdownContent()}
@@ -1134,7 +1169,11 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                 title="Switch or open session"
               >
                 <CalendarDays className="size-3.5 text-zinc-400" />
-                <span>{activeSession ? activeSession.date : "No Session"}</span>
+                <span>
+                  {activeSession
+                    ? `${formatDisplayDate(activeSession.date)} (${activeSession.date})`
+                    : "No Session"}
+                </span>
                 {activeSession && (
                   <>
                     <span className="text-zinc-600">·</span>
@@ -1142,10 +1181,10 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                       className={
                         activeSession.status === "closed"
                           ? "text-zinc-500"
-                          : "text-zinc-200"
+                          : "text-emerald-400"
                       }
                     >
-                      {activeSession.status === "closed" ? "Locked" : "Open"}
+                      {activeSession.status === "closed" ? "🔒 Closed" : "🔓 Open"}
                     </span>
                   </>
                 )}
@@ -1273,6 +1312,25 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                 </div>
               )}
 
+              {/* Informational Banner when no session is selected */}
+              {!activeSession && (
+                <div className="flex items-center justify-between gap-3 rounded-xl border border-zinc-800 bg-zinc-900/60 px-4 py-2.5 text-xs text-zinc-400 font-mono shadow-xs">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <CalendarDays className="size-3.5 shrink-0 text-zinc-500" />
+                    <span className="truncate">
+                      No active session for {sport}. Open a new session to record attendance.
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleOpenNewSessionModal}
+                    className="text-xs font-semibold text-zinc-200 hover:text-zinc-100 underline underline-offset-2 shrink-0 cursor-pointer"
+                  >
+                    + Open Session
+                  </button>
+                </div>
+              )}
+
               {/* Action Buttons Row */}
               <div className="flex items-center justify-between gap-2 pt-1">
                 <div className="flex items-center gap-2">
@@ -1333,20 +1391,24 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                         role="button"
                         tabIndex={0}
                         onClick={() => {
-                          if (isLocked || !activeSession) {
-                            if (isLocked) {
-                              toast.info("Session is locked (read-only)");
-                            }
+                          if (!activeSession) {
+                            toast.info("Please open or select a session to mark attendance");
+                            return;
+                          }
+                          if (isLocked) {
+                            toast.info("Session is locked (read-only)");
                             return;
                           }
                           handleToggleAttendance(pId, !present);
                         }}
                         onKeyDown={(e) => {
                           if (e.key === "Enter" || e.key === " ") {
-                            if (isLocked || !activeSession) {
-                              if (isLocked) {
-                                toast.info("Session is locked (read-only)");
-                              }
+                            if (!activeSession) {
+                              toast.info("Please open or select a session to mark attendance");
+                              return;
+                            }
+                            if (isLocked) {
+                              toast.info("Session is locked (read-only)");
                               return;
                             }
                             handleToggleAttendance(pId, !present);
@@ -1357,12 +1419,14 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                           present
                             ? "border-zinc-300 bg-zinc-900/80 shadow-[0_0_20px_-10px_rgba(255,255,255,0.15)] ring-1 ring-zinc-300/40"
                             : "border-zinc-800/80 bg-zinc-900/40 hover:border-zinc-700/80",
-                          isLocked && "opacity-75 cursor-not-allowed hover:border-zinc-800/80 shadow-none ring-0"
+                          (isLocked || !activeSession) && "opacity-75 cursor-not-allowed hover:border-zinc-800/80 shadow-none ring-0"
                         )}
                         title={
-                          isLocked
-                            ? `Locked Session (${activeSession?.date}) - Read-only`
-                            : `Tap to mark ${present ? "absent" : "present"}`
+                          !activeSession
+                            ? `No active session for ${sport} - Open a session to mark attendance`
+                            : isLocked
+                              ? `Locked Session (${activeSession?.date}) - Read-only`
+                              : `Tap to mark ${present ? "absent" : "present"}`
                         }
                       >
                         {/* Lock indicator icon when session is closed */}
@@ -2752,6 +2816,19 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
           </DialogHeader>
           <form onSubmit={handleOpenSession} className="space-y-4 pt-2">
             <DialogPanel className="space-y-3">
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-zinc-400 block">
+                  Discipline
+                </label>
+                <select
+                  value={newSessionSport}
+                  onChange={(e) => setNewSessionSport(e.target.value)}
+                  className="h-10 w-full rounded-lg border border-zinc-800 bg-zinc-900 px-3 text-xs text-zinc-100 focus:border-zinc-500 focus:outline-none"
+                >
+                  <option value="Football">Football</option>
+                  <option value="Cricket">Cricket</option>
+                </select>
+              </div>
               <div className="space-y-1.5">
                 <label className="text-xs font-medium text-zinc-400 block">
                   Session Date
