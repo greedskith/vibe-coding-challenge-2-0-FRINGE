@@ -1,15 +1,16 @@
 import { LoginForm } from "@/components/login-form";
 
 export const metadata = {
-  title: "Login — Academy Desk Dumka",
+  title: "Sign In — Academy Desk Dumka",
+  description: "Sign in to Dumka Sports Academy Desk.",
 };
 
 export default function LoginPage() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-4 bg-gradient-to-b from-muted/50 to-background">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-muted/30">
       <div className="w-full max-w-md">
         <LoginForm />
       </div>
-    </main>
+    </div>
   );
 }
