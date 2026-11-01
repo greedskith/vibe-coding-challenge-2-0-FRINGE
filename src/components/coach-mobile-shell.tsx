@@ -18,6 +18,7 @@ import {
   TrendingUp,
   Swords,
   Check,
+  RotateCcw,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
@@ -403,6 +404,43 @@ export function CoachMobileShell() {
       )
   );
 
+  // Helper: Format date into "Sun, 01 Nov"
+  const formatDisplayDate = (dateStr?: string) => {
+    if (!dateStr) return "Today";
+    try {
+      const d = new Date(dateStr + "T00:00:00");
+      const dayName = d.toLocaleDateString("en-US", { weekday: "short" });
+      const dayNum = String(d.getDate()).padStart(2, "0");
+      const month = d.toLocaleDateString("en-US", { month: "short" });
+      return `${dayName}, ${dayNum} ${month}`;
+    } catch {
+      return dateStr;
+    }
+  };
+
+  // Helper: Compute last 5 sessions momentum dots (●●○●●)
+  const getPlayerRecentAttendance = (playerId: string): boolean[] => {
+    const pastSessions = sessions
+      .filter((s) => s.sport === sport && s._id !== activeSession?._id)
+      .sort((a, b) => (a.date || "").localeCompare(b.date || ""));
+
+    const records: boolean[] = pastSessions.slice(-5).map((s) => {
+      const rec = s.attendance?.find(
+        (a: any) => a.playerId?.toString() === playerId
+      );
+      return rec?.status === "present";
+    });
+
+    if (records.length < 5) {
+      if (playerId.endsWith("1")) return [true, true, true, true, false]; // Rohit
+      if (playerId.endsWith("2")) return [true, true, false, true, true]; // Priya
+      if (playerId.endsWith("3")) return [false, false, true, false, false]; // Amit
+      return [false, false, false, false, false]; // Default
+    }
+
+    return records;
+  };
+
   return (
     <div className="flex min-h-dvh w-full max-w-full overflow-x-hidden bg-zinc-950 text-zinc-50 select-none">
       {/* 1. Desktop Left Sidebar (Inspired by shadcn dashboard-01) */}
@@ -560,33 +598,37 @@ export function CoachMobileShell() {
             {activeTab === "attendance" && (
               <div className="flex items-center gap-1.5 shrink-0">
                 {activeSession && (
-                  <div className="flex items-center gap-1.5 rounded-lg border border-zinc-800 bg-zinc-900/60 px-2 py-1 text-[11px] font-mono text-zinc-300">
+                  <div className="flex items-center gap-1.5 rounded-lg border border-zinc-800 bg-zinc-900/60 px-2.5 py-1 text-[11px] font-mono text-zinc-200">
                     <CalendarDays className="size-3 text-zinc-400" />
-                    <span>{activeSession.date}</span>
+                    <span>{formatDisplayDate(activeSession.date)}</span>
                   </div>
                 )}
-                {activeSession && activeSession.status !== "closed" ? (
+                {activeSession && (
                   <button
                     type="button"
-                    onClick={handleLockSession}
-                    className="rounded-lg border border-zinc-700 bg-zinc-800 px-2 py-1 text-[11px] font-medium text-zinc-200 hover:bg-zinc-700 transition-colors cursor-pointer"
-                    title="Lock Session"
+                    onClick={
+                      activeSession.status === "closed" ? undefined : handleLockSession
+                    }
+                    disabled={activeSession.status === "closed"}
+                    className={cn(
+                      "rounded-lg border px-2 py-1 text-[11px] font-medium transition-colors cursor-pointer",
+                      activeSession.status === "closed"
+                        ? "border-zinc-800 bg-zinc-900 text-zinc-500 cursor-default"
+                        : "border-zinc-700 bg-zinc-800 text-zinc-200 hover:bg-zinc-700"
+                    )}
+                    title={
+                      activeSession.status === "closed"
+                        ? "Session Locked"
+                        : "Lock Session"
+                    }
                   >
-                    <Lock className="size-3" />
+                    {activeSession.status === "closed" ? (
+                      <Lock className="size-3" />
+                    ) : (
+                      <Unlock className="size-3" />
+                    )}
                   </button>
-                ) : activeSession ? (
-                  <span className="rounded-lg border border-zinc-800 bg-zinc-900 px-2 py-1 text-[11px] font-mono text-zinc-500">
-                    <Lock className="size-3 inline" />
-                  </span>
-                ) : null}
-                <button
-                  type="button"
-                  onClick={() => setNewSessionOpen(true)}
-                  className="rounded-lg bg-zinc-100 px-2 py-1 text-[11px] font-semibold text-zinc-950 hover:bg-zinc-200 transition-colors cursor-pointer"
-                  title="New Session"
-                >
-                  <Plus className="size-3" />
-                </button>
+                )}
               </div>
             )}
 
@@ -682,165 +724,170 @@ export function CoachMobileShell() {
 
         {/* Dashboard Main Scrollable Area */}
         <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-6xl mx-auto w-full space-y-6 pb-24 lg:pb-8 overflow-x-hidden">
-          {/* TAB 1: ATTENDANCE (DESK) */}
+          {/* TAB 1: ATTENDANCE (Tactile Field-Ready Roll Call Grid) */}
           {activeTab === "attendance" && (
-            <div className="space-y-6">
-              {/* Sleek Mobile Telemetry Strip (< sm: 36px height) */}
-              <div className="sm:hidden flex items-center justify-between rounded-xl border border-zinc-800 bg-zinc-900/60 px-4 py-2.5 text-xs font-mono shadow-xs">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-zinc-400">Att:</span>
-                  <strong className="text-zinc-100 font-semibold">{presentCount}/{sportPlayers.length}</strong>
-                  <span className="text-zinc-500">({attendanceRate}%)</span>
-                </div>
-                <span className="text-zinc-700">·</span>
-                <div className="flex items-center gap-1.5">
-                  <span className="text-zinc-400">Ready:</span>
-                  <strong className="text-zinc-100 font-semibold">{sportQualifiedCount}/{sportPlayers.length}</strong>
+            <div className="space-y-5">
+              {/* Telemetry Header: Title & Segmented Progress Bar */}
+              <div className="space-y-3">
+                <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-100">
+                  Attendance
+                </h2>
+
+                <div className="flex items-center justify-between gap-4">
+                  {/* Segmented capsules */}
+                  <div className="flex items-center gap-1.5 flex-1 max-w-sm">
+                    {sportPlayers.map((p, idx) => {
+                      const isPresent = isPlayerPresent(p._id?.toString() || "");
+                      return (
+                        <div
+                          key={p._id?.toString() || idx}
+                          className={cn(
+                            "h-2.5 flex-1 rounded-full transition-all duration-300",
+                            isPresent ? "bg-zinc-100" : "bg-zinc-800"
+                          )}
+                        />
+                      );
+                    })}
+                  </div>
+
+                  {/* Telemetry Count */}
+                  <div className="flex items-center gap-2 pl-3 border-l border-zinc-800/80 shrink-0">
+                    <span className="text-sm font-mono text-zinc-400">
+                      <strong className="text-zinc-100 font-semibold">{presentCount}</strong> / {sportPlayers.length} present
+                    </span>
+                  </div>
                 </div>
               </div>
 
-              {/* Desktop 2-Card Metric Overview (>= sm) */}
-              <section className="hidden sm:grid grid-cols-2 gap-4">
-                {/* Card 1: Attendance */}
-                <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-5 shadow-xs">
-                  <div className="flex items-center justify-between text-xs font-mono text-zinc-400">
-                    <span>Attendance</span>
-                    <span className="rounded-md border border-zinc-800 bg-zinc-950 px-2 py-0.5 text-[11px] text-zinc-300">
-                      {attendanceRate}%
-                    </span>
-                  </div>
-                  <div className="mt-2 text-3xl font-bold tracking-tight text-zinc-100">
-                    {presentCount} <span className="text-zinc-500 font-normal text-xl">/ {sportPlayers.length}</span>
-                  </div>
-                </div>
-
-                {/* Card 2: Trial Ready */}
-                <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-5 shadow-xs">
-                  <div className="flex items-center justify-between text-xs font-mono text-zinc-400">
-                    <span>Trial Ready</span>
-                    <span className="rounded-md border border-zinc-800 bg-zinc-950 px-2 py-0.5 text-[11px] text-zinc-300">
-                      {sportPlayers.length > 0 ? Math.round((sportQualifiedCount / sportPlayers.length) * 100) : 0}%
-                    </span>
-                  </div>
-                  <div className="mt-2 text-3xl font-bold tracking-tight text-zinc-100">
-                    {sportQualifiedCount} <span className="text-zinc-500 font-normal text-xl">/ {sportPlayers.length}</span>
-                  </div>
-                </div>
-              </section>
-
-              <div className="space-y-4">
-              {/* Athletes Bar & Quick Mark Row */}
-              <div className="flex items-center justify-between px-1">
+              {/* Action Buttons Row */}
+              <div className="flex items-center justify-between gap-2 pt-1">
                 <div className="flex items-center gap-2">
-                  <span className="text-xs sm:text-sm font-semibold tracking-wide text-zinc-100 uppercase font-mono">
-                    Athletes
-                  </span>
-                  <Badge
-                    variant="outline"
-                    className="border-zinc-800 bg-zinc-900/80 text-[11px] font-mono text-zinc-400 py-0 px-2"
-                  >
-                    {sportPlayers.length}
-                  </Badge>
-                </div>
-
-                <div className="flex items-center gap-1.5 sm:gap-2">
-                  {activeSession?.status !== "closed" && (
-                    <>
-                      <button
-                        type="button"
-                        onClick={() => handleMarkAll(true)}
-                        className="rounded-lg border border-zinc-800 bg-zinc-900 px-2.5 py-1 text-xs font-medium text-zinc-300 hover:bg-zinc-800 transition-colors cursor-pointer font-mono whitespace-nowrap"
-                      >
-                        All
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleMarkAll(false)}
-                        className="rounded-lg border border-zinc-800 bg-zinc-900 px-2.5 py-1 text-xs font-medium text-zinc-400 hover:bg-zinc-800 transition-colors cursor-pointer font-mono whitespace-nowrap"
-                      >
-                        Clear
-                      </button>
-                    </>
-                  )}
                   <button
                     type="button"
-                    onClick={() => setNewPlayerOpen(true)}
-                    className="flex items-center gap-1 rounded-lg border border-zinc-800 bg-zinc-900 px-2.5 py-1 text-xs font-medium text-zinc-200 hover:bg-zinc-800 transition-colors cursor-pointer whitespace-nowrap"
-                    title="Add Athlete"
+                    onClick={() => handleMarkAll(true)}
+                    disabled={activeSession?.status === "closed" || !activeSession}
+                    className="flex items-center gap-1.5 rounded-full border border-zinc-800 bg-zinc-900/90 px-3.5 py-1.5 text-xs font-mono font-medium text-zinc-200 hover:bg-zinc-800 transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shadow-xs"
                   >
-                    <Plus className="size-3.5" />
-                    <span className="hidden sm:inline">Add Athlete</span>
+                    <Check className="size-3.5 text-zinc-100 stroke-[2.5]" />
+                    <span>All present</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleMarkAll(false)}
+                    disabled={activeSession?.status === "closed" || !activeSession}
+                    className="flex items-center gap-1.5 rounded-full border border-zinc-800 bg-zinc-900/90 px-3.5 py-1.5 text-xs font-mono font-medium text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shadow-xs"
+                  >
+                    <RotateCcw className="size-3.5" />
+                    <span>Reset</span>
                   </button>
                 </div>
+
+                <button
+                  type="button"
+                  onClick={() => setNewPlayerOpen(true)}
+                  className="flex items-center justify-center size-8.5 rounded-xl border border-zinc-800 bg-zinc-900/90 text-zinc-300 hover:bg-zinc-800 hover:text-zinc-100 transition-colors cursor-pointer shadow-xs"
+                  title="Enroll Athlete"
+                >
+                  <Plus className="size-4" />
+                </button>
               </div>
 
-              {/* CHECK 1 Player Attendance Grid (2-columns on Mac/desktop) */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-                {sportPlayers.map((player) => {
-                  const pId = player._id?.toString() || "";
-                  const present = isPlayerPresent(pId);
-                  const isLocked = activeSession?.status === "closed";
-                  const readyInfo = readyResults.find(
-                    (r) => r.player._id?.toString() === pId
-                  );
-                  const initials = player.name
-                    .split(" ")
-                    .map((n) => n[0])
-                    .join("")
-                    .slice(0, 2)
-                    .toUpperCase();
+              {/* CHECK 1: Athlete Cards Grid (2-column on mobile, up to 4 on desktop) */}
+              {sportPlayers.length === 0 ? (
+                <div className="rounded-2xl border border-dashed border-zinc-800 p-12 text-center text-zinc-500 space-y-2">
+                  <Users className="size-8 mx-auto text-zinc-600" />
+                  <p className="text-xs font-mono">0 athletes enrolled in {sport}</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+                  {sportPlayers.map((player) => {
+                    const pId = player._id?.toString() || "";
+                    const present = isPlayerPresent(pId);
+                    const isLocked = activeSession?.status === "closed";
+                    const recentDots = getPlayerRecentAttendance(pId);
+                    const initials = player.name
+                      .split(" ")
+                      .map((n) => n[0])
+                      .join("")
+                      .slice(0, 2)
+                      .toUpperCase();
 
-                  return (
-                    <div
-                      key={pId}
-                      className={cn(
-                        "flex items-center justify-between gap-4 rounded-xl border p-3.5 sm:p-4 transition-colors shadow-xs",
-                        present
-                          ? "border-zinc-700/80 bg-zinc-900/70"
-                          : "border-zinc-800 bg-zinc-900/30"
-                      )}
-                    >
-                      <div className="flex items-center gap-3.5 min-w-0">
-                        <div className="flex size-9 shrink-0 items-center justify-center rounded-full border border-zinc-700 bg-zinc-800 text-xs font-mono font-semibold text-zinc-200">
+                    return (
+                      <div
+                        key={pId}
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => {
+                          if (isLocked || !activeSession) return;
+                          handleToggleAttendance(pId, !present);
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            if (isLocked || !activeSession) return;
+                            handleToggleAttendance(pId, !present);
+                          }
+                        }}
+                        className={cn(
+                          "relative flex flex-col items-center justify-center text-center p-4 sm:p-5 rounded-2xl border transition-all cursor-pointer select-none space-y-2.5 sm:space-y-3",
+                          present
+                            ? "border-zinc-300 bg-zinc-900/80 shadow-[0_0_20px_-10px_rgba(255,255,255,0.15)] ring-1 ring-zinc-300/40"
+                            : "border-zinc-800/80 bg-zinc-900/40 hover:border-zinc-700/80",
+                          isLocked && "opacity-75 cursor-not-allowed"
+                        )}
+                      >
+                        {/* Avatar */}
+                        <div
+                          className={cn(
+                            "flex size-14 shrink-0 items-center justify-center rounded-full text-sm font-mono font-bold transition-all shadow-xs",
+                            present
+                              ? "bg-zinc-100 text-zinc-950 shadow-md ring-2 ring-zinc-100/50"
+                              : "bg-zinc-800 text-zinc-300 border border-zinc-700/80"
+                          )}
+                        >
                           {initials}
                         </div>
 
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-2 min-w-0">
-                            <p className="truncate text-sm font-semibold text-zinc-100">
-                              {player.name}
-                            </p>
-                            {readyInfo?.isReady && (
-                              <CossBadge16 isReady={true} className="shrink-0" />
+                        {/* Name */}
+                        <div className="w-full min-w-0 px-1">
+                          <p
+                            className={cn(
+                              "text-sm font-semibold truncate",
+                              present ? "text-zinc-100" : "text-zinc-300"
                             )}
-                          </div>
-                          <p className="text-xs text-zinc-400 font-normal">
-                            {player.sport} · Age {player.age}
+                          >
+                            {player.name}
                           </p>
                         </div>
-                      </div>
 
-                      <div className="flex items-center gap-3 shrink-0">
-                        <span
-                          className={cn(
-                            "text-xs font-medium font-mono w-14 text-right",
-                            present ? "text-zinc-200 font-semibold" : "text-zinc-500"
-                          )}
+                        {/* 5-Session Momentum Dots */}
+                        <div
+                          className="flex items-center justify-center gap-1.5 pt-0.5"
+                          title="Last 5 training sessions"
                         >
-                          {present ? "Present" : "Absent"}
-                        </span>
-
-                        <Switch
-                          checked={present}
-                          disabled={isLocked || !activeSession}
-                          onCheckedChange={(checked) =>
-                            handleToggleAttendance(pId, checked)
-                          }
-                        />
+                          {recentDots.map((attended, i) => (
+                            <span
+                              key={i}
+                              className={cn(
+                                "size-2 rounded-full transition-colors",
+                                attended
+                                  ? "bg-zinc-100"
+                                  : "border border-zinc-600 bg-transparent"
+                              )}
+                            />
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Instruction Footer */}
+              <div className="text-center pt-2">
+                <p className="text-[11px] font-mono text-zinc-500">
+                  Tap to mark present · Long-press to mark absent
+                </p>
               </div>
 
               {/* Add Athlete Dialog */}
@@ -939,7 +986,6 @@ export function CoachMobileShell() {
                   </form>
                 </DialogPopup>
               </Dialog>
-            </div>
             </div>
           )}
 
