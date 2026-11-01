@@ -1099,14 +1099,9 @@ export function CoachMobileShell() {
           {/* TAB 4: READY BOARD */}
           {activeTab === "ready" && (
             <div className="space-y-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                <div>
-                  <h2 className="text-base font-semibold text-zinc-100">Trial Readiness Board</h2>
-                  <p className="text-xs text-zinc-400">
-                    Qualification Benchmarks: ≥75% session attendance AND ≥2 recorded matches.
-                  </p>
-                </div>
-                <span className="text-xs font-mono text-zinc-400 self-start sm:self-auto">
+              <div className="flex items-center justify-between">
+                <h2 className="text-base font-semibold text-zinc-100">Trial Readiness Board</h2>
+                <span className="text-xs font-mono text-zinc-400">
                   {qualifiedCount} of {players.length} qualified
                 </span>
               </div>
@@ -1156,10 +1151,10 @@ export function CoachMobileShell() {
                       <div className="space-y-1.5">
                         <div className="flex justify-between text-xs font-mono">
                           <span className="text-zinc-400">
-                            Attendance: <strong className="text-zinc-200">{item.attendancePct}%</strong> ({item.sessionsPresent}/{item.sessionsHeld})
+                            Attendance: <strong className="text-zinc-200">{item.attendancePct}%</strong>
                           </span>
                           <span className={item.attendancePct >= 75 ? "text-zinc-200 font-semibold" : "text-zinc-500"}>
-                            75% Target |
+                            Target 75%
                           </span>
                         </div>
 
@@ -1194,19 +1189,6 @@ export function CoachMobileShell() {
                           <span>
                             {item.matchCount}/2 Matches {item.matchCount >= 2 && <Check className="inline size-3 text-zinc-100" />}
                           </span>
-                        </div>
-
-                        <div>
-                          {isReady ? (
-                            <span className="text-zinc-200 font-medium flex items-center gap-1">
-                              <Check className="size-3.5 text-zinc-100" />
-                              Ready for Trial
-                            </span>
-                          ) : (
-                            <span className="text-zinc-500 font-mono">
-                              Pending Criteria
-                            </span>
-                          )}
                         </div>
                       </div>
                     </div>
