@@ -65,71 +65,21 @@ export default function ScoutPage() {
       <main className="flex-1 px-4 py-6 sm:px-8 sm:py-8">
         <div className="mx-auto max-w-6xl space-y-6">
           {/* Header & Overview */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-100">
-                Trial Candidates
-              </h1>
-              <p className="text-xs sm:text-sm text-zinc-400 mt-1">
-                Athletes meeting qualification benchmarks (≥75% attendance and ≥2 official matches).
-              </p>
-            </div>
+          <div className="flex items-center justify-between">
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-100">
+              Trial Roster
+            </h1>
 
-            <span className="rounded-md border border-zinc-800 bg-zinc-900/80 px-3 py-1 text-xs font-mono font-medium text-zinc-300 w-fit">
-              {candidates.length} Qualified {candidates.length === 1 ? "Athlete" : "Athletes"}
+            <span className="rounded-md border border-zinc-800 bg-zinc-900/80 px-3 py-1 text-xs font-mono font-medium text-zinc-300">
+              {candidates.length} Qualified
             </span>
-          </div>
-
-          {/* Stat Cards Row */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-5 shadow-xs">
-              <div className="flex items-center justify-between text-xs font-medium text-zinc-400">
-                <span>Qualified Roster</span>
-                <Sparkles className="size-4 text-zinc-500" />
-              </div>
-              <div className="mt-2 text-2xl font-bold tracking-tight text-zinc-100">
-                {candidates.length}
-              </div>
-              <p className="mt-1 text-xs text-zinc-500 font-mono">
-                Eligible for state & zonal trials
-              </p>
-            </div>
-
-            <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-5 shadow-xs">
-              <div className="flex items-center justify-between text-xs font-medium text-zinc-400">
-                <span>Attendance Filter</span>
-                <UserCheck className="size-4 text-zinc-500" />
-              </div>
-              <div className="mt-2 text-2xl font-bold tracking-tight text-zinc-100">
-                ≥ 75%
-              </div>
-              <p className="mt-1 text-xs text-zinc-500 font-mono">
-                Minimum regular training compliance
-              </p>
-            </div>
-
-            <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-5 shadow-xs">
-              <div className="flex items-center justify-between text-xs font-medium text-zinc-400">
-                <span>Match Threshold</span>
-                <Trophy className="size-4 text-zinc-500" />
-              </div>
-              <div className="mt-2 text-2xl font-bold tracking-tight text-zinc-100">
-                ≥ 2 Matches
-              </div>
-              <p className="mt-1 text-xs text-zinc-500 font-mono">
-                Competitive match sample required
-              </p>
-            </div>
           </div>
 
           {/* Candidates Grid */}
           {candidates.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-zinc-800 p-12 text-center text-zinc-500 space-y-3">
-              <ShieldAlert className="size-9 mx-auto text-zinc-600" />
-              <div>
-                <p className="text-sm font-medium text-zinc-400">No athletes qualified yet</p>
-                <p className="text-xs text-zinc-600 mt-1">Athletes must achieve ≥75% session attendance and at least 2 matches to appear on this board.</p>
-              </div>
+            <div className="rounded-xl border border-dashed border-zinc-800 p-12 text-center text-zinc-500 space-y-2">
+              <ShieldAlert className="size-8 mx-auto text-zinc-600" />
+              <p className="text-sm font-medium text-zinc-400">No candidates qualified for trials yet</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -170,7 +120,7 @@ export default function ScoutPage() {
                     <div className="space-y-1.5 pt-1">
                       <div className="flex justify-between text-xs font-mono">
                         <span className="text-zinc-400">
-                          Attendance: <strong className="text-zinc-100">{item.attendancePct}%</strong> ({item.sessionsPresent}/{item.sessionsHeld})
+                          Attendance: <strong className="text-zinc-100">{item.attendancePct}%</strong>
                         </span>
                         <span className="text-zinc-300 font-semibold">
                           75% Target |
@@ -196,7 +146,7 @@ export default function ScoutPage() {
                     <div className="flex items-center justify-between pt-2 border-t border-zinc-800/80 text-xs font-mono">
                       <span className="inline-flex items-center gap-1.5 text-zinc-300">
                         <Trophy className="size-3.5 text-zinc-400" />
-                        {item.matchCount} Official {item.matchCount === 1 ? "Match" : "Matches"}
+                        {item.matchCount} {item.matchCount === 1 ? "Match" : "Matches"}
                       </span>
 
                       <span className="text-zinc-300 font-medium flex items-center gap-1">
