@@ -790,9 +790,9 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
       sideOffset={6}
       className="w-auto min-w-[280px] max-w-sm bg-zinc-950 border border-zinc-800 text-zinc-100 p-1.5 shadow-xl rounded-xl z-50"
     >
-      <DropdownMenuLabel className="text-[11px] font-mono text-zinc-400 uppercase tracking-wider px-2 py-1">
+      <div className="text-[11px] font-mono text-zinc-400 uppercase tracking-wider px-2 py-1">
         {sport} Practice Sessions
-      </DropdownMenuLabel>
+      </div>
       <DropdownMenuSeparator className="bg-zinc-800/80 my-1" />
       {sportSessions.length === 0 ? (
         <div className="px-2 py-3 text-center text-xs text-zinc-500 font-mono">
@@ -830,13 +830,23 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                 <div className="flex items-center gap-1.5 shrink-0">
                   <span
                     className={cn(
-                      "text-[10px] font-mono px-1.5 py-0.5 rounded border uppercase tracking-wider",
+                      "inline-flex items-center gap-1 text-[10px] font-mono px-1.5 py-0.5 rounded border uppercase tracking-wider",
                       isClosed
                         ? "border-zinc-800 bg-zinc-900 text-zinc-500"
-                        : "border-emerald-500/30 bg-emerald-500/10 text-emerald-400"
+                        : "border-zinc-700 bg-zinc-800 text-zinc-200"
                     )}
                   >
-                    {isClosed ? "🔒 Closed" : "🔓 Open"}
+                    {isClosed ? (
+                      <>
+                        <Lock className="size-2.5" />
+                        <span>Closed</span>
+                      </>
+                    ) : (
+                      <>
+                        <Unlock className="size-2.5" />
+                        <span>Open</span>
+                      </>
+                    )}
                   </span>
                   {isSelected && (
                     <Check className="size-3.5 text-zinc-100 ml-1 shrink-0" />
@@ -1063,14 +1073,18 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                     {activeSession && (
                       <>
                         <span className="text-zinc-600">·</span>
-                        <span
-                          className={
-                            activeSession.status === "closed"
-                              ? "text-zinc-500"
-                              : "text-emerald-400"
-                          }
-                        >
-                          {activeSession.status === "closed" ? "🔒 Closed" : "🔓 Open"}
+                        <span className="text-zinc-400 font-mono inline-flex items-center gap-1">
+                          {activeSession.status === "closed" ? (
+                            <>
+                              <Lock className="size-2.5 text-zinc-500" />
+                              <span className="text-zinc-500">Closed</span>
+                            </>
+                          ) : (
+                            <>
+                              <Unlock className="size-2.5 text-zinc-300" />
+                              <span className="text-zinc-300">Open</span>
+                            </>
+                          )}
                         </span>
                       </>
                     )}
@@ -1177,14 +1191,18 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                 {activeSession && (
                   <>
                     <span className="text-zinc-600">·</span>
-                    <span
-                      className={
-                        activeSession.status === "closed"
-                          ? "text-zinc-500"
-                          : "text-emerald-400"
-                      }
-                    >
-                      {activeSession.status === "closed" ? "🔒 Closed" : "🔓 Open"}
+                    <span className="text-zinc-400 font-mono inline-flex items-center gap-1">
+                      {activeSession.status === "closed" ? (
+                        <>
+                          <Lock className="size-3 text-zinc-500" />
+                          <span className="text-zinc-500">Closed</span>
+                        </>
+                      ) : (
+                        <>
+                          <Unlock className="size-3 text-zinc-300" />
+                          <span className="text-zinc-300">Open</span>
+                        </>
+                      )}
                     </span>
                   </>
                 )}
@@ -1300,7 +1318,7 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                   <div className="flex items-center gap-2 min-w-0">
                     <Lock className="size-3.5 shrink-0 text-zinc-400" />
                     <span className="font-medium truncate">
-                      🔒 Locked Session · Recorded on {activeSession.date} (Read-only)
+                      Locked Session · Recorded on {activeSession.date} (Read-only)
                     </span>
                   </div>
                   <Badge
