@@ -131,6 +131,15 @@ function matchDoc(doc: any, query: any): boolean {
 
     if (expected instanceof RegExp) {
       if (typeof actual !== "string" || !expected.test(actual)) return false;
+    } else if (expected && typeof expected === "object" && "$in" in expected && Array.isArray(expected.$in)) {
+      const inList = expected.$in;
+      const matched = inList.some((item: any) => {
+        if (actual instanceof ObjectId || item instanceof ObjectId) {
+          return actual?.toString() === item?.toString();
+        }
+        return actual === item;
+      });
+      if (!matched) return false;
     } else if (expected && typeof expected === "object" && "$regex" in expected) {
       const exp = expected as any;
       const reg = exp.$regex instanceof RegExp ? exp.$regex : new RegExp(exp.$regex, exp.$options);

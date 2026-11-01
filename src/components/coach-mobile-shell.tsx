@@ -79,6 +79,13 @@ export function getAgeGroup(age: number | string): string {
   return "Senior";
 }
 
+const TAB_ROUTES: Record<Tab, string> = {
+  attendance: "/coach",
+  matches: "/coach/matches",
+  roster: "/coach/players",
+  ready: "/coach/ready",
+};
+
 export interface CoachMobileShellProps {
   defaultTab?: Tab;
 }
@@ -86,7 +93,7 @@ export interface CoachMobileShellProps {
 export function CoachMobileShell(props: CoachMobileShellProps = {}) {
   return (
     <Suspense fallback={<div className="min-h-dvh bg-zinc-950" />}>
-      <CoachMobileShellInner {...props} />
+      <CoachMobileShellInner key={props.defaultTab ?? "attendance"} {...props} />
     </Suspense>
   );
 }
@@ -136,10 +143,12 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
   const [isAddingPlayer, setIsAddingPlayer] = useState(false);
 
   const [newMatchOpen, setNewMatchOpen] = useState(false);
+  const [newMatchSport, setNewMatchSport] = useState<string>("Football");
   const [newMatchDate, setNewMatchDate] = useState(
     new Date().toISOString().slice(0, 10)
   );
   const [newMatchOpponent, setNewMatchOpponent] = useState("Ranchi FC");
+  const [newMatchOutcome, setNewMatchOutcome] = useState<"win" | "draw" | "loss">("win");
   const [selectedPlayers, setSelectedPlayers] = useState<Record<string, boolean>>({});
   const [matchScores, setMatchScores] = useState<Record<string, number>>({});
   const [matchError, setMatchError] = useState<string | null>(null);
@@ -155,8 +164,9 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
     setActiveTab(newTab);
     if (typeof window !== "undefined") {
       const url = new URL(window.location.href);
-      url.searchParams.set("tab", newTab);
-      window.history.replaceState(null, "", url.toString());
+      url.pathname = TAB_ROUTES[newTab] || "/coach";
+      url.searchParams.delete("tab");
+      window.history.replaceState(null, "", url.pathname + (url.search ? url.search : ""));
     }
   };
 
@@ -616,12 +626,16 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
   };
 
   // CHECK 2 Match Creation & Absent Refusal
-  const isPlayerAbsentOnMatchDate = (playerId: string, targetDate: string) => {
+  const isPlayerAbsentOnMatchDate = (
+    playerId: string,
+    targetDate: string,
+    targetSport = sport
+  ) => {
     const sessionForDate =
       sessions.find(
         (s) =>
           s.date === targetDate &&
-          (s.sport || "").toLowerCase() === sport.toLowerCase()
+          (s.sport || "").toLowerCase() === targetSport.toLowerCase()
       ) || sessions.find((s) => s.date === targetDate);
     if (!sessionForDate || !Array.isArray(sessionForDate.attendance)) return false;
     const record = sessionForDate.attendance.find((a: any) => {
@@ -633,23 +647,51 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
     return !record || record.status === "absent";
   };
 
-  const handleOpenMatchModal = () => {
-    setMatchError(null);
-    const targetDate = activeSession?.date || new Date().toISOString().slice(0, 10);
-    setNewMatchDate(targetDate);
+  const syncMatchEligiblePlayers = (targetDate: string, targetSport: string) => {
+    const sessionForDate =
+      sessions.find(
+        (s) =>
+          s.date === targetDate &&
+          (s.sport || "").toLowerCase() === targetSport.toLowerCase()
+      ) || sessions.find((s) => s.date === targetDate);
+
+    const relevantPlayers = players.filter(
+      (p) => !targetSport || (p.sport || "").toLowerCase() === targetSport.toLowerCase()
+    );
 
     const initialScores: Record<string, number> = {};
     const initialSelected: Record<string, boolean> = {};
 
-    players.forEach((p) => {
+    relevantPlayers.forEach((p) => {
       const pId = p._id?.toString() || "";
-      const isAbsent = isPlayerAbsentOnMatchDate(pId, targetDate);
-      initialScores[pId] = 0;
-      initialSelected[pId] = !isAbsent;
+      if (sessionForDate && Array.isArray(sessionForDate.attendance)) {
+        const record = sessionForDate.attendance.find((a: any) => {
+          const id = a.playerId?._id
+            ? a.playerId._id.toString()
+            : a.playerId?.toString();
+          return id === pId;
+        });
+        const isPresent = record?.status === "present";
+        initialSelected[pId] = isPresent;
+      } else {
+        initialSelected[pId] = false;
+      }
+      initialScores[pId] = matchScores[pId] || 0;
     });
 
-    setMatchScores(initialScores);
     setSelectedPlayers(initialSelected);
+    setMatchScores(initialScores);
+  };
+
+  const handleOpenMatchModal = () => {
+    setMatchError(null);
+    const activeDiscipline = sport || "Football";
+    setNewMatchSport(activeDiscipline);
+    const targetDate = activeSession?.date || new Date().toISOString().slice(0, 10);
+    setNewMatchDate(targetDate);
+    setNewMatchOutcome("win");
+
+    syncMatchEligiblePlayers(targetDate, activeDiscipline);
     setNewMatchOpen(true);
   };
 
@@ -659,7 +701,7 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
 
     const scoresPayload: { playerId: string; score: number }[] = [];
     const eligiblePlayers = players.filter(
-      (p) => !sport || (p.sport || "").toLowerCase() === sport.toLowerCase()
+      (p) => !newMatchSport || (p.sport || "").toLowerCase() === newMatchSport.toLowerCase()
     );
     for (const p of eligiblePlayers) {
       const pId = p._id?.toString() || "";
@@ -672,7 +714,7 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
     }
 
     if (scoresPayload.length === 0) {
-      setMatchError("Select at least one player");
+      setMatchError("Select at least one player to record match");
       return;
     }
 
@@ -682,15 +724,16 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           date: newMatchDate,
-          sport,
+          sport: newMatchSport,
           opponent: newMatchOpponent.trim() || "Opponent",
+          outcome: newMatchOutcome,
           scores: scoresPayload,
         }),
       });
 
       if (!res.ok) {
         const data = await res.json();
-        setMatchError(data.error || "Refused");
+        setMatchError(data.error || "Refused by server");
         return;
       }
 
@@ -701,6 +744,9 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
       fetch("/api/ready")
         .then((r) => r.json())
         .then((data) => Array.isArray(data) && setReadyResults(data));
+      fetch("/api/matches")
+        .then((r) => r.json())
+        .then((data) => Array.isArray(data) && setMatches(data));
     } catch (err: any) {
       setMatchError(err.message || "Failed to record match");
     }
@@ -1569,10 +1615,15 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                       const month = monthNames[monthIndex] || "NOV";
 
                       let outcome: "win" | "draw" | "loss" = "loss";
-                      if (m.opponent === "Tata FA") outcome = "win";
-                      else if (m.opponent === "Ranchi FC") outcome = "draw";
-                      else if (m.opponent === "Bokaro FC") outcome = "loss";
-                      else {
+                      if (m.outcome && ["win", "draw", "loss"].includes(m.outcome.toLowerCase())) {
+                        outcome = m.outcome.toLowerCase() as "win" | "draw" | "loss";
+                      } else if (m.opponent === "Tata FA") {
+                        outcome = "win";
+                      } else if (m.opponent === "Ranchi FC") {
+                        outcome = "draw";
+                      } else if (m.opponent === "Bokaro FC") {
+                        outcome = "loss";
+                      } else {
                         const totalGoals = (m.scores || []).reduce(
                           (acc: number, s: any) => acc + (s.score || 0),
                           0
@@ -1593,7 +1644,7 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                         const p = players.find(
                           (pl) => pl._id?.toString() === sc.playerId?.toString()
                         );
-                        const name = p?.name || "Player";
+                        const name = sc.playerName || p?.name || "Player";
                         const initials = name
                           .split(" ")
                           .map((n: string) => n[0])
@@ -1629,13 +1680,22 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                           {/* Timeline Node on Spine */}
                           <div className="absolute -left-6 sm:-left-8 top-7 -translate-x-1/2 flex items-center justify-center z-10">
                             {outcome === "win" && (
-                              <div className="size-3.5 rounded-full bg-zinc-100 ring-4 ring-zinc-950" />
+                              <div
+                                className="size-3.5 rounded-full bg-zinc-100 ring-4 ring-zinc-950"
+                                title="Win"
+                              />
                             )}
                             {outcome === "loss" && (
-                              <div className="size-3.5 rounded-full border-2 border-zinc-400 bg-zinc-950 ring-4 ring-zinc-950" />
+                              <div
+                                className="size-3.5 rounded-full border-2 border-zinc-500 bg-zinc-950 ring-4 ring-zinc-950"
+                                title="Loss"
+                              />
                             )}
                             {outcome === "draw" && (
-                              <div className="size-3.5 rounded-full ring-4 ring-zinc-950 overflow-hidden border border-zinc-400 flex">
+                              <div
+                                className="size-3.5 rounded-full ring-4 ring-zinc-950 overflow-hidden border border-zinc-400 flex"
+                                title="Draw"
+                              >
                                 <div className="w-1/2 h-full bg-zinc-100" />
                                 <div className="w-1/2 h-full bg-zinc-950" />
                               </div>
@@ -1663,9 +1723,14 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                                 </div>
 
                                 <div className="space-y-2.5 min-w-0 flex-1">
-                                  <h3 className="text-base sm:text-lg font-semibold text-zinc-100 truncate leading-tight">
-                                    {m.opponent}
-                                  </h3>
+                                  <div className="flex items-center gap-2">
+                                    <h3 className="text-base sm:text-lg font-semibold text-zinc-100 truncate leading-tight">
+                                      {m.opponent}
+                                    </h3>
+                                    <span className="rounded border border-zinc-800 bg-zinc-900 px-1.5 py-0.2 text-[9.5px] font-mono text-zinc-400">
+                                      {m.sport}
+                                    </span>
+                                  </div>
 
                                   <div className="space-y-1.5 pt-0.5">
                                     {squad.map((playerItem) => (
@@ -1693,22 +1758,32 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                                         >
                                           {playerItem.name}
                                         </span>
-                                        {playerItem.score > 0 && (
-                                          <div className="flex items-center gap-1 shrink-0 ml-1">
+                                        {playerItem.score > 0 ? (
+                                          <div
+                                            className="flex items-center gap-1 shrink-0 ml-1.5"
+                                            title={`${playerItem.score} scored`}
+                                          >
                                             {Array.from({
                                               length: Math.min(6, playerItem.score),
                                             }).map((_, i) => (
                                               <span
                                                 key={i}
-                                                className="size-2 rounded-full bg-zinc-100 shrink-0"
+                                                className="size-1.5 rounded-full bg-zinc-100 shrink-0"
                                               />
                                             ))}
                                             {playerItem.score > 6 && (
-                                              <span className="text-[10px] font-mono font-bold text-zinc-100">
+                                              <span className="text-[10px] font-mono font-bold text-zinc-200">
                                                 +{playerItem.score - 6}
                                               </span>
                                             )}
+                                            <span className="text-[11px] font-mono text-zinc-400 ml-1">
+                                              ({playerItem.score})
+                                            </span>
                                           </div>
+                                        ) : (
+                                          <span className="text-[10.5px] font-mono text-zinc-500 ml-1.5">
+                                            Played
+                                          </span>
                                         )}
                                       </div>
                                     ))}
@@ -1716,41 +1791,27 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                                 </div>
                               </div>
 
-                              <div className="shrink-0 pt-0.5">
+                              <div className="shrink-0 flex items-center gap-2 pt-0.5">
                                 {outcome === "win" && (
-                                  <div
-                                    className="size-5 rounded-full bg-zinc-100 shadow-xs"
-                                    title="Win"
-                                  />
-                                )}
-                                {outcome === "loss" && (
-                                  <div
-                                    className="size-5 rounded-full border-2 border-zinc-400 bg-transparent"
-                                    title="Loss"
-                                  />
+                                  <div className="flex items-center gap-1.5 rounded-md bg-zinc-100 px-2.5 py-1 text-[10px] font-mono font-bold text-zinc-950 shadow-xs">
+                                    <span className="size-2 rounded-full bg-zinc-950" />
+                                    <span>WIN</span>
+                                  </div>
                                 )}
                                 {outcome === "draw" && (
-                                  <svg
-                                    className="size-5 shrink-0"
-                                    viewBox="0 0 20 20"
-                                    fill="none"
-                                    aria-label="Draw"
-                                  >
-                                    <title>Draw</title>
-                                    <circle
-                                      cx="10"
-                                      cy="10"
-                                      r="8"
-                                      stroke="currentColor"
-                                      strokeWidth="2"
-                                      className="text-zinc-400"
-                                    />
-                                    <path
-                                      d="M10 2 A 8 8 0 0 0 10 18 Z"
-                                      fill="currentColor"
-                                      className="text-zinc-100"
-                                    />
-                                  </svg>
+                                  <div className="flex items-center gap-1.5 rounded-md border border-zinc-700 bg-zinc-900 px-2.5 py-1 text-[10px] font-mono font-medium text-zinc-200">
+                                    <span className="size-2 rounded-full overflow-hidden border border-zinc-400 flex">
+                                      <span className="w-1/2 h-full bg-zinc-100" />
+                                      <span className="w-1/2 h-full bg-zinc-950" />
+                                    </span>
+                                    <span>DRAW</span>
+                                  </div>
+                                )}
+                                {outcome === "loss" && (
+                                  <div className="flex items-center gap-1.5 rounded-md border border-zinc-800 bg-zinc-950 px-2.5 py-1 text-[10px] font-mono font-medium text-zinc-500">
+                                    <span className="size-2 rounded-full border border-zinc-500 bg-transparent" />
+                                    <span>LOSS</span>
+                                  </div>
                                 )}
                               </div>
                             </div>
@@ -2877,147 +2938,309 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
 
       {/* Record Match Dialog */}
       <Dialog open={newMatchOpen} onOpenChange={setNewMatchOpen}>
-        <DialogPopup className="sm:max-w-md bg-zinc-950 border-zinc-800 text-zinc-100 max-h-[85vh] overflow-y-auto">
+        <DialogPopup className="sm:max-w-md bg-zinc-950 border-zinc-800 text-zinc-100 max-h-[88vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-base font-semibold text-zinc-100 flex items-center gap-2">
               <Swords className="size-4 text-zinc-300" />
               Record Match Score
             </DialogTitle>
             <DialogDescription className="text-xs text-zinc-400">
-              Score eligible players. Absent players on this date are restricted.
+              Only athletes present in a session can participate. Absent athletes are strictly restricted.
             </DialogDescription>
           </DialogHeader>
 
           <form onSubmit={handleRecordMatch} className="space-y-4 pt-2">
             {matchError && (
-              <div className="flex items-center gap-2 rounded-lg bg-red-950/40 border border-red-900/60 p-3 text-xs text-red-400">
-                <AlertCircle className="size-4 shrink-0" />
+              <div className="flex items-center gap-2 rounded-lg bg-zinc-900 border border-zinc-700/80 p-3 text-xs text-zinc-200">
+                <AlertCircle className="size-4 shrink-0 text-zinc-400" />
                 <span>{matchError}</span>
               </div>
             )}
 
             <DialogPanel className="space-y-3.5">
+              {/* Discipline Pre-selection (Football or Cricket) */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-zinc-400 block font-mono">
+                  Discipline
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  {["Football", "Cricket"].map((spOption) => (
+                    <button
+                      key={spOption}
+                      type="button"
+                      onClick={() => {
+                        setNewMatchSport(spOption);
+                        syncMatchEligiblePlayers(newMatchDate, spOption);
+                      }}
+                      className={cn(
+                        "rounded-lg border py-2 text-xs font-mono font-medium transition-colors cursor-pointer text-center",
+                        newMatchSport === spOption
+                          ? "border-zinc-100 bg-zinc-100 text-zinc-950 font-bold"
+                          : "border-zinc-800 bg-zinc-900 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/60"
+                      )}
+                    >
+                      {spOption}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Match Meta: Date & Opponent */}
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-zinc-400 block">
-                    Date
+                  <label className="text-xs font-medium text-zinc-400 block font-mono">
+                    Match Date
                   </label>
                   <input
                     type="date"
                     value={newMatchDate}
                     onChange={(e) => {
-                      const date = e.target.value;
-                      setNewMatchDate(date);
+                      const d = e.target.value;
+                      setNewMatchDate(d);
                       setMatchError(null);
-                      const updatedSelected: Record<string, boolean> = {};
-                      sportPlayers.forEach((p) => {
-                        const pId = p._id?.toString() || "";
-                        const isAbsent = isPlayerAbsentOnMatchDate(pId, date);
-                        updatedSelected[pId] = !isAbsent;
-                      });
-                      setSelectedPlayers(updatedSelected);
+                      syncMatchEligiblePlayers(d, newMatchSport);
                     }}
                     required
-                    className="h-10 w-full rounded-lg border border-zinc-800 bg-zinc-900 px-3 text-xs text-zinc-100 focus:border-zinc-500 focus:outline-none"
+                    className="h-10 w-full rounded-lg border border-zinc-800 bg-zinc-900 px-3 text-xs text-zinc-100 focus:border-zinc-500 focus:outline-none font-mono"
                   />
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-zinc-400 block">
-                    Opponent
+                  <label className="text-xs font-medium text-zinc-400 block font-mono">
+                    Opponent Club
                   </label>
                   <input
                     type="text"
                     value={newMatchOpponent}
                     onChange={(e) => setNewMatchOpponent(e.target.value)}
-                    placeholder="Opponent Club"
+                    placeholder="e.g. Dumka XI"
                     required
                     className="h-10 w-full rounded-lg border border-zinc-800 bg-zinc-900 px-3 text-xs text-zinc-100 focus:border-zinc-500 focus:outline-none"
                   />
                 </div>
               </div>
 
+              {/* Fixture Outcome: Win (●) | Draw (◐) | Loss (○) */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-zinc-400 block font-mono">
+                  Fixture Outcome
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setNewMatchOutcome("win")}
+                    className={cn(
+                      "flex items-center justify-center gap-1.5 rounded-lg border py-2 text-xs font-mono font-medium transition-colors cursor-pointer",
+                      newMatchOutcome === "win"
+                        ? "border-zinc-100 bg-zinc-100 text-zinc-950 font-bold"
+                        : "border-zinc-800 bg-zinc-900 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/60"
+                    )}
+                  >
+                    <span className={cn("size-2 rounded-full", newMatchOutcome === "win" ? "bg-zinc-950" : "bg-zinc-100")} />
+                    <span>Win</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setNewMatchOutcome("draw")}
+                    className={cn(
+                      "flex items-center justify-center gap-1.5 rounded-lg border py-2 text-xs font-mono font-medium transition-colors cursor-pointer",
+                      newMatchOutcome === "draw"
+                        ? "border-zinc-600 bg-zinc-800 text-zinc-100 font-bold"
+                        : "border-zinc-800 bg-zinc-900 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/60"
+                    )}
+                  >
+                    <span className="size-2 rounded-full overflow-hidden border border-zinc-400 flex">
+                      <span className="w-1/2 h-full bg-zinc-100" />
+                      <span className="w-1/2 h-full bg-zinc-950" />
+                    </span>
+                    <span>Draw</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setNewMatchOutcome("loss")}
+                    className={cn(
+                      "flex items-center justify-center gap-1.5 rounded-lg border py-2 text-xs font-mono font-medium transition-colors cursor-pointer",
+                      newMatchOutcome === "loss"
+                        ? "border-zinc-700 bg-zinc-900 text-zinc-200 font-bold"
+                        : "border-zinc-800 bg-zinc-900 text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/60"
+                    )}
+                  >
+                    <span className="size-2 rounded-full border border-zinc-500 bg-transparent" />
+                    <span>Loss</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Resolved Session Status & Editorial Note */}
+              {(() => {
+                const sessionDoc = sessions.find(
+                  (s) =>
+                    s.date === newMatchDate &&
+                    (s.sport || "").toLowerCase() === newMatchSport.toLowerCase()
+                ) || sessions.find((s) => s.date === newMatchDate);
+
+                if (!sessionDoc) {
+                  return (
+                    <div className="rounded-lg border border-zinc-800 bg-zinc-900/60 p-3 text-xs text-zinc-400 space-y-1">
+                      <div className="flex items-center gap-1.5 font-medium text-zinc-300">
+                        <AlertCircle className="size-3.5 text-zinc-400" />
+                        <span>No session found for {newMatchDate}</span>
+                      </div>
+                      <p className="text-[11px] text-zinc-500">
+                        Please open and record attendance first in the Attendance tab to establish athlete eligibility.
+                      </p>
+                    </div>
+                  );
+                }
+
+                if (sessionDoc.status === "open") {
+                  return (
+                    <div className="rounded-lg border border-zinc-800 bg-zinc-900/60 p-3 text-xs text-zinc-400 space-y-1">
+                      <div className="flex items-center gap-1.5 font-medium text-zinc-300">
+                        <Lock className="size-3.5 text-zinc-400" />
+                        <span>Session is currently open</span>
+                      </div>
+                      <p className="text-[11px] text-zinc-500">
+                        Attendance is not yet locked. Close the training session first to finalize eligibility.
+                      </p>
+                    </div>
+                  );
+                }
+
+                const presentCount = (sessionDoc.attendance || []).filter(
+                  (a: any) => a.status === "present"
+                ).length;
+                const absentCount = (sessionDoc.attendance || []).filter(
+                  (a: any) => a.status === "absent"
+                ).length;
+
+                return (
+                  <div className="rounded-lg border border-zinc-800/80 bg-zinc-900/40 p-2.5 text-xs text-zinc-400 flex items-center justify-between">
+                    <span className="flex items-center gap-1.5 text-[11.5px] font-mono text-zinc-300">
+                      <Check className="size-3.5 text-zinc-400" />
+                      Closed session verified
+                    </span>
+                    <span className="text-[11px] font-mono text-zinc-500">
+                      {presentCount} present · {absentCount} restricted
+                    </span>
+                  </div>
+                );
+              })()}
+
+              {/* Squad Scoring Section */}
               <div className="pt-2">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-xs font-medium text-zinc-400 font-mono">
-                    Player Scores
+                    Squad Participants & Scores
                   </span>
                   <span className="text-[11px] text-zinc-500 font-mono">
-                    Absent players restricted
+                    Absent athletes locked
                   </span>
                 </div>
 
                 <div className="space-y-2">
-                  {sportPlayers.map((p) => {
-                    const pId = p._id?.toString() || "";
-                    const isAbsent = isPlayerAbsentOnMatchDate(
-                      pId,
-                      newMatchDate
-                    );
-                    const isChecked = selectedPlayers[pId] ?? false;
-                    const currentScore = matchScores[pId] || 0;
+                  {players
+                    .filter(
+                      (p) =>
+                        !newMatchSport ||
+                        (p.sport || "").toLowerCase() === newMatchSport.toLowerCase()
+                    )
+                    .map((p) => {
+                      const pId = p._id?.toString() || "";
+                      const isAbsent = isPlayerAbsentOnMatchDate(
+                        pId,
+                        newMatchDate,
+                        newMatchSport
+                      );
+                      const isChecked = selectedPlayers[pId] ?? false;
+                      const currentScore = matchScores[pId] || 0;
 
-                    return (
-                      <div
-                        key={pId}
-                        className={cn(
-                          "flex items-center justify-between rounded-lg border p-3 transition-colors",
-                          isAbsent
-                            ? "border-zinc-800/80 bg-zinc-950/60"
-                            : isChecked
-                              ? "border-zinc-700 bg-zinc-900/80"
-                              : "border-zinc-800 bg-zinc-900/40"
-                        )}
-                      >
-                        <div className="flex items-center gap-3 min-w-0 pr-2">
-                          <input
-                            type="checkbox"
-                            checked={isChecked && !isAbsent}
-                            disabled={isAbsent}
-                            onChange={(e) =>
-                              setSelectedPlayers((prev) => ({
-                                ...prev,
-                                [pId]: e.target.checked,
-                              }))
-                            }
-                            className="size-4 rounded accent-zinc-100 bg-zinc-900 border-zinc-700 disabled:opacity-30 cursor-pointer"
-                          />
-                          <div className="min-w-0">
-                            <p
-                              className={cn(
-                                "text-xs font-semibold truncate",
-                                isAbsent ? "text-zinc-400" : "text-zinc-200"
-                              )}
-                            >
-                              {p.name}
-                            </p>
-                            {isAbsent && (
-                              <span className="flex items-center gap-1 text-[11px] text-red-400 font-mono font-medium mt-0.5">
-                                <Lock className="size-3" />
-                                Ineligible (Absent)
-                              </span>
-                            )}
+                      return (
+                        <div
+                          key={pId}
+                          className={cn(
+                            "flex items-center justify-between rounded-lg border p-3 transition-colors",
+                            isAbsent
+                              ? "border-zinc-800/60 bg-zinc-950/40 opacity-60"
+                              : isChecked
+                                ? "border-zinc-700 bg-zinc-900/80"
+                                : "border-zinc-800 bg-zinc-900/40"
+                          )}
+                        >
+                          <div className="flex items-center gap-3 min-w-0 pr-2">
+                            <input
+                              type="checkbox"
+                              checked={isChecked && !isAbsent}
+                              disabled={isAbsent}
+                              onChange={(e) =>
+                                setSelectedPlayers((prev) => ({
+                                  ...prev,
+                                  [pId]: e.target.checked,
+                                }))
+                              }
+                              className="size-4 rounded accent-zinc-100 bg-zinc-900 border-zinc-700 disabled:opacity-30 cursor-pointer"
+                            />
+                            <div className="min-w-0">
+                              <p
+                                className={cn(
+                                  "text-xs font-semibold truncate",
+                                  isAbsent ? "text-zinc-500" : "text-zinc-200"
+                                )}
+                              >
+                                {p.name}
+                              </p>
+                              {isAbsent ? (
+                                <span className="flex items-center gap-1 text-[11px] text-zinc-500 font-mono mt-0.5">
+                                  <Lock className="size-3" />
+                                  Ineligible · Absent
+                                </span>
+                              ) : isChecked && currentScore > 0 ? (
+                                <div className="flex items-center gap-1 mt-0.5">
+                                  {Array.from({
+                                    length: Math.min(5, currentScore),
+                                  }).map((_, i) => (
+                                    <span
+                                      key={i}
+                                      className="size-1.5 rounded-full bg-zinc-100"
+                                    />
+                                  ))}
+                                  {currentScore > 5 && (
+                                    <span className="text-[10px] font-mono text-zinc-400">
+                                      +{currentScore - 5}
+                                    </span>
+                                  )}
+                                  <span className="text-[10px] font-mono text-zinc-400 ml-1">
+                                    ({currentScore} {newMatchSport === "Cricket" ? "runs" : "goals"})
+                                  </span>
+                                </div>
+                              ) : isChecked ? (
+                                <span className="text-[10.5px] font-mono text-zinc-500 mt-0.5 block">
+                                  Appearance only (0 scored)
+                                </span>
+                              ) : null}
+                            </div>
+                          </div>
+
+                          <div className="shrink-0">
+                            <CossNumberField11
+                              value={currentScore}
+                              onValueChange={(val) => {
+                                if (isAbsent) return;
+                                setMatchScores((prev) => ({
+                                  ...prev,
+                                  [pId]: Math.max(0, val),
+                                }));
+                              }}
+                              disabled={isAbsent || !isChecked}
+                              min={0}
+                              max={99}
+                            />
                           </div>
                         </div>
-
-                        <div className="shrink-0">
-                          <CossNumberField11
-                            value={currentScore}
-                            onValueChange={(val) => {
-                              if (isAbsent) return;
-                              setMatchScores((prev) => ({
-                                ...prev,
-                                [pId]: Math.max(0, val),
-                              }));
-                            }}
-                            disabled={isAbsent || !isChecked}
-                            min={0}
-                            max={99}
-                          />
-                        </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
                 </div>
               </div>
             </DialogPanel>
@@ -3030,7 +3253,7 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                 type="submit"
                 className="flex-1 rounded-lg bg-zinc-100 py-2 text-xs font-semibold text-zinc-950 hover:bg-zinc-200 transition-colors cursor-pointer"
               >
-                Save Match
+                Record Match
               </button>
             </DialogFooter>
           </form>

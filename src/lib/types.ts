@@ -33,15 +33,17 @@ export interface Session {
 }
 
 export interface ScoreEntry {
-  playerId: ObjectId;
+  playerId: ObjectId | string;
   score: number;
+  playerName?: string;
 }
 
 export interface Match {
-  _id?: ObjectId;
+  _id?: ObjectId | string;
   date: string;       // YYYY-MM-DD
   sport: string;
   opponent: string;
+  outcome?: "win" | "draw" | "loss";
   scores: ScoreEntry[];
 }
 
