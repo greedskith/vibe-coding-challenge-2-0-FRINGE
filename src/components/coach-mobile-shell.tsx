@@ -28,8 +28,17 @@ import {
   Trash2,
   Search,
   Loader2,
+  ChevronDown,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 import {
   Dialog,
   DialogClose,
@@ -170,19 +179,29 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
       if (Array.isArray(pData)) setPlayers(pData);
       if (Array.isArray(sData)) {
         setSessions(sData);
-        // Find open or latest session matching active sport
-        const sportSession =
-          sData.find(
-            (s: Session) =>
-              (s.sport || "").toLowerCase() === sport.toLowerCase() &&
-              s.status === "open"
-          ) ||
-          sData.find(
-            (s: Session) => (s.sport || "").toLowerCase() === sport.toLowerCase()
-          ) ||
-          sData[0] ||
-          null;
-        setActiveSession(sportSession);
+        setActiveSession((prev) => {
+          if (
+            prev &&
+            (prev.sport || "").toLowerCase() === sport.toLowerCase()
+          ) {
+            const updated = sData.find(
+              (s: Session) => s._id?.toString() === prev._id?.toString()
+            );
+            if (updated) return updated;
+          }
+          const sportSession =
+            sData.find(
+              (s: Session) =>
+                (s.sport || "").toLowerCase() === sport.toLowerCase() &&
+                s.status === "open"
+            ) ||
+            sData.find(
+              (s: Session) => (s.sport || "").toLowerCase() === sport.toLowerCase()
+            ) ||
+            sData[0] ||
+            null;
+          return sportSession;
+        });
       }
       if (Array.isArray(mData)) setMatches(mData);
       if (Array.isArray(rData)) setReadyResults(rData);
@@ -236,21 +255,32 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
   // Attendance helpers
   const isPlayerPresent = (playerId: string) => {
     if (!activeSession || !Array.isArray(activeSession.attendance)) return false;
-    const rec = activeSession.attendance.find(
-      (a: any) => a.playerId?.toString() === playerId
-    );
+    const rec = activeSession.attendance.find((a: any) => {
+      const id = a.playerId?._id
+        ? a.playerId._id.toString()
+        : a.playerId?.toString();
+      return id === playerId;
+    });
     return rec?.status === "present";
   };
 
   const handleToggleAttendance = async (playerId: string, present: boolean) => {
-    if (!activeSession || activeSession.status === "closed") return;
+    if (!activeSession || activeSession.status === "closed") {
+      if (activeSession?.status === "closed") {
+        toast.info("Session is locked (read-only)");
+      }
+      return;
+    }
     const newStatus = present ? "present" : "absent";
 
     // Optimistic UI update
     const updatedAttendance = [...(activeSession.attendance || [])];
-    const idx = updatedAttendance.findIndex(
-      (a: any) => a.playerId?.toString() === playerId
-    );
+    const idx = updatedAttendance.findIndex((a: any) => {
+      const id = a.playerId?._id
+        ? a.playerId._id.toString()
+        : a.playerId?.toString();
+      return id === playerId;
+    });
     if (idx >= 0) {
       updatedAttendance[idx] = { ...updatedAttendance[idx], status: newStatus };
     } else {
@@ -282,7 +312,12 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
   };
 
   const handleMarkAll = async (present: boolean) => {
-    if (!activeSession || activeSession.status === "closed") return;
+    if (!activeSession || activeSession.status === "closed") {
+      if (activeSession?.status === "closed") {
+        toast.info("Session is locked (read-only)");
+      }
+      return;
+    }
     const newStatus = present ? "present" : "absent";
     const currentSportPlayers = players.filter(
       (p) => !sport || (p.sport || "").toLowerCase() === sport.toLowerCase()
@@ -334,6 +369,7 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
         fetch("/api/ready")
           .then((r) => r.json())
           .then((data) => Array.isArray(data) && setReadyResults(data));
+        toast.success(`Session locked on ${locked.date}`);
       }
     } catch (err) {
       console.error("Failed to lock session:", err);
@@ -352,14 +388,28 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
         const created = await res.json();
         setSessions((prev) => [
           created,
-          ...prev.filter((s) => s._id !== created._id),
+          ...prev.filter(
+            (s) => s._id?.toString() !== created._id?.toString()
+          ),
         ]);
         setActiveSession(created);
         setNewSessionOpen(false);
+        toast.success(
+          `Active session set to ${formatDisplayDate(created.date)}`
+        );
+      } else {
+        const err = await res.json();
+        toast.error(err.error || "Failed to open session");
       }
     } catch (err) {
       console.error("Failed to create session:", err);
+      toast.error("Failed to open session");
     }
+  };
+
+  const handleOpenNewSessionModal = () => {
+    setNewSessionDate(new Date().toISOString().slice(0, 10));
+    setNewSessionOpen(true);
   };
 
   const handleOpenAddPlayer = () => {
@@ -709,6 +759,87 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
     }
   };
 
+  // Active sport sessions sorted newest first
+  const sportSessions = sessions
+    .filter(
+      (s) => !sport || (s.sport || "").toLowerCase() === sport.toLowerCase()
+    )
+    .sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+
+  const renderSessionDropdownContent = () => (
+    <DropdownMenuContent
+      align="end"
+      sideOffset={6}
+      className="w-auto min-w-[280px] max-w-sm bg-zinc-950 border border-zinc-800 text-zinc-100 p-1.5 shadow-xl rounded-xl z-50"
+    >
+      <DropdownMenuLabel className="text-[11px] font-mono text-zinc-400 uppercase tracking-wider px-2 py-1">
+        {sport} Practice Sessions
+      </DropdownMenuLabel>
+      <DropdownMenuSeparator className="bg-zinc-800/80 my-1" />
+      {sportSessions.length === 0 ? (
+        <div className="px-2 py-3 text-center text-xs text-zinc-500 font-mono">
+          No sessions recorded for {sport}
+        </div>
+      ) : (
+        <div className="max-h-60 overflow-y-auto space-y-0.5">
+          {sportSessions.map((session) => {
+            const isSelected =
+              activeSession?._id?.toString() === session._id?.toString();
+            const isClosed = session.status === "closed";
+            return (
+              <DropdownMenuItem
+                key={session._id?.toString()}
+                onClick={() => {
+                  setActiveSession(session);
+                  toast.success(
+                    `Viewing ${session.date} session (${isClosed ? "Locked" : "Open"})`
+                  );
+                }}
+                className={cn(
+                  "flex items-center justify-between gap-3 px-2.5 py-1.5 text-xs rounded-lg cursor-pointer transition-colors",
+                  isSelected
+                    ? "bg-zinc-800/90 text-zinc-100 font-medium"
+                    : "text-zinc-300 hover:bg-zinc-800/60 hover:text-zinc-100"
+                )}
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  <CalendarDays className="size-3.5 shrink-0 text-zinc-400" />
+                  <span className="font-mono">{session.date}</span>
+                  <span className="text-zinc-500 text-[11px]">
+                    ({formatDisplayDate(session.date)})
+                  </span>
+                </div>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <span
+                    className={cn(
+                      "text-[10px] font-mono px-1.5 py-0.5 rounded border uppercase tracking-wider",
+                      isClosed
+                        ? "border-zinc-800 bg-zinc-900 text-zinc-500"
+                        : "border-emerald-500/30 bg-emerald-500/10 text-emerald-400"
+                    )}
+                  >
+                    {isClosed ? "🔒 Closed" : "🔓 Open"}
+                  </span>
+                  {isSelected && (
+                    <Check className="size-3.5 text-zinc-100 ml-1 shrink-0" />
+                  )}
+                </div>
+              </DropdownMenuItem>
+            );
+          })}
+        </div>
+      )}
+      <DropdownMenuSeparator className="bg-zinc-800/80 my-1" />
+      <DropdownMenuItem
+        onClick={handleOpenNewSessionModal}
+        className="flex items-center gap-2 px-2.5 py-1.5 text-xs text-zinc-200 hover:text-zinc-100 font-medium cursor-pointer rounded-lg hover:bg-zinc-800/60"
+      >
+        <Plus className="size-3.5 text-zinc-400" />
+        <span>+ Open New Session...</span>
+      </DropdownMenuItem>
+    </DropdownMenuContent>
+  );
+
   // Helper: Compute last 5 sessions momentum dots (●●○●●)
   const getPlayerRecentAttendance = (playerId: string): boolean[] => {
     const pastSessions = sessions
@@ -897,12 +1028,21 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
             {/* Attendance Tab Controls */}
             {activeTab === "attendance" && (
               <div className="flex items-center gap-1.5 shrink-0">
-                {activeSession && (
-                  <div className="flex items-center gap-1.5 rounded-lg border border-zinc-800 bg-zinc-900/60 px-2.5 py-1 text-[11px] font-mono text-zinc-200">
+                <DropdownMenu>
+                  <DropdownMenuTrigger
+                    className="flex items-center gap-1.5 rounded-lg border border-zinc-800 bg-zinc-900/60 hover:bg-zinc-800/80 hover:border-zinc-700 px-2.5 py-1 text-[11px] font-mono text-zinc-200 transition-colors cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-zinc-400 shrink-0"
+                    title="Switch or open session"
+                  >
                     <CalendarDays className="size-3 text-zinc-400" />
-                    <span>{formatDisplayDate(activeSession.date)}</span>
-                  </div>
-                )}
+                    <span>
+                      {activeSession
+                        ? formatDisplayDate(activeSession.date)
+                        : "Select Session"}
+                    </span>
+                    <ChevronDown className="size-2.5 text-zinc-500" />
+                  </DropdownMenuTrigger>
+                  {renderSessionDropdownContent()}
+                </DropdownMenu>
                 {activeSession && (
                   <button
                     type="button"
@@ -987,22 +1127,32 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
           </div>
 
           <div className="flex items-center gap-2.5 shrink-0">
-            {activeSession && (
-              <div className="flex items-center gap-2 rounded-lg border border-zinc-800 bg-zinc-900/50 px-3 py-1.5 text-xs font-mono text-zinc-300 whitespace-nowrap shrink-0">
+            {/* Session Pill with Dropdown Switcher */}
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                className="flex items-center gap-2 rounded-lg border border-zinc-800 bg-zinc-900/50 hover:bg-zinc-800/80 hover:border-zinc-700 px-3 py-1.5 text-xs font-mono text-zinc-300 transition-colors cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-zinc-400 whitespace-nowrap shrink-0"
+                title="Switch or open session"
+              >
                 <CalendarDays className="size-3.5 text-zinc-400" />
-                <span>{activeSession.date}</span>
-                <span className="text-zinc-600">·</span>
-                <span
-                  className={
-                    activeSession.status === "closed"
-                      ? "text-zinc-500"
-                      : "text-zinc-200"
-                  }
-                >
-                  {activeSession.status === "closed" ? "Locked" : "Open"}
-                </span>
-              </div>
-            )}
+                <span>{activeSession ? activeSession.date : "No Session"}</span>
+                {activeSession && (
+                  <>
+                    <span className="text-zinc-600">·</span>
+                    <span
+                      className={
+                        activeSession.status === "closed"
+                          ? "text-zinc-500"
+                          : "text-zinc-200"
+                      }
+                    >
+                      {activeSession.status === "closed" ? "Locked" : "Open"}
+                    </span>
+                  </>
+                )}
+                <ChevronDown className="size-3 text-zinc-500 ml-0.5" />
+              </DropdownMenuTrigger>
+              {renderSessionDropdownContent()}
+            </DropdownMenu>
 
             {/* Quick Action Buttons on Desktop */}
             {activeTab === "attendance" && (
@@ -1027,7 +1177,7 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setNewSessionOpen(true)}
+                  onClick={handleOpenNewSessionModal}
                   className="flex items-center gap-1.5 rounded-lg bg-zinc-100 px-3 py-1.5 text-xs font-semibold text-zinc-950 hover:bg-zinc-200 transition-colors cursor-pointer whitespace-nowrap shrink-0"
                 >
                   <Plus className="size-3.5" />
@@ -1105,6 +1255,24 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                 </div>
               </div>
 
+              {/* Editorial Read-Only Banner when session is closed */}
+              {activeSession?.status === "closed" && (
+                <div className="flex items-center justify-between gap-3 rounded-xl border border-zinc-800 bg-zinc-900/80 px-4 py-2.5 text-xs text-zinc-300 font-mono shadow-xs">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <Lock className="size-3.5 shrink-0 text-zinc-400" />
+                    <span className="font-medium truncate">
+                      🔒 Locked Session · Recorded on {activeSession.date} (Read-only)
+                    </span>
+                  </div>
+                  <Badge
+                    variant="secondary"
+                    className="text-[10px] uppercase tracking-wider font-mono shrink-0"
+                  >
+                    Read-only
+                  </Badge>
+                </div>
+              )}
+
               {/* Action Buttons Row */}
               <div className="flex items-center justify-between gap-2 pt-1">
                 <div className="flex items-center gap-2">
@@ -1165,12 +1333,22 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                         role="button"
                         tabIndex={0}
                         onClick={() => {
-                          if (isLocked || !activeSession) return;
+                          if (isLocked || !activeSession) {
+                            if (isLocked) {
+                              toast.info("Session is locked (read-only)");
+                            }
+                            return;
+                          }
                           handleToggleAttendance(pId, !present);
                         }}
                         onKeyDown={(e) => {
                           if (e.key === "Enter" || e.key === " ") {
-                            if (isLocked || !activeSession) return;
+                            if (isLocked || !activeSession) {
+                              if (isLocked) {
+                                toast.info("Session is locked (read-only)");
+                              }
+                              return;
+                            }
                             handleToggleAttendance(pId, !present);
                           }
                         }}
@@ -1179,9 +1357,24 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                           present
                             ? "border-zinc-300 bg-zinc-900/80 shadow-[0_0_20px_-10px_rgba(255,255,255,0.15)] ring-1 ring-zinc-300/40"
                             : "border-zinc-800/80 bg-zinc-900/40 hover:border-zinc-700/80",
-                          isLocked && "opacity-75 cursor-not-allowed"
+                          isLocked && "opacity-75 cursor-not-allowed hover:border-zinc-800/80 shadow-none ring-0"
                         )}
+                        title={
+                          isLocked
+                            ? `Locked Session (${activeSession?.date}) - Read-only`
+                            : `Tap to mark ${present ? "absent" : "present"}`
+                        }
                       >
+                        {/* Lock indicator icon when session is closed */}
+                        {isLocked && (
+                          <div
+                            className="absolute top-2.5 right-2.5 text-zinc-500"
+                            title="Locked (read-only)"
+                          >
+                            <Lock className="size-3" />
+                          </div>
+                        )}
+
                         {/* Avatar */}
                         <div
                           className={cn(
@@ -1232,7 +1425,9 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
               {/* Instruction Footer */}
               <div className="text-center pt-2">
                 <p className="text-[11px] font-mono text-zinc-500">
-                  Tap to mark present · Long-press to mark absent
+                  {activeSession?.status === "closed"
+                    ? "Session locked · Historical attendance is read-only"
+                    : "Tap to mark present · Long-press to mark absent"}
                 </p>
               </div>
             </div>
