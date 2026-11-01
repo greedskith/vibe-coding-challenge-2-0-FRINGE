@@ -32,8 +32,8 @@
 | M1 | Ready API & Build Unblocker | Fix `sessions/route.ts` type, enhance `/api/ready` for `?readyOnly=true`, `?filter=readyOnly`, `?playerId=xxx` | Survey | DONE |
 | M2 | Swiss UI & Dashboards | Refactor `p-badge-16.tsx` to monochromatic, enhance `/player` with history/matches, verify `/scout` & `/coach/ready` | M1 | DONE |
 | M3 | Phase 5 Test Suite Integration | Implement `src/scripts/test-phase-5.ts` and `"verify:phase5"` in `package.json` | M1, M2 | DONE |
-| M4 | Final Milestone (E2E Pass & Adversarial Hardening) | Pass 100% E2E tests (Phase 1) + Tier 5 Adversarial Coverage Hardening (Phase 2) | E2E, M3 | IN_PROGRESS |
-| M5 | Matrix Verification, Git Sync & Deploy | Run full verification matrix, clean Git commit & push to `origin/main`, Vercel deploy check | M4 | PLANNED |
+| M4 | Final Milestone (E2E Pass & Adversarial Hardening) | Pass 100% E2E tests (Phase 1) + Tier 5 Adversarial Coverage Hardening (Phase 2) | E2E, M3 | DONE |
+| M5 | Matrix Verification, Git Sync & Deploy | Run full verification matrix, clean Git commit & push to `origin/main`, Vercel deploy check | M4 | IN_PROGRESS |
 
 ## Interface Contracts
 ### Client ↔ `/api/ready`

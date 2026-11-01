@@ -64,10 +64,13 @@ npm run verify:phase3
 # 4. Run Phase 4 Deep Match Scoring & Absent Refusal Suite
 npm run verify:phase4
 
-# 5. Run Live Production Smoke Test against any live URL (or localhost)
+# 5. Run Phase 5 Ready Logic, Scout Exclusivity & Monochromatic Design Audit
+npm run verify:phase5
+
+# 6. Run Live Production Smoke Test against any live URL (or localhost)
 BASE_URL=https://<your-deployment-url>.vercel.app npm run verify:live
 
-# 6. Type check & production build
+# 7. Type check & production build
 npx tsc --noEmit
 npm run build
 ```
