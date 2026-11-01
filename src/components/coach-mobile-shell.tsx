@@ -628,38 +628,39 @@ export function CoachMobileShell() {
 
         {/* Dashboard Main Scrollable Area */}
         <main className="flex-1 p-4 sm:p-6 md:p-8 max-w-6xl mx-auto w-full space-y-6 pb-24 md:pb-8">
-          {/* 2-Card Metric Overview */}
-          <section className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-            {/* Card 1: Attendance */}
-            <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-4 sm:p-5 shadow-xs">
-              <div className="flex items-center justify-between text-xs font-mono text-zinc-400">
-                <span>Attendance</span>
-                <span className="rounded-md border border-zinc-800 bg-zinc-950 px-2 py-0.5 text-[11px] text-zinc-300">
-                  {attendanceRate}%
-                </span>
-              </div>
-              <div className="mt-2 text-2xl sm:text-3xl font-bold tracking-tight text-zinc-100">
-                {presentCount} <span className="text-zinc-500 font-normal text-xl">/ {players.length}</span>
-              </div>
-            </div>
-
-            {/* Card 2: Trial Ready */}
-            <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-4 sm:p-5 shadow-xs">
-              <div className="flex items-center justify-between text-xs font-mono text-zinc-400">
-                <span>Trial Ready</span>
-                <span className="rounded-md border border-zinc-800 bg-zinc-950 px-2 py-0.5 text-[11px] text-zinc-300">
-                  {players.length > 0 ? Math.round((qualifiedCount / players.length) * 100) : 0}%
-                </span>
-              </div>
-              <div className="mt-2 text-2xl sm:text-3xl font-bold tracking-tight text-zinc-100">
-                {qualifiedCount} <span className="text-zinc-500 font-normal text-xl">/ {players.length}</span>
-              </div>
-            </div>
-          </section>
-
           {/* TAB 1: ATTENDANCE (DESK) */}
           {activeTab === "attendance" && (
-            <div className="space-y-4">
+            <div className="space-y-6">
+              {/* 2-Card Metric Overview */}
+              <section className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                {/* Card 1: Attendance */}
+                <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-4 sm:p-5 shadow-xs">
+                  <div className="flex items-center justify-between text-xs font-mono text-zinc-400">
+                    <span>Attendance</span>
+                    <span className="rounded-md border border-zinc-800 bg-zinc-950 px-2 py-0.5 text-[11px] text-zinc-300">
+                      {attendanceRate}%
+                    </span>
+                  </div>
+                  <div className="mt-2 text-2xl sm:text-3xl font-bold tracking-tight text-zinc-100">
+                    {presentCount} <span className="text-zinc-500 font-normal text-xl">/ {players.length}</span>
+                  </div>
+                </div>
+
+                {/* Card 2: Trial Ready */}
+                <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-4 sm:p-5 shadow-xs">
+                  <div className="flex items-center justify-between text-xs font-mono text-zinc-400">
+                    <span>Trial Ready</span>
+                    <span className="rounded-md border border-zinc-800 bg-zinc-950 px-2 py-0.5 text-[11px] text-zinc-300">
+                      {players.length > 0 ? Math.round((qualifiedCount / players.length) * 100) : 0}%
+                    </span>
+                  </div>
+                  <div className="mt-2 text-2xl sm:text-3xl font-bold tracking-tight text-zinc-100">
+                    {qualifiedCount} <span className="text-zinc-500 font-normal text-xl">/ {players.length}</span>
+                  </div>
+                </div>
+              </section>
+
+              <div className="space-y-4">
               {/* Athletes Bar & Quick Mark Row */}
               <div className="flex items-center justify-between px-1">
                 <div className="flex items-center gap-2">
@@ -862,6 +863,7 @@ export function CoachMobileShell() {
                 </DialogPopup>
               </Dialog>
             </div>
+            </div>
           )}
 
           {/* TAB 3: MATCHES */}
@@ -976,8 +978,8 @@ export function CoachMobileShell() {
                                   isAbsent
                                     ? "border-zinc-800/80 bg-zinc-950/60"
                                     : isChecked
-                                    ? "border-zinc-700 bg-zinc-900/80"
-                                    : "border-zinc-800 bg-zinc-900/40"
+                                      ? "border-zinc-700 bg-zinc-900/80"
+                                      : "border-zinc-800 bg-zinc-900/40"
                                 )}
                               >
                                 <div className="flex items-center gap-3 min-w-0 pr-2">
@@ -1147,49 +1149,36 @@ export function CoachMobileShell() {
                         <CossBadge16 isReady={isReady} />
                       </div>
 
-                      {/* 75% Tick Threshold Bar */}
-                      <div className="space-y-1.5">
-                        <div className="flex justify-between text-xs font-mono">
-                          <span className="text-zinc-400">
-                            Attendance: <strong className="text-zinc-200">{item.attendancePct}%</strong>
-                          </span>
-                          <span className={item.attendancePct >= 75 ? "text-zinc-200 font-semibold" : "text-zinc-500"}>
-                            Target 75%
-                          </span>
-                        </div>
-
-                        {/* Progress bar container with 75% vertical tick mark */}
-                        <div className="relative h-2 w-full rounded-full bg-zinc-800 overflow-hidden">
-                          {/* Fill bar */}
-                          <div
-                            className={cn(
-                              "h-full rounded-full transition-all duration-300",
-                              item.attendancePct >= 75 ? "bg-zinc-100" : "bg-zinc-500"
-                            )}
-                            style={{
-                              width: `${Math.min(100, item.attendancePct)}%`,
-                            }}
-                          />
-                          {/* 75% tick marker with clear contrast */}
-                          <div
-                            className={cn(
-                              "absolute top-0 bottom-0 w-0.5 z-10",
-                              item.attendancePct >= 75 ? "bg-zinc-950" : "bg-zinc-300"
-                            )}
-                            style={{ left: "75%" }}
-                            title="75% Target"
-                          />
-                        </div>
+                      {/* Attendance & Match Metrics Row (Option A) */}
+                      <div className="flex items-center justify-between text-xs font-mono">
+                        <span className="text-zinc-400">
+                          <strong className="text-zinc-100 font-semibold">{item.attendancePct}%</strong> Attendance
+                        </span>
+                        <span className="text-zinc-400 flex items-center gap-1">
+                          <strong className="text-zinc-100 font-semibold">{item.matchCount}/2</strong> Matches
+                          {item.matchCount >= 2 && <Check className="size-3 text-zinc-100 stroke-[2.5]" />}
+                        </span>
                       </div>
 
-                      {/* Criteria Badges Footer */}
-                      <div className="flex items-center justify-between pt-2 border-t border-zinc-800 text-xs font-mono">
-                        <div className="flex items-center gap-1.5 text-zinc-300">
-                          <Trophy className="size-3.5 text-zinc-400" />
-                          <span>
-                            {item.matchCount}/2 Matches {item.matchCount >= 2 && <Check className="inline size-3 text-zinc-100" />}
-                          </span>
-                        </div>
+                      {/* Sleek Progress Bar with 75% Target Marker */}
+                      <div className="relative h-1.5 w-full rounded-full bg-zinc-800 overflow-hidden">
+                        <div
+                          className={cn(
+                            "h-full rounded-full transition-all duration-300",
+                            item.attendancePct >= 75 ? "bg-zinc-200" : "bg-zinc-500"
+                          )}
+                          style={{
+                            width: `${Math.min(100, item.attendancePct)}%`,
+                          }}
+                        />
+                        <div
+                          className={cn(
+                            "absolute top-0 bottom-0 w-0.5 z-10",
+                            item.attendancePct >= 75 ? "bg-zinc-950" : "bg-zinc-400"
+                          )}
+                          style={{ left: "75%" }}
+                          title="75% Target"
+                        />
                       </div>
                     </div>
                   );
