@@ -4,7 +4,7 @@ import * as React from "react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { signIn, getSession } from "next-auth/react";
-import { ArrowRight, Loader2, Lock, User, AlertCircle } from "lucide-react";
+import { ArrowRight, Loader2, Lock, User, AlertCircle, Trophy } from "lucide-react";
 
 export function LoginForm() {
   const router = useRouter();
@@ -68,113 +68,125 @@ export function LoginForm() {
   };
 
   return (
-    <div className="w-full space-y-6">
+    <div className="w-full max-w-sm mx-auto space-y-6">
       {/* Visual Header */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="size-2.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]" />
-          <h1 className="text-xl font-bold tracking-tight text-zinc-100">
-            Academy Desk
-          </h1>
+        <div className="flex items-center gap-2.5">
+          <div className="flex size-8 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900 text-zinc-200">
+            <Trophy className="size-4 text-zinc-300" />
+          </div>
+          <div>
+            <h1 className="text-base font-semibold tracking-tight text-zinc-100">
+              Academy Desk
+            </h1>
+            <p className="text-[11px] text-zinc-400 font-mono">Dumka Sports Academy</p>
+          </div>
         </div>
-        <span className="text-[11px] font-mono uppercase tracking-wider text-zinc-500">
-          Dumka
+        <span className="rounded-md border border-zinc-800 bg-zinc-900/60 px-2 py-0.5 text-[10px] font-mono uppercase tracking-wider text-zinc-400">
+          Sign In
         </span>
       </div>
 
       {/* Login Card */}
-      <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/60 p-5 backdrop-blur">
+      <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-6 backdrop-blur shadow-xs">
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
-            <div className="flex items-center gap-2 rounded-xl bg-red-950/40 border border-red-900/60 p-3 text-xs text-red-400">
+            <div className="flex items-center gap-2 rounded-lg bg-red-950/40 border border-red-900/60 p-3 text-xs text-red-400">
               <AlertCircle className="size-4 shrink-0" />
               <span>{error}</span>
             </div>
           )}
 
-          <div className="relative">
-            <User className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-zinc-500" />
-            <input
-              type="text"
-              value={username}
-              onChange={(e) => {
-                setUsername(e.target.value);
-                setActiveRole(null);
-              }}
-              placeholder="Username"
-              required
-              autoComplete="username"
-              className="h-12 w-full rounded-xl border border-zinc-800 bg-zinc-950 pl-10 pr-3 text-sm text-zinc-100 placeholder:text-zinc-600 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-            />
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-zinc-400">Username</label>
+            <div className="relative">
+              <User className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-zinc-500" />
+              <input
+                type="text"
+                value={username}
+                onChange={(e) => {
+                  setUsername(e.target.value);
+                  setActiveRole(null);
+                }}
+                placeholder="Username"
+                required
+                autoComplete="username"
+                className="h-10 w-full rounded-lg border border-zinc-800 bg-zinc-950 pl-10 pr-3 text-sm text-zinc-100 placeholder:text-zinc-600 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-600 transition-colors"
+              />
+            </div>
           </div>
 
-          <div className="relative">
-            <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-zinc-500" />
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => {
-                setPassword(e.target.value);
-                setActiveRole(null);
-              }}
-              placeholder="Password"
-              required
-              autoComplete="current-password"
-              className="h-12 w-full rounded-xl border border-zinc-800 bg-zinc-950 pl-10 pr-3 text-sm text-zinc-100 placeholder:text-zinc-600 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-            />
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-zinc-400">Password</label>
+            <div className="relative">
+              <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-zinc-500" />
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  setActiveRole(null);
+                }}
+                placeholder="Password"
+                required
+                autoComplete="current-password"
+                className="h-10 w-full rounded-lg border border-zinc-800 bg-zinc-950 pl-10 pr-3 text-sm text-zinc-100 placeholder:text-zinc-600 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-600 transition-colors"
+              />
+            </div>
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-emerald-500 font-semibold text-zinc-950 shadow hover:bg-emerald-400 transition-colors cursor-pointer disabled:opacity-50"
+            className="flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-zinc-100 font-semibold text-xs uppercase tracking-wide text-zinc-950 shadow hover:bg-zinc-200 transition-colors cursor-pointer disabled:opacity-50 mt-2"
           >
             {loading ? (
               <Loader2 className="size-4 animate-spin" />
             ) : (
               <>
-                <span>Enter</span>
+                <span>Continue</span>
                 <ArrowRight className="size-4" />
               </>
             )}
           </button>
         </form>
 
-        {/* Quick Role Pills */}
-        <div className="mt-6 pt-5 border-t border-zinc-800/80">
+        {/* Quick Demo Role Pills */}
+        <div className="mt-6 pt-5 border-t border-zinc-800">
+          <p className="text-[11px] font-mono text-zinc-500 mb-2">Quick Sign-in Roles</p>
           <div className="grid grid-cols-3 gap-2">
             <button
               type="button"
               onClick={() => selectRolePill("coach")}
-              className={`flex h-10 items-center justify-center rounded-xl border text-xs font-mono transition-colors ${
+              className={`flex h-9 items-center justify-center rounded-lg border text-xs font-mono transition-colors cursor-pointer ${
                 activeRole === "coach"
-                  ? "border-emerald-500/80 bg-emerald-500/15 text-emerald-400"
-                  : "border-zinc-800 bg-zinc-950 text-zinc-400 hover:text-zinc-200"
+                  ? "border-zinc-500 bg-zinc-800 text-zinc-100 font-semibold"
+                  : "border-zinc-800 bg-zinc-950 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900"
               }`}
             >
-              [ coach ]
+              coach
             </button>
             <button
               type="button"
               onClick={() => selectRolePill("scout")}
-              className={`flex h-10 items-center justify-center rounded-xl border text-xs font-mono transition-colors ${
+              className={`flex h-9 items-center justify-center rounded-lg border text-xs font-mono transition-colors cursor-pointer ${
                 activeRole === "scout"
-                  ? "border-emerald-500/80 bg-emerald-500/15 text-emerald-400"
-                  : "border-zinc-800 bg-zinc-950 text-zinc-400 hover:text-zinc-200"
+                  ? "border-zinc-500 bg-zinc-800 text-zinc-100 font-semibold"
+                  : "border-zinc-800 bg-zinc-950 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900"
               }`}
             >
-              [ scout ]
+              scout
             </button>
             <button
               type="button"
               onClick={() => selectRolePill("player")}
-              className={`flex h-10 items-center justify-center rounded-xl border text-xs font-mono transition-colors ${
+              className={`flex h-9 items-center justify-center rounded-lg border text-xs font-mono transition-colors cursor-pointer ${
                 activeRole === "player"
-                  ? "border-emerald-500/80 bg-emerald-500/15 text-emerald-400"
-                  : "border-zinc-800 bg-zinc-950 text-zinc-400 hover:text-zinc-200"
+                  ? "border-zinc-500 bg-zinc-800 text-zinc-100 font-semibold"
+                  : "border-zinc-800 bg-zinc-950 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900"
               }`}
             >
-              [ player ]
+              player
             </button>
           </div>
         </div>

@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 export interface ReadyBadgeProps {
   isReady: boolean;
@@ -7,25 +7,22 @@ export interface ReadyBadgeProps {
 }
 
 export function CossBadge16({ isReady, className }: ReadyBadgeProps) {
-  return isReady ? (
-    <Badge
-      variant="outline"
-      className={`border-emerald-500/40 bg-emerald-500/10 text-emerald-400 gap-1.5 py-1 px-2.5 font-medium text-xs font-mono ${className || ""}`}
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center gap-1.5 rounded-full border border-zinc-800 bg-zinc-900/80 px-2.5 py-0.5 text-xs font-medium text-zinc-200 shrink-0 select-none",
+        className
+      )}
     >
       <span
         aria-hidden="true"
-        className="size-1.5 rounded-full bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.8)]"
+        className={cn(
+          "size-1.5 rounded-full shrink-0",
+          isReady ? "bg-emerald-400" : "bg-zinc-500"
+        )}
       />
-      Ready
-    </Badge>
-  ) : (
-    <Badge
-      variant="outline"
-      className={`border-zinc-800 bg-zinc-900/60 text-zinc-400 gap-1.5 py-1 px-2.5 font-medium text-xs font-mono ${className || ""}`}
-    >
-      <span aria-hidden="true" className="size-1.5 rounded-full bg-zinc-500" />
-      Pending
-    </Badge>
+      <span>{isReady ? "Ready" : "Pending"}</span>
+    </span>
   );
 }
 
