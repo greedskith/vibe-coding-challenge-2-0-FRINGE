@@ -1,29 +1,30 @@
 # Academy Desk
 
-Sports academy tracking and trial readiness benchmarking system for Dumka Sports Academy.
+A simple sports desk for Dumka Sports Academy. Coaches track daily practice and matches, qualifying athletes for scout trials.
 
-### Checkpoints
+### How It Works
 
-| Rule | Specification |
+| Rule | What it does |
 |---|---|
-| **Session Immutability** | Attendance is locked once closed (`HTTP 400`). |
-| **Match Eligibility** | Absent athletes cannot participate in matches (`HTTP 400`). |
-| **Trial Readiness** | $\ge 75\%$ attendance and $\ge 2$ matches played. |
-| **Role Isolation** | Scouts see only trial-ready athletes; players see only their own dossier. |
-| **Multi-Sport** | Strict attendance isolation across concurrent sports on the same date. |
+| **Locked Sessions** | Once a practice session is marked closed, its attendance cannot be altered. |
+| **Match Eligibility** | If a player was absent for practice on match day, they cannot play that match. |
+| **Trial Qualification** | A player becomes trial-ready after reaching **75% attendance** and playing **at least 2 matches**. |
+| **Private Portals** | Scouts only see players who qualified for trials. Players only see their own progress. |
+| **Multiple Sports** | Football and cricket track attendance independently without mixing up records. |
 
-### Credentials
+### Demo Accounts
 
-| Role | Login | Route |
+| Role | Login | Page |
 |---|---|---|
 | **Coach** | `coach` / `coach123` | `/coach` |
 | **Scout** | `scout` / `scout123` | `/scout` |
 | **Player** | `rohit` / `rohit123` | `/player` |
 
-### Verification
+### Commands
 
 ```bash
-npm run verify        # 4 core hackathon checks + multi-sport concurrency
-npm test              # full 107-test opaque-box E2E suite
-npm run build         # production build
+npm run dev     # start local server at http://localhost:3000
+npm run verify  # check all academy rules and edge cases
+npm test        # run the full test suite (107 tests)
+npm run build   # build production app
 ```
