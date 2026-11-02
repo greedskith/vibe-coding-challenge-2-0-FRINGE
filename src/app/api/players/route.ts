@@ -32,7 +32,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { name, age, sport, password } = body;
+    const { name, age, sport, password, imageUrl } = body;
 
     if (!name || typeof name !== "string" || !name.trim()) {
       return NextResponse.json({ error: "Player name is required" }, { status: 400 });
@@ -48,11 +48,14 @@ export async function POST(req: NextRequest) {
     const db = await getDb();
 
     // 1. Insert into `players` → get insertedId
-    const playerDoc = {
+    const playerDoc: Record<string, any> = {
       name: trimmedName,
       age: parsedAge,
       sport: selectedSport,
     };
+    if (imageUrl && typeof imageUrl === "string" && imageUrl.trim()) {
+      playerDoc.imageUrl = imageUrl.trim();
+    }
     const playerResult = await db.collection("players").insertOne(playerDoc);
     const playerId = playerResult.insertedId;
 

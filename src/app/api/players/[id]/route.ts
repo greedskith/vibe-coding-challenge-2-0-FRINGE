@@ -52,7 +52,7 @@ export async function PUT(
     }
 
     const body = await req.json();
-    const { name, age, sport } = body;
+    const { name, age, sport, imageUrl } = body;
 
     const updateFields: Record<string, any> = {};
     if (name !== undefined) {
@@ -73,6 +73,9 @@ export async function PUT(
         return NextResponse.json({ error: "Sport cannot be empty" }, { status: 400 });
       }
       updateFields.sport = sport.trim();
+    }
+    if (imageUrl !== undefined) {
+      updateFields.imageUrl = typeof imageUrl === "string" && imageUrl.trim() ? imageUrl.trim() : null;
     }
 
     if (Object.keys(updateFields).length === 0) {

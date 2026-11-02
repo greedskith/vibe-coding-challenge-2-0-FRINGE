@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { signOut } from "next-auth/react";
 import { LogOut, Trophy, Check, ShieldAlert } from "lucide-react";
 import { CossBadge16 } from "@/components/p-badge-16";
+import { AthleteAvatar } from "@/components/athlete-avatar";
 import { ReadyResult } from "@/lib/types";
 
 export default function ScoutPage() {
@@ -108,9 +109,12 @@ export default function ScoutPage() {
                     {/* Header */}
                     <div className="flex flex-wrap sm:flex-nowrap items-start sm:items-center justify-between gap-2.5 sm:gap-4">
                       <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
-                        <div className="flex size-9 sm:size-10 shrink-0 items-center justify-center rounded-full border border-zinc-700 bg-zinc-800 text-zinc-200 font-semibold text-xs font-mono">
-                          {initials}
-                        </div>
+                        <AthleteAvatar
+                          name={item.player.name}
+                          imageUrl={item.player.imageUrl}
+                          className="size-9 sm:size-10 border-zinc-700 bg-zinc-800"
+                          alt={`${item.player.name} (${initials})`}
+                        />
                         <div className="min-w-0 flex-1">
                           <h3 className="text-sm sm:text-base font-semibold text-zinc-100 truncate">
                             {item.player.name}

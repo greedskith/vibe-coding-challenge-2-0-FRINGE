@@ -19,9 +19,27 @@ function getInitialStore(): LocalStore {
 
   return {
     players: [
-      { _id: p1Id, name: "Rohit Kumar", age: 17, sport: "Football" },
-      { _id: p2Id, name: "Priya Murmu", age: 16, sport: "Football" },
-      { _id: p3Id, name: "Amit Soren", age: 18, sport: "Football" },
+      {
+        _id: p1Id,
+        name: "Rohit Kumar",
+        age: 17,
+        sport: "Football",
+        imageUrl: "https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?auto=format&fit=crop&w=256&q=80",
+      },
+      {
+        _id: p2Id,
+        name: "Priya Murmu",
+        age: 16,
+        sport: "Football",
+        imageUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=256&q=80",
+      },
+      {
+        _id: p3Id,
+        name: "Amit Soren",
+        age: 18,
+        sport: "Football",
+        imageUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=256&q=80",
+      },
     ],
     users: [
       {

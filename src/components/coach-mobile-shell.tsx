@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import React, { useState, useEffect, useCallback, Suspense } from "react";
@@ -28,7 +29,9 @@ import {
   Search,
   Loader2,
   ChevronDown,
+  Camera,
 } from "lucide-react";
+import { AthleteAvatar } from "@/components/athlete-avatar";
 import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
@@ -67,6 +70,46 @@ const NAV_TABS = [
   { id: "roster" as Tab, label: "Roster", icon: Users },
   { id: "ready" as Tab, label: "Ready Board", icon: Sparkles },
 ];
+
+const ATHLETE_AVATAR_PRESETS = [
+  { label: "1", url: "https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?auto=format&fit=crop&w=256&q=80" },
+  { label: "2", url: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=256&q=80" },
+  { label: "3", url: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=256&q=80" },
+  { label: "4", url: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=256&q=80" },
+];
+
+function compressImage(file: File, maxDim = 256): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        let { width, height } = img;
+        if (width > height) {
+          if (width > maxDim) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          }
+        } else {
+          if (height > maxDim) {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
+          }
+        }
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        ctx?.drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL("image/jpeg", 0.82));
+      };
+      img.onerror = reject;
+      img.src = e.target?.result as string;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
 
 export function getAgeGroup(age: number | string): string {
   const num = Number(age);
@@ -146,6 +189,7 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
   const [editName, setEditName] = useState("");
   const [editAge, setEditAge] = useState<number>(16);
   const [editSport, setEditSport] = useState<string>("Football");
+  const [editImageUrl, setEditImageUrl] = useState<string>("");
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [isDeletingAthlete, setIsDeletingAthlete] = useState(false);
 
@@ -161,6 +205,7 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
   const [newPlayerAge, setNewPlayerAge] = useState<number>(16);
   const [newPlayerSport, setNewPlayerSport] = useState<string>("Football");
   const [newPlayerPassword, setNewPlayerPassword] = useState("");
+  const [newPlayerImageUrl, setNewPlayerImageUrl] = useState("");
   const [isAddingPlayer, setIsAddingPlayer] = useState(false);
 
   const [newMatchOpen, setNewMatchOpen] = useState(false);
@@ -490,6 +535,7 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
           name: trimmedName,
           age: numAge,
           sport: newPlayerSport || sport,
+          ...(newPlayerImageUrl.trim() ? { imageUrl: newPlayerImageUrl.trim() } : {}),
           ...(explicitPassword ? { password: explicitPassword } : {}),
         }),
       });
@@ -518,6 +564,7 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
       setNewPlayerOpen(false);
       setNewPlayerName("");
       setNewPlayerPassword("");
+      setNewPlayerImageUrl("");
       await loadData();
     } catch (err: any) {
       toast.error(err.message || "Failed to add athlete");
@@ -532,6 +579,7 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
     setEditName(athlete.name);
     setEditAge(athlete.age);
     setEditSport(athlete.sport || sport);
+    setEditImageUrl(athlete.imageUrl || "");
     setCopied(false);
     setDrawerOpen(true);
   };
@@ -601,6 +649,7 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
           name: editName.trim(),
           age: numAge,
           sport: editSport,
+          imageUrl: editImageUrl.trim() || null,
         }),
       });
 
@@ -1492,12 +1541,6 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                     const present = isPlayerPresent(pId);
                     const isLocked = activeSession?.status === "closed";
                     const recentDots = getPlayerRecentAttendance(pId);
-                    const initials = player.name
-                      .split(" ")
-                      .map((n) => n[0])
-                      .join("")
-                      .slice(0, 2)
-                      .toUpperCase();
 
                     return (
                       <div
@@ -1603,16 +1646,17 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                         )}
 
                         {/* Avatar */}
-                        <div
+                        <AthleteAvatar
+                          name={player.name}
+                          imageUrl={player.imageUrl}
                           className={cn(
-                            "flex size-14 shrink-0 items-center justify-center rounded-full text-sm font-mono font-bold transition-all shadow-xs",
+                            "size-14 font-bold shadow-xs",
                             present
-                              ? "bg-zinc-100 text-zinc-950 shadow-md ring-2 ring-zinc-100/50"
-                              : "bg-zinc-800 text-zinc-300 border border-zinc-700/80"
+                              ? "ring-2 ring-zinc-100 shadow-md bg-zinc-100"
+                              : "border-zinc-700/80 bg-zinc-800"
                           )}
-                        >
-                          {initials}
-                        </div>
+                          textClassName={present ? "text-zinc-950 font-bold" : "text-zinc-200"}
+                        />
 
                         {/* Name */}
                         <div className="w-full min-w-0 px-1">
@@ -1741,16 +1785,10 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                           (pl) => pl._id?.toString() === sc.playerId?.toString()
                         );
                         const name = sc.playerName || p?.name || "Player";
-                        const initials = name
-                          .split(" ")
-                          .map((n: string) => n[0])
-                          .join("")
-                          .slice(0, 2)
-                          .toUpperCase();
                         return {
                           id: sc.playerId?.toString(),
                           name,
-                          initials,
+                          imageUrl: p?.imageUrl,
                           score: sc.score || 0,
                         };
                       });
@@ -1818,16 +1856,11 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                                         key={playerItem.id}
                                         className="flex items-center gap-2 min-w-0"
                                       >
-                                        <div
-                                          className={cn(
-                                            "flex size-6 shrink-0 items-center justify-center rounded-full text-[10px] font-mono font-medium",
-                                            playerItem.score > 0
-                                              ? "bg-zinc-800 border border-zinc-700 text-zinc-200"
-                                              : "bg-zinc-900 border border-zinc-800/80 text-zinc-500"
-                                          )}
-                                        >
-                                          {playerItem.initials}
-                                        </div>
+                                        <AthleteAvatar
+                                          name={playerItem.name}
+                                          imageUrl={playerItem.imageUrl}
+                                          className="size-6 text-[10px]"
+                                        />
                                         <span
                                           className={cn(
                                             "text-xs truncate",
@@ -1993,12 +2026,6 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                     const isAttMet = attendancePct >= 75;
                     const isMatchesMet = matchCount >= 2;
                     const ageGroup = getAgeGroup(player.age);
-                    const initials = player.name
-                      .split(" ")
-                      .map((n) => n[0])
-                      .join("")
-                      .slice(0, 2)
-                      .toUpperCase();
 
                     return (
                       <div
@@ -2016,16 +2043,14 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                         {/* Card Top: Avatar, Name, Age Group & Readiness Pill */}
                         <div className="flex items-start justify-between gap-3 min-w-0">
                           <div className="flex items-center gap-3 min-w-0 flex-1">
-                            <div
+                            <AthleteAvatar
+                              name={player.name}
+                              imageUrl={player.imageUrl}
                               className={cn(
-                                "flex size-11 shrink-0 items-center justify-center rounded-full text-xs font-mono font-semibold transition-all",
-                                isReady
-                                  ? "bg-zinc-100 text-zinc-950 font-bold shadow-xs ring-2 ring-zinc-300"
-                                  : "border border-zinc-800 bg-zinc-900 text-zinc-300 font-medium"
+                                "size-11",
+                                isReady && "ring-2 ring-zinc-300"
                               )}
-                            >
-                              {initials}
-                            </div>
+                            />
                             <div className="min-w-0 flex-1">
                               <h3 className="text-sm font-semibold text-zinc-100 truncate group-hover:text-white transition-colors">
                                 {player.name}
@@ -2190,12 +2215,6 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                             const isReady = item.isReady;
                             const isAttMet = item.attendancePct >= 75;
                             const isMatchesMet = item.matchCount >= 2;
-                            const initials = item.player.name
-                              .split(" ")
-                              .map((n) => n[0])
-                              .join("")
-                              .slice(0, 2)
-                              .toUpperCase();
 
                             return (
                               <div
@@ -2210,16 +2229,11 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                                 {/* Desktop & Tablet Layout (sm:grid) */}
                                 <div className="hidden sm:grid sm:grid-cols-[1fr_220px_100px] lg:grid-cols-[1fr_260px_110px] sm:items-center gap-4">
                                   <div className="flex items-center gap-3 min-w-0">
-                                    <div
-                                      className={cn(
-                                        "flex size-9 shrink-0 items-center justify-center rounded-full text-xs font-mono",
-                                        isReady
-                                          ? "bg-zinc-100 text-zinc-950 font-bold shadow-xs"
-                                          : "border border-zinc-800 bg-zinc-900 text-zinc-300 font-medium"
-                                      )}
-                                    >
-                                      {initials}
-                                    </div>
+                                    <AthleteAvatar
+                                      name={item.player.name}
+                                      imageUrl={item.player.imageUrl}
+                                      className={cn("size-9", isReady && "ring-1 ring-zinc-300")}
+                                    />
                                     <div className="min-w-0 flex-1">
                                       <h3 className="text-sm font-semibold text-zinc-100 truncate">
                                         {item.player.name}
@@ -2306,16 +2320,11 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                                 <div className="sm:hidden space-y-3">
                                   <div className="flex items-center justify-between gap-3">
                                     <div className="flex items-center gap-3 min-w-0">
-                                      <div
-                                        className={cn(
-                                          "flex size-9 shrink-0 items-center justify-center rounded-full text-xs font-mono",
-                                          isReady
-                                            ? "bg-zinc-100 text-zinc-950 font-bold shadow-xs"
-                                            : "border border-zinc-800 bg-zinc-900 text-zinc-300 font-medium"
-                                        )}
-                                      >
-                                        {initials}
-                                      </div>
+                                      <AthleteAvatar
+                                        name={item.player.name}
+                                        imageUrl={item.player.imageUrl}
+                                        className={cn("size-9", isReady && "ring-1 ring-zinc-300")}
+                                      />
                                       <div className="min-w-0 flex-1">
                                         <h3 className="text-sm font-semibold text-zinc-100 truncate">
                                           {item.player.name}
@@ -2498,26 +2507,19 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                 const mCount = readyInfo?.matchCount || 0;
                 const attMet = attPct >= 75;
                 const matchMet = mCount >= 2;
-                const initials = selectedAthlete.name
-                  .split(" ")
-                  .map((n) => n[0])
-                  .join("")
-                  .slice(0, 2)
-                  .toUpperCase();
 
                 return (
                   <>
                     <div className="flex items-start gap-4">
-                      <div
+                      <AthleteAvatar
+                        name={selectedAthlete.name}
+                        imageUrl={selectedAthlete.imageUrl}
                         className={cn(
-                          "flex size-14 shrink-0 items-center justify-center rounded-2xl text-base font-mono font-bold shadow-md",
-                          isReady
-                            ? "bg-zinc-100 text-zinc-950 ring-2 ring-zinc-300"
-                            : "border border-zinc-800 bg-zinc-900 text-zinc-300"
+                          "size-14 rounded-2xl shadow-md",
+                          isReady && "ring-2 ring-zinc-300"
                         )}
-                      >
-                        {initials}
-                      </div>
+                        textClassName="text-base font-bold"
+                      />
                       <div className="min-w-0 flex-1 space-y-1">
                         <h2 className="text-lg font-bold text-zinc-100 truncate">
                           {selectedAthlete.name}
@@ -2789,6 +2791,47 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                           </div>
                         </div>
 
+                        {/* Profile Photo */}
+                        <div className="space-y-1.5">
+                          <label className="text-xs text-zinc-400 block font-medium">
+                            Profile Photo
+                          </label>
+                          <div className="flex items-center gap-2">
+                            <label className="flex items-center justify-center gap-1.5 rounded-lg border border-zinc-800 bg-zinc-950 px-2.5 py-1.5 text-xs text-zinc-200 hover:bg-zinc-900 transition-colors cursor-pointer shrink-0">
+                              <Camera className="size-3 text-zinc-400" />
+                              <span>Upload</span>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={async (e) => {
+                                  const file = e.target.files?.[0];
+                                  if (file) {
+                                    const dataUrl = await compressImage(file, 256);
+                                    setEditImageUrl(dataUrl);
+                                  }
+                                }}
+                              />
+                            </label>
+                            <input
+                              type="url"
+                              value={editImageUrl.startsWith("data:") ? "" : editImageUrl}
+                              onChange={(e) => setEditImageUrl(e.target.value)}
+                              placeholder="Or paste image URL..."
+                              className="h-8 flex-1 rounded-lg border border-zinc-800 bg-zinc-950 px-2.5 text-xs text-zinc-100 placeholder:text-zinc-600 focus:border-zinc-500 focus:outline-none"
+                            />
+                            {editImageUrl && (
+                              <button
+                                type="button"
+                                onClick={() => setEditImageUrl("")}
+                                className="rounded-lg border border-zinc-800 bg-zinc-950 px-2 py-1.5 text-xs text-zinc-400 hover:text-zinc-100"
+                              >
+                                Clear
+                              </button>
+                            )}
+                          </div>
+                        </div>
+
                         <button
                           type="submit"
                           disabled={isUpdatingAthlete}
@@ -2916,6 +2959,78 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                     <option value="Football">Football</option>
                     <option value="Cricket">Cricket</option>
                   </select>
+                </div>
+              </div>
+
+              {/* Profile Photo */}
+              <div className="space-y-2">
+                <label className="text-xs font-medium text-zinc-400 block">
+                  Profile Photo <span className="text-[10px] text-zinc-500 font-mono font-normal">(Optional)</span>
+                </label>
+                <div className="flex items-center gap-3">
+                  <AthleteAvatar
+                    name={newPlayerName || "Athlete"}
+                    imageUrl={newPlayerImageUrl}
+                    className="size-12 rounded-xl border-zinc-700 bg-zinc-800"
+                    textClassName="text-sm font-bold"
+                  />
+                  <div className="flex-1 space-y-1.5 min-w-0">
+                    <div className="flex gap-2">
+                      <label className="flex items-center justify-center gap-1.5 rounded-lg border border-zinc-800 bg-zinc-950 px-2.5 py-1.5 text-xs text-zinc-200 hover:bg-zinc-800 transition-colors cursor-pointer shrink-0">
+                        <Camera className="size-3 text-zinc-400" />
+                        <span>Upload</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              const dataUrl = await compressImage(file, 256);
+                              setNewPlayerImageUrl(dataUrl);
+                            }
+                          }}
+                        />
+                      </label>
+                      <input
+                        type="url"
+                        value={newPlayerImageUrl.startsWith("data:") ? "" : newPlayerImageUrl}
+                        onChange={(e) => setNewPlayerImageUrl(e.target.value)}
+                        placeholder="Or paste photo URL..."
+                        className="h-8 flex-1 rounded-lg border border-zinc-800 bg-zinc-950 px-2.5 text-xs text-zinc-100 placeholder:text-zinc-600 focus:border-zinc-500 focus:outline-none"
+                      />
+                      {newPlayerImageUrl && (
+                        <button
+                          type="button"
+                          onClick={() => setNewPlayerImageUrl("")}
+                          className="rounded-lg border border-zinc-800 bg-zinc-950 px-2 py-1.5 text-xs text-zinc-400 hover:text-zinc-100"
+                        >
+                          Clear
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Presets */}
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[10px] text-zinc-500 font-mono">Presets:</span>
+                      {ATHLETE_AVATAR_PRESETS.map((p, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => setNewPlayerImageUrl(p.url)}
+                          className={cn(
+                            "size-5 rounded-full overflow-hidden border transition-all cursor-pointer",
+                            newPlayerImageUrl === p.url
+                              ? "border-zinc-100 ring-2 ring-zinc-100/40"
+                              : "border-zinc-800 hover:border-zinc-600 opacity-70 hover:opacity-100"
+                          )}
+                          title={`Preset ${idx + 1}`}
+                        >
+                          <img src={p.url} alt={p.label} className="size-full object-cover" />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               </div>
 

@@ -2,8 +2,9 @@
 
 import React, { useState, useEffect } from "react";
 import { signOut, useSession } from "next-auth/react";
-import { User, LogOut, Trophy, Check, Calendar, Activity } from "lucide-react";
+import { LogOut, Trophy, Check, Calendar, Activity } from "lucide-react";
 import { CossBadge16 } from "@/components/p-badge-16";
+import { AthleteAvatar } from "@/components/athlete-avatar";
 import { ReadyResult } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -68,12 +69,6 @@ export default function PlayerPage() {
   const matchHistory = playerData?.matchHistory ?? [];
 
   const athleteName = session?.user?.name || playerData?.player?.name || "Athlete";
-  const initials = athleteName
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
 
   return (
     <div className="flex min-h-dvh w-full flex-col bg-zinc-950 text-zinc-50">
@@ -118,9 +113,12 @@ export default function PlayerPage() {
             {/* Header: Avatar, Name, Sport/Age, and Ready Badge */}
             <div className="flex items-center justify-between gap-4">
               <div className="flex items-center gap-3.5 min-w-0 flex-1">
-                <div className="flex size-11 shrink-0 items-center justify-center rounded-full border border-zinc-700 bg-zinc-800 text-zinc-200 font-semibold text-xs sm:text-sm font-mono">
-                  {initials || <User className="size-5 text-zinc-400" />}
-                </div>
+                <AthleteAvatar
+                  name={athleteName}
+                  imageUrl={playerData?.player?.imageUrl}
+                  className="size-11 sm:size-12 border-zinc-700 bg-zinc-800"
+                  textClassName="text-xs sm:text-sm"
+                />
                 <div className="min-w-0 flex-1">
                   <h2 className="text-base sm:text-lg font-bold tracking-tight text-zinc-100 truncate">
                     {athleteName}

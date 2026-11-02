@@ -17,6 +17,7 @@ export interface Player {
   age: number;
   sport: string;
   username?: string;
+  imageUrl?: string | null;
 }
 
 export interface AttendanceEntry {
