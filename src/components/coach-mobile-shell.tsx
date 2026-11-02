@@ -21,10 +21,7 @@ import {
   Swords,
   Check,
   RotateCcw,
-  KeyRound,
   Copy,
-  ShieldCheck,
-  Pencil,
   Trash2,
   Search,
   Loader2,
@@ -204,7 +201,6 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
   const [newPlayerName, setNewPlayerName] = useState("");
   const [newPlayerAge, setNewPlayerAge] = useState<number>(16);
   const [newPlayerSport, setNewPlayerSport] = useState<string>("Football");
-  const [newPlayerPassword, setNewPlayerPassword] = useState("");
   const [newPlayerImageUrl, setNewPlayerImageUrl] = useState("");
   const [isAddingPlayer, setIsAddingPlayer] = useState(false);
 
@@ -505,7 +501,7 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
     setNewPlayerName("");
     setNewPlayerAge(16);
     setNewPlayerSport(sport);
-    setNewPlayerPassword("");
+    setNewPlayerImageUrl("");
     setNewPlayerOpen(true);
   };
 
@@ -524,7 +520,6 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
     const trimmedName = newPlayerName.trim();
     const cleanUsername =
       trimmedName.toLowerCase().replace(/[^a-z0-9]+/g, "-") || "player";
-    const explicitPassword = newPlayerPassword.trim() || undefined;
 
     try {
       setIsAddingPlayer(true);
@@ -536,7 +531,6 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
           age: numAge,
           sport: newPlayerSport || sport,
           ...(newPlayerImageUrl.trim() ? { imageUrl: newPlayerImageUrl.trim() } : {}),
-          ...(explicitPassword ? { password: explicitPassword } : {}),
         }),
       });
 
@@ -554,7 +548,6 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
         cleanUsername;
       const createdPassword =
         data.credentials?.tempPassword ||
-        explicitPassword ||
         `${createdUsername}123`;
 
       toast.success(
@@ -563,7 +556,6 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
       );
       setNewPlayerOpen(false);
       setNewPlayerName("");
-      setNewPlayerPassword("");
       setNewPlayerImageUrl("");
       await loadData();
     } catch (err: any) {
@@ -619,10 +611,10 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
 
     if (successful) {
       setCopied(true);
-      toast.success(`Copied username "${uname}" to clipboard`);
+      toast.success(`Copied login "${uname}" to clipboard`);
       setTimeout(() => setCopied(false), 2000);
     } else {
-      toast.info(`Username: ${uname}`);
+      toast.info(`Login: ${uname}`);
     }
   };
 
@@ -1951,9 +1943,6 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                       {sportPlayers.length} {sport}
                     </span>
                   </div>
-                  <p className="text-xs font-mono text-zinc-400 mt-1">
-                    Manage athlete profiles, login credentials, and development telemetry.
-                  </p>
                 </div>
 
                 <div className="flex items-center gap-2.5">
@@ -2415,30 +2404,6 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
         </main>
       </div>
 
-      {/* Floating Action Button for Matches (Mobile) */}
-      {activeTab === "matches" && (
-        <button
-          type="button"
-          onClick={handleOpenMatchModal}
-          aria-label="Record Match"
-          className="lg:hidden fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom,0px))] right-5 z-30 size-14 rounded-full bg-zinc-100 text-zinc-950 shadow-2xl hover:bg-zinc-200 active:scale-95 transition-all flex items-center justify-center cursor-pointer"
-        >
-          <Plus className="size-7 stroke-[2.5]" />
-        </button>
-      )}
-
-      {/* Floating Action Button for Roster (Mobile) */}
-      {activeTab === "roster" && (
-        <button
-          type="button"
-          onClick={handleOpenAddPlayer}
-          aria-label="Add Athlete"
-          className="lg:hidden fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom,0px))] right-5 z-30 size-14 rounded-full bg-zinc-100 text-zinc-950 shadow-2xl hover:bg-zinc-200 active:scale-95 transition-all flex items-center justify-center cursor-pointer"
-        >
-          <Plus className="size-7 stroke-[2.5]" />
-        </button>
-      )}
-
       {/* 3. Fixed Mobile Bottom Navigation: 4 First-Class Tabs Without Overflow */}
       <nav
         aria-label="Primary"
@@ -2585,74 +2550,8 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                       )}
                     </div>
 
-                    {/* Login Credentials Card */}
-                    <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-4 space-y-3">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <KeyRound className="size-4 text-zinc-400" />
-                          <h4 className="text-xs font-mono uppercase tracking-wider text-zinc-400">
-                            Login Credentials
-                          </h4>
-                        </div>
-                        <div className="flex items-center gap-1.5 text-[11px] font-mono text-zinc-400">
-                          <ShieldCheck className="size-3.5 text-zinc-300" />
-                          <span>Active Account</span>
-                        </div>
-                      </div>
-
-                      <div className="space-y-2">
-                        <div>
-                          <span className="text-[11px] text-zinc-500 block mb-1">
-                            Login Username
-                          </span>
-                          <div className="flex items-center justify-between rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2">
-                            <code className="text-xs font-mono font-semibold text-zinc-200">
-                              {selectedAthlete.username ||
-                                selectedAthlete.name
-                                  .toLowerCase()
-                                  .replace(/\s+/g, "-")}
-                            </code>
-                            <button
-                              type="button"
-                              onClick={handleCopyUsername}
-                              className="inline-flex items-center gap-1 rounded px-2 py-1 text-[11px] font-mono text-zinc-300 hover:text-zinc-100 hover:bg-zinc-800 transition-colors cursor-pointer"
-                              title="Copy Username"
-                            >
-                              {copied ? (
-                                <>
-                                  <Check className="size-3 text-zinc-100 stroke-[2.5]" />
-                                  <span className="text-zinc-100 font-semibold">
-                                    Copied
-                                  </span>
-                                </>
-                              ) : (
-                                <>
-                                  <Copy className="size-3" />
-                                  <span>Copy</span>
-                                </>
-                              )}
-                            </button>
-                          </div>
-                        </div>
-
-                        <p className="text-[10px] text-zinc-500 font-mono">
-                          Role: <span className="text-zinc-400">player</span> · Grants
-                          access to personal attendance log & match ledger.
-                        </p>
-                      </div>
-                    </div>
-
                     {/* Performance Telemetry Details */}
                     <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-4 space-y-3.5">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-mono uppercase tracking-wider text-zinc-400">
-                          Performance Telemetry
-                        </span>
-                        <span className="text-[11px] font-mono text-zinc-500">
-                          One Academy
-                        </span>
-                      </div>
-
                       {/* Attendance Telemetry */}
                       <div className="space-y-1.5">
                         <div className="flex items-center justify-between text-xs">
@@ -2700,14 +2599,9 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
 
                       {/* Matches Telemetry */}
                       <div className="pt-2 border-t border-zinc-800/60 flex items-center justify-between">
-                        <div>
-                          <span className="text-xs text-zinc-400 block">
-                            Match Appearances
-                          </span>
-                          <span className="text-[11px] text-zinc-500 font-mono">
-                            Requirement: ≥ 2 matches
-                          </span>
-                        </div>
+                        <span className="text-xs text-zinc-400">
+                          Match Appearances
+                        </span>
                         <div className="flex items-center gap-2">
                           <div className="flex items-center gap-1.5">
                             <span
@@ -2739,13 +2633,6 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
 
                     {/* Edit Athlete Form */}
                     <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-4 space-y-3">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-mono uppercase tracking-wider text-zinc-400">
-                          Edit Details
-                        </span>
-                        <Pencil className="size-3.5 text-zinc-500" />
-                      </div>
-
                       <form onSubmit={handleUpdateAthlete} className="space-y-3">
                         <div className="space-y-1.5">
                           <label className="text-xs text-zinc-400 block font-medium">
@@ -2796,7 +2683,7 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                           <label className="text-xs text-zinc-400 block font-medium">
                             Profile Photo
                           </label>
-                          <div className="flex items-center gap-2">
+                          <div className="flex flex-wrap items-center gap-2">
                             <label className="flex items-center justify-center gap-1.5 rounded-lg border border-zinc-800 bg-zinc-950 px-2.5 py-1.5 text-xs text-zinc-200 hover:bg-zinc-900 transition-colors cursor-pointer shrink-0">
                               <Camera className="size-3 text-zinc-400" />
                               <span>Upload</span>
@@ -2813,22 +2700,36 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                                 }}
                               />
                             </label>
-                            <input
-                              type="url"
-                              value={editImageUrl.startsWith("data:") ? "" : editImageUrl}
-                              onChange={(e) => setEditImageUrl(e.target.value)}
-                              placeholder="Or paste image URL..."
-                              className="h-8 flex-1 rounded-lg border border-zinc-800 bg-zinc-950 px-2.5 text-xs text-zinc-100 placeholder:text-zinc-600 focus:border-zinc-500 focus:outline-none"
-                            />
                             {editImageUrl && (
                               <button
                                 type="button"
                                 onClick={() => setEditImageUrl("")}
-                                className="rounded-lg border border-zinc-800 bg-zinc-950 px-2 py-1.5 text-xs text-zinc-400 hover:text-zinc-100"
+                                className="rounded-lg border border-zinc-800 bg-zinc-950 px-2 py-1.5 text-xs text-zinc-400 hover:text-zinc-100 cursor-pointer"
                               >
                                 Clear
                               </button>
                             )}
+
+                            {/* Presets */}
+                            <div className="flex items-center gap-1.5 ml-1">
+                              <span className="text-[10px] text-zinc-500 font-mono">Presets:</span>
+                              {ATHLETE_AVATAR_PRESETS.map((p, idx) => (
+                                <button
+                                  key={idx}
+                                  type="button"
+                                  onClick={() => setEditImageUrl(p.url)}
+                                  className={cn(
+                                    "size-5 rounded-full overflow-hidden border transition-all cursor-pointer",
+                                    editImageUrl === p.url
+                                      ? "border-zinc-100 ring-2 ring-zinc-100/40"
+                                      : "border-zinc-800 hover:border-zinc-600 opacity-70 hover:opacity-100"
+                                  )}
+                                  title={`Preset ${idx + 1}`}
+                                >
+                                  <img src={p.url} alt={p.label} className="size-full object-cover" />
+                                </button>
+                              ))}
+                            </div>
                           </div>
                         </div>
 
@@ -2847,15 +2748,35 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                       </form>
                     </div>
 
-                    {/* Delete Athlete Action */}
-                    <div className="pt-1 pb-4">
+                    {/* Bottom Actions: Copy login & Delete */}
+                    <div className="flex items-center justify-between pt-1 pb-4 px-1">
+                      <button
+                        type="button"
+                        onClick={handleCopyUsername}
+                        className="inline-flex items-center gap-1.5 text-xs font-mono text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer"
+                        title="Copy login"
+                      >
+                        {copied ? (
+                          <>
+                            <Check className="size-3.5 text-zinc-200 stroke-[2.5]" />
+                            <span className="text-zinc-200 font-medium">Copied login</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="size-3.5 text-zinc-400" />
+                            <span>Copy login</span>
+                          </>
+                        )}
+                      </button>
+
                       <button
                         type="button"
                         onClick={() => setDeleteConfirmOpen(true)}
-                        className="w-full rounded-lg border border-red-950/80 bg-red-950/20 py-2.5 text-xs font-semibold text-red-400 hover:bg-red-950/40 hover:text-red-300 transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+                        className="inline-flex items-center gap-1.5 text-xs font-mono text-zinc-500 hover:text-zinc-300 transition-colors cursor-pointer"
+                        title="Delete athlete"
                       >
                         <Trash2 className="size-3.5" />
-                        <span>Delete Athlete</span>
+                        <span>Delete</span>
                       </button>
                     </div>
                   </>
@@ -2870,8 +2791,8 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
       <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
         <DialogPopup className="sm:max-w-sm bg-zinc-950 border-zinc-800 text-zinc-100">
           <DialogHeader>
-            <DialogTitle className="text-base font-semibold text-red-400 flex items-center gap-2">
-              <Trash2 className="size-4" />
+            <DialogTitle className="text-base font-semibold text-zinc-100 flex items-center gap-2">
+              <Trash2 className="size-4 text-zinc-400" />
               Confirm Athlete Deletion
             </DialogTitle>
             <DialogDescription className="text-xs text-zinc-400 pt-1">
@@ -2889,7 +2810,7 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
               type="button"
               disabled={isDeletingAthlete}
               onClick={handleDeleteAthlete}
-              className="flex-1 rounded-lg bg-red-600 py-2 text-xs font-semibold text-white hover:bg-red-700 transition-colors cursor-pointer disabled:opacity-50 flex items-center justify-center gap-1.5"
+              className="flex-1 rounded-lg bg-zinc-100 py-2 text-xs font-semibold text-zinc-950 hover:bg-zinc-200 transition-colors cursor-pointer disabled:opacity-50 flex items-center justify-center gap-1.5"
             >
               {isDeletingAthlete ? (
                 <Loader2 className="size-3.5 animate-spin" />
@@ -2919,7 +2840,7 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
             <DialogPanel className="space-y-3">
               <div className="space-y-1.5">
                 <label className="text-xs font-medium text-zinc-400 block">
-                  Full Name <span className="text-red-400">*</span>
+                  Full Name <span className="text-zinc-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -2934,7 +2855,7 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
                   <label className="text-xs font-medium text-zinc-400 block">
-                    Age <span className="text-red-400">*</span>
+                    Age <span className="text-zinc-500">*</span>
                   </label>
                   <input
                     type="number"
@@ -2949,7 +2870,7 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
 
                 <div className="space-y-1.5">
                   <label className="text-xs font-medium text-zinc-400 block">
-                    Sport <span className="text-red-400">*</span>
+                    Sport <span className="text-zinc-500">*</span>
                   </label>
                   <select
                     value={newPlayerSport}
@@ -2975,7 +2896,7 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                     textClassName="text-sm font-bold"
                   />
                   <div className="flex-1 space-y-1.5 min-w-0">
-                    <div className="flex gap-2">
+                    <div className="flex items-center gap-2">
                       <label className="flex items-center justify-center gap-1.5 rounded-lg border border-zinc-800 bg-zinc-950 px-2.5 py-1.5 text-xs text-zinc-200 hover:bg-zinc-800 transition-colors cursor-pointer shrink-0">
                         <Camera className="size-3 text-zinc-400" />
                         <span>Upload</span>
@@ -2992,18 +2913,11 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                           }}
                         />
                       </label>
-                      <input
-                        type="url"
-                        value={newPlayerImageUrl.startsWith("data:") ? "" : newPlayerImageUrl}
-                        onChange={(e) => setNewPlayerImageUrl(e.target.value)}
-                        placeholder="Or paste photo URL..."
-                        className="h-8 flex-1 rounded-lg border border-zinc-800 bg-zinc-950 px-2.5 text-xs text-zinc-100 placeholder:text-zinc-600 focus:border-zinc-500 focus:outline-none"
-                      />
                       {newPlayerImageUrl && (
                         <button
                           type="button"
                           onClick={() => setNewPlayerImageUrl("")}
-                          className="rounded-lg border border-zinc-800 bg-zinc-950 px-2 py-1.5 text-xs text-zinc-400 hover:text-zinc-100"
+                          className="rounded-lg border border-zinc-800 bg-zinc-950 px-2 py-1.5 text-xs text-zinc-400 hover:text-zinc-100 cursor-pointer"
                         >
                           Clear
                         </button>
@@ -3033,47 +2947,15 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                   </div>
                 </div>
               </div>
-
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-medium text-zinc-400 block">
-                    Password
-                  </label>
-                  <span className="text-[10px] font-mono text-zinc-500">
-                    Auto-generated if empty
-                  </span>
-                </div>
-                <input
-                  type="password"
-                  value={newPlayerPassword}
-                  onChange={(e) => setNewPlayerPassword(e.target.value)}
-                  placeholder="Optional: custom password"
-                  className="h-10 w-full rounded-lg border border-zinc-800 bg-zinc-900 px-3 text-xs text-zinc-100 placeholder:text-zinc-600 focus:border-zinc-500 focus:outline-none"
-                />
-              </div>
-
-              <div className="rounded-lg border border-zinc-800/80 bg-zinc-900/40 p-2.5 text-[11px] text-zinc-400 flex items-start gap-2 font-mono">
-                <ShieldCheck className="size-3.5 shrink-0 text-zinc-300 mt-0.5" />
-                <span>
-                  Username will be derived from name (e.g. &apos;
-                  {newPlayerName.trim()
-                    ? newPlayerName
-                        .trim()
-                        .toLowerCase()
-                        .replace(/[^a-z0-9]+/g, "-")
-                    : "player"}
-                  &apos;).
-                </span>
-              </div>
             </DialogPanel>
             <DialogFooter variant="bare" className="flex gap-2 pt-2">
-              <DialogClose className="flex-1 rounded-lg border border-zinc-800 bg-zinc-900 py-2 text-xs font-medium text-zinc-300 hover:bg-zinc-800 transition-colors cursor-pointer">
+              <DialogClose className="flex-1 rounded-lg border border-zinc-800 bg-zinc-900 py-2.5 text-xs font-medium text-zinc-300 hover:bg-zinc-800 transition-colors cursor-pointer">
                 Cancel
               </DialogClose>
               <button
                 type="submit"
                 disabled={isAddingPlayer}
-                className="flex-1 rounded-lg bg-zinc-100 py-2 text-xs font-semibold text-zinc-950 hover:bg-zinc-200 transition-colors cursor-pointer disabled:opacity-50 flex items-center justify-center gap-1.5"
+                className="flex-1 rounded-lg bg-zinc-100 py-2.5 text-xs font-semibold text-zinc-950 hover:bg-zinc-200 transition-colors cursor-pointer disabled:opacity-50 flex items-center justify-center gap-1.5"
               >
                 {isAddingPlayer ? (
                   <Loader2 className="size-3.5 animate-spin" />
