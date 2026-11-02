@@ -42,7 +42,7 @@ export function CoachNav() {
             <div className="flex flex-col">
               <span className="leading-tight">Academy Desk</span>
               <span className="text-[10px] font-normal text-muted-foreground uppercase tracking-wider">
-                Dumka Academy
+                One Academy
               </span>
             </div>
           </Link>
@@ -80,7 +80,7 @@ export function CoachNav() {
               <span className="font-semibold text-foreground">
                 {session?.user?.name || "Coach"}
               </span>
-              <span className="text-[10px] text-muted-foreground">Dumka Head Coach</span>
+              <span className="text-[10px] text-muted-foreground">One Academy Head Coach</span>
             </div>
             <Badge variant="default" className="text-[10px] uppercase font-bold tracking-wider">
               Coach

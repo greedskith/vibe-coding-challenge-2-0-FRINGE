@@ -998,7 +998,7 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                 Academy Desk
               </div>
               <div className="text-[11px] text-zinc-400 font-mono truncate">
-                Dumka Academy
+                One Academy
               </div>
             </div>
           </div>
@@ -1080,7 +1080,7 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                   Coach
                 </p>
                 <p className="text-[10px] text-zinc-500 font-mono truncate">
-                  Dumka Academy
+                  One Academy
                 </p>
               </div>
             </div>
@@ -2481,7 +2481,7 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
               Athlete Profile
             </SheetTitle>
             <SheetDescription className="text-xs text-zinc-400">
-              Dumka Sports Academy · {selectedAthlete?.sport || sport}
+              One Academy · {selectedAthlete?.sport || sport}
             </SheetDescription>
           </SheetHeader>
 
@@ -2647,7 +2647,7 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                           Performance Telemetry
                         </span>
                         <span className="text-[11px] font-mono text-zinc-500">
-                          Dumka Academy
+                          One Academy
                         </span>
                       </div>
 
@@ -3104,7 +3104,7 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                     type="text"
                     value={newMatchOpponent}
                     onChange={(e) => setNewMatchOpponent(e.target.value)}
-                    placeholder="e.g. Dumka XI"
+                    placeholder="e.g. City XI"
                     required
                     className="h-10 w-full rounded-lg border border-zinc-800 bg-zinc-900 px-3 text-xs text-zinc-100 focus:border-zinc-500 focus:outline-none"
                   />

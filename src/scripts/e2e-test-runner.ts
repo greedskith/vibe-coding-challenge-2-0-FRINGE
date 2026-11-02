@@ -1,5 +1,5 @@
 /**
- * Academy Desk (Dumka Sports Academy) — Comprehensive Opaque-Box E2E Test Suite
+ * Academy Desk (One Academy) — Comprehensive Opaque-Box E2E Test Suite
  *
  * Implements 4-Tier Test Suite Specification:
  * - Tier 1: Feature Coverage (F1 to F9: >=5 tests per feature = 45 tests)
@@ -1339,7 +1339,7 @@ registerTest("T4_SCENARIO_05", 4, "SCENARIO", "Scout Talent Search with Zero-Fal
 export async function runE2ESuite() {
   console.log("\n╔══════════════════════════════════════════════════════════════════════╗");
   console.log("║         ACADEMY DESK — COMPREHENSIVE OPAQUE-BOX E2E TEST RUNNER      ║");
-  console.log("║         Dumka Sports Academy · 4-Tier Test Architecture              ║");
+  console.log("║           One Academy · 4-Tier Test Architecture              ║");
   console.log("╚══════════════════════════════════════════════════════════════════════╝\n");
 
   const startTime = Date.now();

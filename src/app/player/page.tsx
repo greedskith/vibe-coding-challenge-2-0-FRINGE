@@ -126,7 +126,7 @@ export default function PlayerPage() {
                     {athleteName}
                   </h2>
                   <p className="text-xs text-zinc-400 font-normal truncate mt-0.5">
-                    {playerData?.player?.sport || "Multi-sport"} · Age {playerData?.player?.age || 17} · Dumka Academy
+                    {playerData?.player?.sport || "Multi-sport"} · Age {playerData?.player?.age || 17} · One Academy
                   </p>
                 </div>
               </div>

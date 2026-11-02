@@ -4,8 +4,8 @@ import { Providers } from "@/components/providers";
 import { Toaster } from "@/components/ui/sonner";
 
 export const metadata: Metadata = {
-  title: "Academy Desk — Dumka",
-  description: "Dumka Sports Academy Desk",
+  title: "Academy Desk — One Academy",
+  description: "One Academy Sports Desk",
 };
 
 export const viewport: Viewport = {

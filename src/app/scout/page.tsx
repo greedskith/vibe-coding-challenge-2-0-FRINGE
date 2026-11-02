@@ -48,7 +48,7 @@ export default function ScoutPage() {
                 Academy Desk
               </span>
               <span className="text-[11px] font-mono text-zinc-400 block">
-                Scout Portal · Dumka Trials
+                Scout Portal · One Academy Trials
               </span>
             </div>
           </div>

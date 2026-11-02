@@ -251,7 +251,7 @@ async function runPhase4DeepVerification() {
       body: JSON.stringify({
         date: "2026-11-21",
         sport: "Cricket",
-        opponent: "Dumka XI",
+        opponent: "City XI",
         scores: [{ playerId: p1Id, score: 50 }],
       }),
     })
@@ -269,7 +269,7 @@ async function runPhase4DeepVerification() {
       body: JSON.stringify({
         date: "2026-11-21",
         sport: "Cricket",
-        opponent: "Dumka XI",
+        opponent: "City XI",
         outcome: "draw",
         scores: [{ playerId: p2Id, score: 45 }],
       }),

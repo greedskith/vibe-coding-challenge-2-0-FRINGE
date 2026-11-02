@@ -78,7 +78,7 @@ export function LoginForm() {
           <h1 className="text-base font-semibold tracking-tight text-zinc-100">
             Academy Desk
           </h1>
-          <p className="text-[11px] text-zinc-400 font-mono">Dumka Sports Academy</p>
+          <p className="text-[11px] text-zinc-400 font-mono">One Academy</p>
         </div>
       </div>
 

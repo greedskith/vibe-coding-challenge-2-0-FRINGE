@@ -1,6 +1,6 @@
 # Academy Desk
 
-A simple sports desk for Dumka Sports Academy. Coaches track daily practice and matches, qualifying athletes for scout trials.
+A simple sports desk for One Academy. Coaches track daily practice and matches, qualifying athletes for scout trials.
 
 ### How It Works
 
