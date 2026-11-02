@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, Suspense } from "react";
-import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { toast } from "sonner";
@@ -36,7 +35,6 @@ import {
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -98,6 +96,17 @@ export function CoachMobileShell(props: CoachMobileShellProps = {}) {
   );
 }
 
+const isAthleteAccount = (p: Player) => {
+  if (!p) return false;
+  const name = (p.name || "").trim().toLowerCase();
+  const username = (p.username || "").trim().toLowerCase();
+  const role = ((p as any).role || "").trim().toLowerCase();
+  if (role === "coach" || role === "scout") return false;
+  if (name === "coach" || name === "head coach" || name === "scout") return false;
+  if (username === "coach" || username === "scout") return false;
+  return true;
+};
+
 function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
   const searchParams = useSearchParams();
   const urlTab = searchParams?.get("tab") as Tab | null;
@@ -115,6 +124,18 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
   const [matches, setMatches] = useState<Match[]>([]);
   const [readyResults, setReadyResults] = useState<ReadyResult[]>([]);
   const [activeSession, setActiveSession] = useState<Session | null>(null);
+
+  // Pointer-based long-press attendance gesture refs
+  const longPressTimers = React.useRef<Record<string, NodeJS.Timeout>>({});
+  const longPressFired = React.useRef<Record<string, boolean>>({});
+  const pointerStartPos = React.useRef<Record<string, { x: number; y: number }>>({});
+
+  useEffect(() => {
+    const activeTimers = longPressTimers.current;
+    return () => {
+      Object.values(activeTimers).forEach((t) => clearTimeout(t));
+    };
+  }, []);
 
   // Roster Tab State
   const [rosterSearch, setRosterSearch] = useState("");
@@ -187,7 +208,7 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
         readyRes.json(),
       ]);
 
-      if (Array.isArray(pData)) setPlayers(pData);
+      if (Array.isArray(pData)) setPlayers(pData.filter(isAthleteAccount));
       if (Array.isArray(sData)) {
         setSessions(sData);
         setActiveSession((prev) => {
@@ -214,7 +235,7 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
         });
       }
       if (Array.isArray(mData)) setMatches(mData);
-      if (Array.isArray(rData)) setReadyResults(rData);
+      if (Array.isArray(rData)) setReadyResults(rData.filter((r: any) => isAthleteAccount(r.player)));
     } catch (err) {
       console.error("Failed to load coach desk data:", err);
     }
@@ -317,7 +338,7 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
         );
         fetch("/api/ready")
           .then((r) => r.json())
-          .then((data) => Array.isArray(data) && setReadyResults(data));
+          .then((data) => Array.isArray(data) && setReadyResults(data.filter((r: any) => isAthleteAccount(r.player))));
       }
     } catch (err) {
       console.error("Failed to update attendance:", err);
@@ -332,9 +353,11 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
       return;
     }
     const newStatus = present ? "present" : "absent";
-    const currentSportPlayers = players.filter(
-      (p) => !sport || (p.sport || "").toLowerCase() === sport.toLowerCase()
-    );
+    const currentSportPlayers = players
+      .filter(isAthleteAccount)
+      .filter(
+        (p) => !sport || (p.sport || "").toLowerCase() === sport.toLowerCase()
+      );
     const newAttendance = currentSportPlayers.map((p) => ({
       playerId: p._id as any,
       status: newStatus as "present" | "absent",
@@ -360,7 +383,7 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
         );
         fetch("/api/ready")
           .then((r) => r.json())
-          .then((data) => Array.isArray(data) && setReadyResults(data));
+          .then((data) => Array.isArray(data) && setReadyResults(data.filter((r: any) => isAthleteAccount(r.player))));
       }
     } catch (err) {
       console.error("Failed bulk attendance:", err);
@@ -384,7 +407,7 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
         );
         fetch("/api/ready")
           .then((r) => r.json())
-          .then((data) => Array.isArray(data) && setReadyResults(data));
+          .then((data) => Array.isArray(data) && setReadyResults(data.filter((r: any) => isAthleteAccount(r.player))));
         toast.success(`Session locked on ${locked.date}`);
       }
     } catch (err) {
@@ -653,9 +676,11 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
         (!s.sport || (s.sport || "").toLowerCase() === (targetSport || "").toLowerCase())
     );
 
-    const relevantPlayers = players.filter(
-      (p) => !targetSport || (p.sport || "").toLowerCase() === targetSport.toLowerCase()
-    );
+    const relevantPlayers = players
+      .filter(isAthleteAccount)
+      .filter(
+        (p) => !targetSport || (p.sport || "").toLowerCase() === targetSport.toLowerCase()
+      );
 
     const initialScores: Record<string, number> = {};
     const initialSelected: Record<string, boolean> = {};
@@ -708,9 +733,11 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
     }
 
     const scoresPayload: { playerId: string; score: number }[] = [];
-    const eligiblePlayers = players.filter(
-      (p) => !newMatchSport || (p.sport || "").toLowerCase() === newMatchSport.toLowerCase()
-    );
+    const eligiblePlayers = players
+      .filter(isAthleteAccount)
+      .filter(
+        (p) => !newMatchSport || (p.sport || "").toLowerCase() === newMatchSport.toLowerCase()
+      );
     for (const p of eligiblePlayers) {
       const pId = p._id?.toString() || "";
       if (selectedPlayers[pId]) {
@@ -751,7 +778,7 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
 
       fetch("/api/ready")
         .then((r) => r.json())
-        .then((data) => Array.isArray(data) && setReadyResults(data));
+        .then((data) => Array.isArray(data) && setReadyResults(data.filter((r: any) => isAthleteAccount(r.player))));
       fetch("/api/matches")
         .then((r) => r.json())
         .then((data) => Array.isArray(data) && setMatches(data));
@@ -761,9 +788,11 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
   };
 
   // Sport-scoped data to eliminate cross-sport leakage
-  const sportPlayers = players.filter(
-    (p) => !sport || (p.sport || "").toLowerCase() === sport.toLowerCase()
-  );
+  const sportPlayers = players
+    .filter(isAthleteAccount)
+    .filter(
+      (p) => !sport || (p.sport || "").toLowerCase() === sport.toLowerCase()
+    );
 
   const presentCount = sportPlayers.filter((p) =>
     isPlayerPresent(p._id?.toString() || "")
@@ -772,9 +801,11 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
   const filteredMatches = matches.filter(
     (m) => !sport || (m.sport || "").toLowerCase() === sport.toLowerCase()
   );
-  const filteredReadyResults = readyResults.filter(
-    (r) => !sport || (r.player.sport || "").toLowerCase() === sport.toLowerCase()
-  );
+  const filteredReadyResults = readyResults
+    .filter((r) => isAthleteAccount(r.player))
+    .filter(
+      (r) => !sport || (r.player.sport || "").toLowerCase() === sport.toLowerCase()
+    );
   const sportQualifiedCount = filteredReadyResults.filter((r) => r.isReady).length;
 
   // Swiss-engineered 3-tier grouping for Trial Readiness Ledger
@@ -953,7 +984,7 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
   };
 
   return (
-    <div className="flex min-h-dvh w-full max-w-full overflow-x-hidden bg-zinc-950 text-zinc-50 select-none">
+    <div className="flex min-h-dvh w-full max-w-full overflow-x-hidden bg-zinc-950 text-zinc-50">
       {/* 1. Desktop Left Sidebar */}
       <aside className="hidden lg:flex lg:w-64 shrink-0 flex-col justify-between border-r border-zinc-800 bg-zinc-950 p-4 sticky top-0 h-dvh overflow-y-auto">
         <div className="space-y-6">
@@ -1327,7 +1358,7 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
         </header>
 
         {/* Dashboard Main Scrollable Area */}
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-6xl mx-auto w-full space-y-6 pb-24 lg:pb-8 overflow-x-hidden">
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-6xl mx-auto w-full space-y-6 pb-32 lg:pb-8 overflow-x-hidden">
           {/* TAB 1: ATTENDANCE */}
           {activeTab === "attendance" && (
             <div className="space-y-5">
@@ -1338,20 +1369,31 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                 </h2>
 
                 <div className="flex items-center justify-between gap-4">
-                  {/* Segmented capsules */}
+                  {/* Segmented capsules or continuous progress bar */}
                   <div className="flex items-center gap-1.5 flex-1 max-w-sm">
-                    {sportPlayers.map((p, idx) => {
-                      const isPresent = isPlayerPresent(p._id?.toString() || "");
-                      return (
+                    {sportPlayers.length > 12 ? (
+                      <div className="relative h-2.5 flex-1 rounded-full bg-zinc-800 overflow-hidden">
                         <div
-                          key={p._id?.toString() || idx}
-                          className={cn(
-                            "h-2.5 flex-1 rounded-full transition-all duration-300",
-                            isPresent ? "bg-zinc-100" : "bg-zinc-800"
-                          )}
+                          className="h-full bg-zinc-100 rounded-full transition-all duration-300"
+                          style={{
+                            width: `${sportPlayers.length > 0 ? Math.round((presentCount / sportPlayers.length) * 100) : 0}%`,
+                          }}
                         />
-                      );
-                    })}
+                      </div>
+                    ) : (
+                      sportPlayers.map((p, idx) => {
+                        const isPresent = isPlayerPresent(p._id?.toString() || "");
+                        return (
+                          <div
+                            key={p._id?.toString() || idx}
+                            className={cn(
+                              "h-2.5 flex-1 min-w-[8px] rounded-full transition-all duration-300",
+                              isPresent ? "bg-zinc-100" : "bg-zinc-800"
+                            )}
+                          />
+                        );
+                      })
+                    )}
                   </div>
 
                   {/* Telemetry Count */}
@@ -1462,19 +1504,68 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                         key={pId}
                         role="button"
                         tabIndex={0}
-                        onClick={() => {
-                          if (!activeSession) {
-                            toast.info("Please open or select a session to mark attendance");
-                            return;
+                        onPointerDown={(e) => {
+                          if (e.button !== 0 && e.pointerType === "mouse") return;
+                          longPressFired.current[pId] = false;
+                          pointerStartPos.current[pId] = { x: e.clientX, y: e.clientY };
+                          if (longPressTimers.current[pId]) {
+                            clearTimeout(longPressTimers.current[pId]);
                           }
-                          if (isLocked) {
-                            toast.info("Session is locked (read-only)");
-                            return;
-                          }
-                          handleToggleAttendance(pId, !present);
+                          if (!activeSession || isLocked) return;
+                          longPressTimers.current[pId] = setTimeout(() => {
+                            longPressFired.current[pId] = true;
+                            if (typeof window !== "undefined" && typeof navigator !== "undefined" && "vibrate" in navigator) {
+                              try {
+                                navigator.vibrate(50);
+                              } catch {}
+                            }
+                            handleToggleAttendance(pId, false);
+                          }, 500);
                         }}
+                        onPointerMove={(e) => {
+                          const start = pointerStartPos.current[pId];
+                          if (!start) return;
+                          const dx = Math.abs(e.clientX - start.x);
+                          const dy = Math.abs(e.clientY - start.y);
+                          if (dx > 10 || dy > 10) {
+                            if (longPressTimers.current[pId]) {
+                              clearTimeout(longPressTimers.current[pId]);
+                            }
+                            delete pointerStartPos.current[pId];
+                          }
+                        }}
+                        onPointerUp={() => {
+                          if (longPressTimers.current[pId]) {
+                            clearTimeout(longPressTimers.current[pId]);
+                          }
+                          const start = pointerStartPos.current[pId];
+                          const fired = longPressFired.current[pId];
+                          delete pointerStartPos.current[pId];
+                          delete longPressFired.current[pId];
+
+                          if (!fired && start) {
+                            if (!activeSession) {
+                              toast.info("Please open or select a session to mark attendance");
+                              return;
+                            }
+                            if (isLocked) {
+                              toast.info("Session is locked (read-only)");
+                              return;
+                            }
+                            handleToggleAttendance(pId, true);
+                          }
+                        }}
+                        onPointerCancel={() => {
+                          if (longPressTimers.current[pId]) {
+                            clearTimeout(longPressTimers.current[pId]);
+                          }
+                          delete pointerStartPos.current[pId];
+                          delete longPressFired.current[pId];
+                        }}
+                        onContextMenu={(e) => e.preventDefault()}
                         onKeyDown={(e) => {
                           if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
                             if (!activeSession) {
                               toast.info("Please open or select a session to mark attendance");
                               return;
@@ -1645,9 +1736,6 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                         outcome === "win" ||
                         (m.scores || []).some((s: any) => (s.score || 0) >= 3);
 
-                      const matchPlayerIds = new Set(
-                        (m.scores || []).map((sc: any) => sc.playerId?.toString())
-                      );
                       const squad = (m.scores || []).map((sc: any) => {
                         const p = players.find(
                           (pl) => pl._id?.toString() === sc.playerId?.toString()
@@ -1839,7 +1927,7 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                   <button
                     type="button"
                     onClick={handleOpenAddPlayer}
-                    className="flex items-center gap-1.5 rounded-lg bg-zinc-100 px-3 py-1.5 text-xs font-semibold text-zinc-950 hover:bg-zinc-200 transition-colors cursor-pointer shadow-xs whitespace-nowrap"
+                    className="hidden lg:flex items-center gap-1.5 rounded-lg bg-zinc-100 px-3 py-1.5 text-xs font-semibold text-zinc-950 hover:bg-zinc-200 transition-colors cursor-pointer shadow-xs whitespace-nowrap"
                   >
                     <Plus className="size-3.5 stroke-[2.5]" />
                     <span>Add Athlete</span>
@@ -2176,36 +2264,41 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                                     </div>
                                   </div>
 
-                                  <div className="flex items-center justify-end gap-1.5 shrink-0">
-                                    <span
-                                      className={cn(
-                                        "size-2.5 rounded-full transition-colors",
-                                        item.matchCount >= 1
-                                          ? "bg-zinc-100"
-                                          : "border border-zinc-600 bg-transparent"
+                                  <div className="flex items-center justify-end gap-2 shrink-0">
+                                    <span className="text-[11px] font-mono text-zinc-400">
+                                      {item.matchCount} {item.matchCount === 1 ? "match" : "matches"}
+                                    </span>
+                                    <div className="flex items-center gap-1.5 shrink-0">
+                                      <span
+                                        className={cn(
+                                          "size-2.5 rounded-full transition-colors",
+                                          item.matchCount >= 1
+                                            ? "bg-zinc-100"
+                                            : "border border-zinc-600 bg-transparent"
+                                        )}
+                                        title={
+                                          item.matchCount >= 1
+                                            ? "Match 1 completed"
+                                            : "Match 1 pending"
+                                        }
+                                      />
+                                      <span
+                                        className={cn(
+                                          "size-2.5 rounded-full transition-colors",
+                                          item.matchCount >= 2
+                                            ? "bg-zinc-100"
+                                            : "border border-zinc-600 bg-transparent"
+                                        )}
+                                        title={
+                                          item.matchCount >= 2
+                                            ? "Match 2 completed"
+                                            : "Match 2 pending"
+                                        }
+                                      />
+                                      {isMatchesMet && (
+                                        <Check className="size-3 text-zinc-100 stroke-[2.5] ml-0.5" />
                                       )}
-                                      title={
-                                        item.matchCount >= 1
-                                          ? "Match 1 completed"
-                                          : "Match 1 pending"
-                                      }
-                                    />
-                                    <span
-                                      className={cn(
-                                        "size-2.5 rounded-full transition-colors",
-                                        item.matchCount >= 2
-                                          ? "bg-zinc-100"
-                                          : "border border-zinc-600 bg-transparent"
-                                      )}
-                                      title={
-                                        item.matchCount >= 2
-                                          ? "Match 2 completed"
-                                          : "Match 2 pending"
-                                      }
-                                    />
-                                    {isMatchesMet && (
-                                      <Check className="size-3 text-zinc-100 stroke-[2.5] ml-0.5" />
-                                    )}
+                                    </div>
                                   </div>
                                 </div>
 
@@ -2234,28 +2327,33 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                                     </div>
 
                                     <div
-                                      className="flex items-center gap-1.5 shrink-0"
+                                      className="flex items-center gap-2 shrink-0"
                                       title={`Matches: ${item.matchCount}/2`}
                                     >
-                                      <span
-                                        className={cn(
-                                          "size-2.5 rounded-full transition-colors",
-                                          item.matchCount >= 1
-                                            ? "bg-zinc-100"
-                                            : "border border-zinc-600 bg-transparent"
+                                      <span className="text-[11px] font-mono text-zinc-400">
+                                        {item.matchCount} {item.matchCount === 1 ? "match" : "matches"}
+                                      </span>
+                                      <div className="flex items-center gap-1.5 shrink-0">
+                                        <span
+                                          className={cn(
+                                            "size-2.5 rounded-full transition-colors",
+                                            item.matchCount >= 1
+                                              ? "bg-zinc-100"
+                                              : "border border-zinc-600 bg-transparent"
+                                          )}
+                                        />
+                                        <span
+                                          className={cn(
+                                            "size-2.5 rounded-full transition-colors",
+                                            item.matchCount >= 2
+                                              ? "bg-zinc-100"
+                                              : "border border-zinc-600 bg-transparent"
+                                          )}
+                                        />
+                                        {isMatchesMet && (
+                                          <Check className="size-3 text-zinc-100 stroke-[2.5] ml-0.5" />
                                         )}
-                                      />
-                                      <span
-                                        className={cn(
-                                          "size-2.5 rounded-full transition-colors",
-                                          item.matchCount >= 2
-                                            ? "bg-zinc-100"
-                                            : "border border-zinc-600 bg-transparent"
-                                        )}
-                                      />
-                                      {isMatchesMet && (
-                                        <Check className="size-3 text-zinc-100 stroke-[2.5] ml-0.5" />
-                                      )}
+                                      </div>
                                     </div>
                                   </div>
 
@@ -2314,7 +2412,7 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
           type="button"
           onClick={handleOpenMatchModal}
           aria-label="Record Match"
-          className="lg:hidden fixed bottom-20 right-5 z-30 size-14 rounded-full bg-zinc-100 text-zinc-950 shadow-2xl hover:bg-zinc-200 active:scale-95 transition-all flex items-center justify-center cursor-pointer"
+          className="lg:hidden fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom,0px))] right-5 z-30 size-14 rounded-full bg-zinc-100 text-zinc-950 shadow-2xl hover:bg-zinc-200 active:scale-95 transition-all flex items-center justify-center cursor-pointer"
         >
           <Plus className="size-7 stroke-[2.5]" />
         </button>
@@ -2326,7 +2424,7 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
           type="button"
           onClick={handleOpenAddPlayer}
           aria-label="Add Athlete"
-          className="lg:hidden fixed bottom-20 right-5 z-30 size-14 rounded-full bg-zinc-100 text-zinc-950 shadow-2xl hover:bg-zinc-200 active:scale-95 transition-all flex items-center justify-center cursor-pointer"
+          className="lg:hidden fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom,0px))] right-5 z-30 size-14 rounded-full bg-zinc-100 text-zinc-950 shadow-2xl hover:bg-zinc-200 active:scale-95 transition-all flex items-center justify-center cursor-pointer"
         >
           <Plus className="size-7 stroke-[2.5]" />
         </button>
@@ -2930,26 +3028,27 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
 
       {/* Record Match Dialog */}
       <Dialog open={newMatchOpen} onOpenChange={setNewMatchOpen}>
-        <DialogPopup className="sm:max-w-md bg-zinc-950 border-zinc-800 text-zinc-100 max-h-[88vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-base font-semibold text-zinc-100 flex items-center gap-2">
-              <Swords className="size-4 text-zinc-300" />
-              Record Match Score
-            </DialogTitle>
-            <DialogDescription className="text-xs text-zinc-400">
-              Only athletes present in a session can participate. Absent athletes are strictly restricted.
-            </DialogDescription>
-          </DialogHeader>
+        <DialogPopup className="max-sm:h-[92dvh] max-sm:max-h-[92dvh] max-sm:rounded-t-2xl sm:max-w-md bg-zinc-950 border-zinc-800 text-zinc-100 flex flex-col p-0 overflow-hidden">
+          <div className="p-6 pb-2 shrink-0 border-b border-zinc-800/60">
+            <DialogHeader>
+              <DialogTitle className="text-base font-semibold text-zinc-100 flex items-center gap-2">
+                <Swords className="size-4 text-zinc-300" />
+                Record Match Score
+              </DialogTitle>
+              <DialogDescription className="text-xs text-zinc-400">
+                Only athletes present in a session can participate. Absent athletes are strictly restricted.
+              </DialogDescription>
+            </DialogHeader>
+          </div>
 
-          <form onSubmit={handleRecordMatch} className="space-y-4 pt-2">
-            {matchError && (
-              <div className="flex items-center gap-2 rounded-lg bg-zinc-900 border border-zinc-700/80 p-3 text-xs text-zinc-200">
-                <AlertCircle className="size-4 shrink-0 text-zinc-400" />
-                <span>{matchError}</span>
-              </div>
-            )}
-
-            <DialogPanel className="space-y-3.5">
+          <form onSubmit={handleRecordMatch} className="flex flex-col flex-1 min-h-0 overflow-hidden">
+            <div className="flex-1 overflow-y-auto min-h-0 px-6 py-4 space-y-4">
+              {matchError && (
+                <div className="flex items-center gap-2 rounded-lg bg-zinc-900 border border-zinc-700/80 p-3 text-xs text-zinc-200">
+                  <AlertCircle className="size-4 shrink-0 text-zinc-400" />
+                  <span>{matchError}</span>
+                </div>
+              )}
               {/* Discipline Pre-selection (Football or Cricket) */}
               <div className="space-y-1.5">
                 <label className="text-xs font-medium text-zinc-400 block font-mono">
@@ -3134,6 +3233,7 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
 
                 <div className="space-y-2">
                   {players
+                    .filter(isAthleteAccount)
                     .filter(
                       (p) =>
                         !newMatchSport ||
@@ -3235,19 +3335,19 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                     })}
                 </div>
               </div>
-            </DialogPanel>
+            </div>
 
-            <DialogFooter variant="bare" className="flex gap-2 pt-2">
-              <DialogClose className="flex-1 rounded-lg border border-zinc-800 bg-zinc-900 py-2 text-xs font-medium text-zinc-300 hover:bg-zinc-800 transition-colors cursor-pointer">
+            <div className="shrink-0 border-t border-zinc-800 bg-zinc-950 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] flex gap-2">
+              <DialogClose className="flex-1 rounded-lg border border-zinc-800 bg-zinc-900 py-2.5 text-xs font-medium text-zinc-300 hover:bg-zinc-800 transition-colors cursor-pointer text-center">
                 Cancel
               </DialogClose>
               <button
                 type="submit"
-                className="flex-1 rounded-lg bg-zinc-100 py-2 text-xs font-semibold text-zinc-950 hover:bg-zinc-200 transition-colors cursor-pointer"
+                className="flex-1 rounded-lg bg-zinc-100 py-2.5 text-xs font-semibold text-zinc-950 hover:bg-zinc-200 transition-colors cursor-pointer text-center"
               >
                 Record Match
               </button>
-            </DialogFooter>
+            </div>
           </form>
         </DialogPopup>
       </Dialog>

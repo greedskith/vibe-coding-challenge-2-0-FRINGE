@@ -11,8 +11,6 @@ async function seed() {
   // Seed 3 Players if none exist
   const existingPlayers = await db.collection("players").find().toArray();
   let player1Id: ObjectId;
-  let player2Id: ObjectId;
-  let player3Id: ObjectId;
 
   if (existingPlayers.length < 3) {
     await db.collection("players").deleteMany({});
@@ -22,12 +20,8 @@ async function seed() {
       { name: "Amit Soren", age: 18, sport: "Football" },
     ]);
     player1Id = res.insertedIds[0];
-    player2Id = res.insertedIds[1];
-    player3Id = res.insertedIds[2];
   } else {
     player1Id = existingPlayers[0]._id;
-    player2Id = existingPlayers[1]._id;
-    player3Id = existingPlayers[2]._id;
   }
 
   // Coach

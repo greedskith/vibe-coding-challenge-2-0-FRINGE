@@ -1,5 +1,4 @@
 import { getDb } from "../lib/db";
-import { ObjectId } from "mongodb";
 import { NextRequest } from "next/server";
 import { POST as postSession, GET as getSessions } from "../app/api/sessions/route";
 import { PATCH as patchSession } from "../app/api/sessions/[id]/route";

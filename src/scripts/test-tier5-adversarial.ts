@@ -21,9 +21,8 @@ import * as path from "path";
 
 // API Handlers
 import { GET as getReady } from "../app/api/ready/route";
-import { GET as getSessions, POST as postSession } from "../app/api/sessions/route";
 import { GET as getSessionById, PATCH as patchSession } from "../app/api/sessions/[id]/route";
-import { GET as getMatches, POST as postMatch } from "../app/api/matches/route";
+import { POST as postMatch } from "../app/api/matches/route";
 
 // ============================================================================
 // Test Framework & Reporting Utilities
@@ -82,11 +81,6 @@ async function runTier5AdversarialSuite() {
   console.log("╚══════════════════════════════════════════════════════════════════════╝\n");
 
   const db = await getDb();
-
-  // Snapshot database collections for 100% deterministic restoration
-  const origPlayers = await db.collection("players").find().toArray();
-  const origSessions = await db.collection("sessions").find().toArray();
-  const origMatches = await db.collection("matches").find().toArray();
 
   const testPlayerIds: ObjectId[] = [];
   const testSessionIds: ObjectId[] = [];

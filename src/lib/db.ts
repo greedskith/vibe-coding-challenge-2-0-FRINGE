@@ -23,8 +23,11 @@ export async function getDb(): Promise<Db> {
     await db.command({ ping: 1 });
     cachedDb = db;
     return cachedDb;
-  } catch (err: any) {
+  } catch (err: unknown) {
     // Atlas unreachable, cache local database fallback permanently
+    if (process.env.NODE_ENV !== "test") {
+      console.warn("MongoDB connection fallback to LocalDb:", err instanceof Error ? err.message : String(err));
+    }
     useLocal = true;
     cachedDb = getLocalDb() as unknown as Db;
     return cachedDb;

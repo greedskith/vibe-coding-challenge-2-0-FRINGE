@@ -48,7 +48,7 @@ export function CossNumberField11({
         disabled={disabled || value <= min}
         onClick={handleDecrement}
         aria-label="Decrease score"
-        className="flex size-7 items-center justify-center rounded-md text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100 transition-colors disabled:opacity-30 disabled:pointer-events-none cursor-pointer"
+        className="relative flex size-7 items-center justify-center rounded-md text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100 transition-colors disabled:opacity-30 disabled:pointer-events-none cursor-pointer touch-manipulation after:absolute after:-inset-2 after:content-['']"
       >
         <Minus className="size-3.5" />
       </button>
@@ -72,7 +72,7 @@ export function CossNumberField11({
         disabled={disabled || value >= max}
         onClick={handleIncrement}
         aria-label="Increase score"
-        className="flex size-7 items-center justify-center rounded-md text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100 transition-colors disabled:opacity-30 disabled:pointer-events-none cursor-pointer"
+        className="relative flex size-7 items-center justify-center rounded-md text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100 transition-colors disabled:opacity-30 disabled:pointer-events-none cursor-pointer touch-manipulation after:absolute after:-inset-2 after:content-['']"
       >
         <Plus className="size-3.5" />
       </button>

@@ -3,11 +3,10 @@ import { ObjectId } from "mongodb";
 import { NextRequest } from "next/server";
 import { encode } from "next-auth/jwt";
 import { GET as getReady } from "../app/api/ready/route";
-import { GET as getSessions, POST as postSessions } from "../app/api/sessions/route";
-import { GET as getSessionById, PATCH as patchSessionById } from "../app/api/sessions/[id]/route";
-import { GET as getMatches, POST as postMatches } from "../app/api/matches/route";
-import { GET as getPlayers, POST as postPlayers } from "../app/api/players/route";
-import { GET as getPlayerById, PUT as putPlayerById, DELETE as deletePlayerById } from "../app/api/players/[id]/route";
+import { POST as postSessions } from "../app/api/sessions/route";
+import { PATCH as patchSessionById } from "../app/api/sessions/[id]/route";
+import { POST as postMatches } from "../app/api/matches/route";
+import { POST as postPlayers } from "../app/api/players/route";
 import middleware from "../middleware";
 import assert from "node:assert";
 

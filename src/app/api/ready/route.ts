@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
-import { ObjectId } from "mongodb";
 import { Player, ReadyResult } from "@/lib/types";
 
 export interface EnrichedReadyResult extends ReadyResult {

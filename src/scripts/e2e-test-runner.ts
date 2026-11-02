@@ -19,10 +19,10 @@ import * as path from "path";
 
 // API Route Handlers
 import { GET as getSessions, POST as postSession } from "../app/api/sessions/route";
-import { GET as getSessionById, PATCH as patchSession } from "../app/api/sessions/[id]/route";
-import { GET as getMatches, POST as postMatch } from "../app/api/matches/route";
+import { PATCH as patchSession } from "../app/api/sessions/[id]/route";
+import { POST as postMatch } from "../app/api/matches/route";
 import { GET as getReady } from "../app/api/ready/route";
-import { GET as getPlayers, POST as postPlayer } from "../app/api/players/route";
+import { POST as postPlayer } from "../app/api/players/route";
 
 // ============================================================================
 // Types & Assertions
@@ -120,13 +120,6 @@ async function callPatchSession(id: string, body: any) {
   return { status: res.status, data };
 }
 
-async function callGetMatches(url: string = "http://localhost:3000/api/matches") {
-  const req = new NextRequest(url);
-  const res = await getMatches(req);
-  const data = await res.json();
-  return { status: res.status, data };
-}
-
 async function callPostMatch(body: any) {
   const req = new NextRequest("http://localhost:3000/api/matches", {
     method: "POST",
@@ -134,13 +127,6 @@ async function callPostMatch(body: any) {
     body: JSON.stringify(body),
   });
   const res = await postMatch(req);
-  const data = await res.json();
-  return { status: res.status, data };
-}
-
-async function callGetPlayers(url: string = "http://localhost:3000/api/players") {
-  const req = new NextRequest(url);
-  const res = await getPlayers(req);
   const data = await res.json();
   return { status: res.status, data };
 }
@@ -890,7 +876,6 @@ registerTest("T3_COMB_01", 3, "COMB", "Attendance marking + Match creation trigg
 });
 
 registerTest("T3_COMB_02", 3, "COMB", "Session absence prevents match scoring and protects match count integrity", async () => {
-  const db = await getDb();
   const pRes = await callPostPlayer({ name: "Comb Test Player 2", age: 16, sport: "Football" });
   const pId = pRes.data._id.toString();
 

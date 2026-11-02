@@ -14,7 +14,6 @@ import { ObjectId } from "mongodb";
 const GREEN = "\x1b[32m";
 const RED = "\x1b[31m";
 const CYAN = "\x1b[36m";
-const YELLOW = "\x1b[33m";
 const RESET = "\x1b[0m";
 
 let passCount = 0;
@@ -107,7 +106,7 @@ async function runAdversarialM2Suite() {
     }
     walkDir(srcDir);
 
-    let foundForbiddenUiColors: string[] = [];
+    const foundForbiddenUiColors: string[] = [];
     for (const f of filesToScan) {
       const content = fs.readFileSync(f, "utf-8");
       // Search for Tailwind emerald and green class patterns
@@ -125,7 +124,7 @@ async function runAdversarialM2Suite() {
 
     // 1.7 Scan for colored emojis in UI components
     const emojiRegex = /[\u{1F300}-\u{1F9FF}\u{1FA00}-\u{1FAFF}]/u;
-    let foundEmojis: string[] = [];
+    const foundEmojis: string[] = [];
     for (const f of filesToScan) {
       const content = fs.readFileSync(f, "utf-8");
       if (emojiRegex.test(content)) {

@@ -1,9 +1,8 @@
 import { getDb } from "../lib/db";
-import { ObjectId } from "mongodb";
 import { NextRequest } from "next/server";
-import { POST as postSession, GET as getSessions } from "../app/api/sessions/route";
+import { POST as postSession } from "../app/api/sessions/route";
 import { PATCH as patchSession } from "../app/api/sessions/[id]/route";
-import { POST as postMatch, GET as getMatches } from "../app/api/matches/route";
+import { POST as postMatch } from "../app/api/matches/route";
 import { GET as getReady } from "../app/api/ready/route";
 
 async function runVerification() {

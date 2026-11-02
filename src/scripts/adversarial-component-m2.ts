@@ -61,8 +61,8 @@ async function runAdversarialComponentSuite() {
 
   // 1.3 Strict Zero-Color / No-Hue Audit for CossBadge16
   const forbiddenColorPatterns = [/emerald/i, /green/i, /red/i, /blue/i, /purple/i, /yellow/i, /amber/i, /rose/i, /teal/i, /lime/i];
-  let readyHasForbidden = forbiddenColorPatterns.some((p) => p.test(readyHtml));
-  let pendingHasForbidden = forbiddenColorPatterns.some((p) => p.test(pendingHtml));
+  const readyHasForbidden = forbiddenColorPatterns.some((p) => p.test(readyHtml));
+  const pendingHasForbidden = forbiddenColorPatterns.some((p) => p.test(pendingHtml));
   report("1.7 CossBadge16 Ready HTML contains zero hue/color classes", !readyHasForbidden, readyHtml);
   report("1.8 CossBadge16 Pending HTML contains zero hue/color classes", !pendingHasForbidden, pendingHtml);
 

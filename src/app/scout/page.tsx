@@ -35,7 +35,7 @@ export default function ScoutPage() {
   }, []);
 
   return (
-    <div className="flex min-h-dvh w-full flex-col bg-zinc-950 text-zinc-50 select-none">
+    <div className="flex min-h-dvh w-full flex-col bg-zinc-950 text-zinc-50">
       {/* Top Header Bar */}
       <header className="sticky top-0 z-30 border-b border-zinc-800/80 bg-zinc-950/80 px-4 sm:px-8 py-3.5 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between">
@@ -103,25 +103,25 @@ export default function ScoutPage() {
                 return (
                   <div
                     key={pId}
-                    className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-5 space-y-4 shadow-xs"
+                    className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-4 sm:p-5 space-y-4 shadow-xs"
                   >
                     {/* Header */}
-                    <div className="flex items-center justify-between gap-4">
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className="flex size-10 shrink-0 items-center justify-center rounded-full border border-zinc-700 bg-zinc-800 text-zinc-200 font-semibold text-xs">
+                    <div className="flex flex-wrap sm:flex-nowrap items-start sm:items-center justify-between gap-2.5 sm:gap-4">
+                      <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
+                        <div className="flex size-9 sm:size-10 shrink-0 items-center justify-center rounded-full border border-zinc-700 bg-zinc-800 text-zinc-200 font-semibold text-xs font-mono">
                           {initials}
                         </div>
                         <div className="min-w-0 flex-1">
                           <h3 className="text-sm sm:text-base font-semibold text-zinc-100 truncate">
                             {item.player.name}
                           </h3>
-                          <p className="text-xs text-zinc-400 font-normal mt-0.5">
+                          <p className="text-xs text-zinc-400 font-normal mt-0.5 truncate">
                             {item.player.sport} · Age {item.player.age}
                           </p>
                         </div>
                       </div>
 
-                      <CossBadge16 isReady={true} />
+                      <CossBadge16 isReady={true} className="shrink-0 self-center sm:self-auto text-[11px] sm:text-xs" />
                     </div>
 
                     {/* 75% Tick Threshold Progress Bar */}
@@ -131,7 +131,7 @@ export default function ScoutPage() {
                           Attendance: <strong className="text-zinc-100">{item.attendancePct}%</strong>
                         </span>
                         <span className="text-zinc-300 font-semibold">
-                          75% Target |
+                          75% Target
                         </span>
                       </div>
 

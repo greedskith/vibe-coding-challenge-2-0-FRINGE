@@ -76,7 +76,7 @@ export default function PlayerPage() {
     .toUpperCase();
 
   return (
-    <div className="flex min-h-dvh w-full flex-col bg-zinc-950 text-zinc-50 select-none">
+    <div className="flex min-h-dvh w-full flex-col bg-zinc-950 text-zinc-50">
       {/* Top Header Bar */}
       <header className="sticky top-0 z-30 border-b border-zinc-800/80 bg-zinc-950/80 px-4 sm:px-8 py-3.5 backdrop-blur">
         <div className="mx-auto flex max-w-4xl items-center justify-between">
@@ -163,11 +163,11 @@ export default function PlayerPage() {
             </div>
 
             {/* Visual Gauge with Correctly Aligned 75% Target */}
-            <div className="space-y-2 pt-1">
+            <div className="space-y-1.5 pt-1">
               <div className="flex justify-between items-center text-xs font-mono">
                 <span className="text-zinc-400">Readiness Benchmark</span>
-                <span className={attendancePct >= 75 ? "text-zinc-200 font-semibold" : "text-zinc-400"}>
-                  Target 75%
+                <span className={attendancePct >= 75 ? "text-zinc-200 font-semibold" : "text-zinc-400"} title="Target 75%">
+                  Target: 75% Ready Threshold
                 </span>
               </div>
 
@@ -185,6 +185,16 @@ export default function PlayerPage() {
                   style={{ left: "75%" }}
                   title="75% Target"
                 />
+              </div>
+
+              {/* Anchored Visible Label Under Gauge */}
+              <div className="relative w-full text-[10px] font-mono text-zinc-500 pt-0.5">
+                <div
+                  className="absolute -translate-x-1/2 flex items-center text-zinc-400 font-medium whitespace-nowrap"
+                  style={{ left: "75%" }}
+                >
+                  ▲ 75% Target
+                </div>
               </div>
             </div>
           </div>
@@ -257,7 +267,7 @@ export default function PlayerPage() {
           </div>
 
           {/* Match Contributions */}
-          <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-6 space-y-4 shadow-xs">
+          <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-4 sm:p-6 space-y-4 shadow-xs">
             <div className="flex items-center justify-between border-b border-zinc-800/80 pb-3">
               <div className="flex items-center gap-2">
                 <Activity className="size-4 text-zinc-400" />
@@ -281,15 +291,15 @@ export default function PlayerPage() {
                 {matchHistory.map((m, idx) => (
                   <div
                     key={m.matchId || `${m.date}-${idx}`}
-                    className="flex items-center justify-between rounded-lg border border-zinc-800/70 bg-zinc-950/60 p-3.5 transition-colors hover:border-zinc-700"
+                    className="flex items-center justify-between rounded-lg border border-zinc-800/70 bg-zinc-950/60 p-3 sm:p-3.5 transition-colors hover:border-zinc-700"
                   >
                     <div className="space-y-0.5 min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 min-w-0">
                         <span className="text-xs font-semibold text-zinc-200 truncate">
                           vs {m.opponent || "Academy Fixture"}
                         </span>
                         {m.outcome && (
-                          <span className="rounded border border-zinc-800 bg-zinc-900 px-1.5 py-0.5 text-[10px] font-mono uppercase tracking-wider text-zinc-400">
+                          <span className="shrink-0 rounded border border-zinc-800 bg-zinc-900 px-1.5 py-0.5 text-[10px] font-mono uppercase tracking-wider text-zinc-400">
                             {m.outcome}
                           </span>
                         )}
@@ -299,7 +309,7 @@ export default function PlayerPage() {
                       </p>
                     </div>
 
-                    <div className="flex items-center gap-2 shrink-0 ml-3">
+                    <div className="flex items-center gap-2 shrink-0 ml-2.5 sm:ml-3">
                       <div className="rounded-md border border-zinc-800 bg-zinc-900/80 px-2.5 py-1 text-right">
                         <span className="text-[10px] font-mono text-zinc-500 block leading-none">
                           Score

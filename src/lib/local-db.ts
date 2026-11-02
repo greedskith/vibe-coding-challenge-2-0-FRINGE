@@ -113,7 +113,7 @@ function saveStore() {
       fs.mkdirSync(DATA_DIR, { recursive: true });
     }
     fs.writeFileSync(DATA_FILE, JSON.stringify(memoryStore, null, 2), "utf-8");
-  } catch (err) {
+  } catch {
     // Non-blocking in read-only or restricted environments
   }
 }
@@ -183,7 +183,7 @@ export class LocalCollection {
 
   find(query: any = {}) {
     const docs = this.getDocs().filter((d) => matchDoc(d, query));
-    let sortedDocs = [...docs];
+    const sortedDocs = [...docs];
 
     return {
       sort(sortObj: Record<string, 1 | -1>) {
@@ -324,7 +324,8 @@ export class LocalDb {
     return new LocalCollection(name as keyof LocalStore);
   }
 
-  async command(_cmd: any) {
+  async command(_cmd?: any) {
+    void _cmd;
     return { ok: 1 };
   }
 }

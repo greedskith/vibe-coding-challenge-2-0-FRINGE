@@ -105,7 +105,10 @@ export function LoginForm() {
                 }}
                 required
                 autoComplete="username"
-                className="h-10 w-full rounded-lg border border-zinc-800 bg-zinc-950 pl-10 pr-3 text-sm text-zinc-100 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-600 transition-colors"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
+                className="h-10 w-full rounded-lg border border-zinc-800 bg-zinc-950 pl-10 pr-3 text-base sm:text-sm text-zinc-100 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-600 transition-colors"
               />
             </div>
           </div>
@@ -123,7 +126,10 @@ export function LoginForm() {
                 }}
                 required
                 autoComplete="current-password"
-                className="h-10 w-full rounded-lg border border-zinc-800 bg-zinc-950 pl-10 pr-3 text-sm text-zinc-100 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-600 transition-colors"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
+                className="h-10 w-full rounded-lg border border-zinc-800 bg-zinc-950 pl-10 pr-3 text-base sm:text-sm text-zinc-100 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-600 transition-colors"
               />
             </div>
           </div>
