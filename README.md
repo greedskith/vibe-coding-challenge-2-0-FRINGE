@@ -10,7 +10,6 @@ A simple sports desk for Dumka Sports Academy. Coaches track daily practice and 
 | **Match Eligibility** | If a player was absent for practice on match day, they cannot play that match. |
 | **Trial Qualification** | A player becomes trial-ready after reaching **75% attendance** and playing **at least 2 matches**. |
 | **Private Portals** | Scouts only see players who qualified for trials. Players only see their own progress. |
-| **Multiple Sports** | Football and cricket track attendance independently without mixing up records. |
 
 ### Demo Accounts
 
