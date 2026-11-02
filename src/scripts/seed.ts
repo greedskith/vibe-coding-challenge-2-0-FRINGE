@@ -1,11 +1,11 @@
-import { getDb } from "../lib/db";
-import { ObjectId } from "mongodb";
-import bcrypt from "bcryptjs";
 import * as dotenv from "dotenv";
-
 dotenv.config({ path: ".env.local" });
 
+import { ObjectId } from "mongodb";
+import bcrypt from "bcryptjs";
+
 async function seed() {
+  const { getDb } = await import("../lib/db");
   const db = await getDb();
 
   // Seed 3 Players if none exist
@@ -71,6 +71,10 @@ async function seed() {
   console.log("   coach / coach123");
   console.log("   scout / scout123");
   console.log("   rohit / rohit123");
+  process.exit(0);
 }
 
-seed().catch(console.error);
+seed().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});

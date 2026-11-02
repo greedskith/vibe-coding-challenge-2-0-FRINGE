@@ -332,6 +332,7 @@ async function runVerification() {
   console.log("=================================================");
   console.log("   ALL 4 HACKATHON CHECKS + EDGE CASES VERIFIED! ");
   console.log("=================================================");
+  process.exit(0);
 }
 
 runVerification().catch((err) => {
