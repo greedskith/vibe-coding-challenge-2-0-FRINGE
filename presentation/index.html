@@ -4,6 +4,13 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>One Academy — Academy Desk</title>
+<script>
+  if (window.location.protocol.startsWith('http')) {
+    const b = document.createElement('base');
+    b.href = window.location.pathname.startsWith('/presentation') ? '/presentation/' : './';
+    document.head.prepend(b);
+  }
+</script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -558,6 +565,18 @@
 </div>
 
 <script>
+  // Robust image fallback across environments
+  document.querySelectorAll('img').forEach(img => {
+    img.addEventListener('error', function() {
+      const src = this.getAttribute('src') || '';
+      const fname = src.split('/').pop();
+      if (!this.dataset.retried) {
+        this.dataset.retried = '1';
+        this.src = '/presentation/img/' + fname;
+      }
+    });
+  });
+
   const slides = Array.from(document.querySelectorAll('.slide'));
   let current = 0;
 
