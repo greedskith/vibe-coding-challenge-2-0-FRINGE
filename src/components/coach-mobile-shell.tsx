@@ -217,7 +217,9 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
   const [matchOverrides, setMatchOverrides] = useState<Record<string, boolean>>({});
   const [matchError, setMatchError] = useState<string | null>(null);
 
-  // Session Delete State
+  // Session Unlock & Delete States
+  const [unlockSessionConfirmOpen, setUnlockSessionConfirmOpen] = useState(false);
+  const [isUnlockingSession, setIsUnlockingSession] = useState(false);
   const [deleteSessionConfirmOpen, setDeleteSessionConfirmOpen] = useState(false);
   const [isDeletingSession, setIsDeletingSession] = useState(false);
 
@@ -480,6 +482,7 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
 
   const handleUnlockSession = async () => {
     if (!activeSession) return;
+    setIsUnlockingSession(true);
 
     try {
       const res = await fetch(`/api/sessions/${activeSession._id}`, {
@@ -497,6 +500,7 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
           .then((r) => r.json())
           .then((data) => Array.isArray(data) && setReadyResults(data.filter((r: any) => isAthleteAccount(r.player))));
         toast.success(`Session for ${unlocked.date} unlocked for editing`);
+        setUnlockSessionConfirmOpen(false);
       } else {
         const data = await res.json();
         toast.error(data.error || "Failed to unlock session");
@@ -504,6 +508,8 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
     } catch (err: any) {
       console.error("Failed to unlock session:", err);
       toast.error(err.message || "Failed to unlock session");
+    } finally {
+      setIsUnlockingSession(false);
     }
   };
 
@@ -1420,50 +1426,50 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
           </div>
 
           {/* Sub Bar: Discipline Toggle & Tab-Scoped Actions */}
-          <div className="flex items-center justify-between border-t border-zinc-800/60 px-4 py-1.5 bg-zinc-950/60 gap-2">
+          <div className="flex items-center justify-between border-t border-zinc-800/60 px-3 sm:px-4 py-1.5 bg-zinc-950/60 gap-1.5 sm:gap-2 min-w-0 max-w-full overflow-hidden">
             <CossToggleGroup4
               value={sport}
               onValueChange={handleSportChange}
               options={[
-                { value: "Football", label: "Football" },
-                { value: "Cricket", label: "Cricket" },
+                { value: "Football", label: "Football", shortLabel: "FB" },
+                { value: "Cricket", label: "Cricket", shortLabel: "CR" },
               ]}
-              className="h-7.5"
+              className="h-7.5 shrink-0"
             />
 
             {/* Attendance Tab Controls */}
             {activeTab === "attendance" && (
-              <div className="flex items-center gap-1.5 shrink-0">
+              <div className="flex items-center gap-1.5 min-w-0 shrink">
                 <DropdownMenu>
                   <DropdownMenuTrigger
-                    className="flex items-center gap-1.5 rounded-lg border border-zinc-800 bg-zinc-900/60 hover:bg-zinc-800/80 hover:border-zinc-700 px-2.5 py-1 text-[11px] font-mono text-zinc-200 transition-colors cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-zinc-400 shrink-0"
+                    className="flex items-center gap-1 sm:gap-1.5 rounded-lg border border-zinc-800 bg-zinc-900/60 hover:bg-zinc-800/80 hover:border-zinc-700 px-2 sm:px-2.5 py-1 text-[11px] font-mono text-zinc-200 transition-colors cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-zinc-400 min-w-0 max-w-[190px] sm:max-w-none"
                     title="Switch or open session"
                   >
-                    <CalendarDays className="size-3 text-zinc-400" />
-                    <span>
+                    <CalendarDays className="size-3 text-zinc-400 shrink-0" />
+                    <span className="truncate">
                       {activeSession
                         ? formatDisplayDate(activeSession.date)
                         : "Select Session"}
                     </span>
                     {activeSession && (
                       <>
-                        <span className="text-zinc-600">·</span>
-                        <span className="text-zinc-400 font-mono inline-flex items-center gap-1">
+                        <span className="text-zinc-600 shrink-0">·</span>
+                        <span className="text-zinc-400 font-mono inline-flex items-center gap-0.5 shrink-0">
                           {activeSession.status === "closed" ? (
                             <>
                               <Lock className="size-2.5 text-zinc-500" />
-                              <span className="text-zinc-500">Closed</span>
+                              <span className="text-zinc-500 hidden xs:inline">Closed</span>
                             </>
                           ) : (
                             <>
                               <Unlock className="size-2.5 text-zinc-300" />
-                              <span className="text-zinc-300">Open</span>
+                              <span className="text-zinc-300 hidden xs:inline">Open</span>
                             </>
                           )}
                         </span>
                       </>
                     )}
-                    <ChevronDown className="size-2.5 text-zinc-500" />
+                    <ChevronDown className="size-2.5 text-zinc-500 shrink-0" />
                   </DropdownMenuTrigger>
                   {renderSessionDropdownContent()}
                 </DropdownMenu>
@@ -1471,9 +1477,11 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                   <button
                     type="button"
                     onClick={
-                      activeSession.status === "closed" ? handleUnlockSession : handleLockSession
+                      activeSession.status === "closed"
+                        ? () => setUnlockSessionConfirmOpen(true)
+                        : handleLockSession
                     }
-                    className="rounded-lg border border-zinc-700 bg-zinc-800 px-2 py-1 text-[11px] font-medium transition-colors cursor-pointer hover:bg-zinc-700 text-zinc-200"
+                    className="rounded-lg border border-zinc-700 bg-zinc-800 px-2 py-1 text-[11px] font-medium transition-colors cursor-pointer hover:bg-zinc-700 text-zinc-200 shrink-0"
                     title={
                       activeSession.status === "closed"
                         ? "Unlock Session (Reopen for edits)"
@@ -1586,7 +1594,7 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                 {activeSession && activeSession.status === "closed" && (
                   <button
                     type="button"
-                    onClick={handleUnlockSession}
+                    onClick={() => setUnlockSessionConfirmOpen(true)}
                     className="flex items-center gap-1.5 rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs font-medium text-zinc-200 hover:bg-zinc-700 transition-colors cursor-pointer whitespace-nowrap shrink-0"
                   >
                     <Unlock className="size-3.5 text-zinc-300" />
@@ -1715,17 +1723,17 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
 
               {/* Editorial Read-Only Banner when session is closed */}
               {activeSession?.status === "closed" && (
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 rounded-xl border border-zinc-800 bg-zinc-900/80 px-4 py-2.5 text-xs text-zinc-300 font-mono shadow-xs">
-                  <div className="flex items-center gap-2 min-w-0">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 rounded-xl border border-zinc-800 bg-zinc-900/80 p-3 sm:px-4 sm:py-2.5 text-xs text-zinc-300 font-mono shadow-xs w-full max-w-full">
+                  <div className="flex items-center gap-2 min-w-0 flex-wrap sm:flex-nowrap">
                     <Lock className="size-3.5 shrink-0 text-zinc-400" />
-                    <span className="font-medium truncate">
-                      Locked Session · Recorded on {activeSession.date} (Read-only)
+                    <span className="font-medium break-words leading-relaxed">
+                      Locked Session · Recorded on {activeSession.date} <span className="text-zinc-500 text-[11px]">(Read-only)</span>
                     </span>
                   </div>
-                  <div className="flex items-center gap-2 shrink-0">
+                  <div className="flex items-center gap-2 shrink-0 pt-1 sm:pt-0">
                     <button
                       type="button"
-                      onClick={handleUnlockSession}
+                      onClick={() => setUnlockSessionConfirmOpen(true)}
                       className="flex items-center gap-1.5 rounded-lg border border-zinc-700 bg-zinc-800 px-2.5 py-1 text-xs font-sans font-medium text-zinc-200 hover:bg-zinc-700 transition-colors cursor-pointer"
                     >
                       <Unlock className="size-3 text-zinc-300" />
@@ -1745,17 +1753,17 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
 
               {/* Informational Banner when no session is selected */}
               {!activeSession && (
-                <div className="flex items-center justify-between gap-3 rounded-xl border border-zinc-800 bg-zinc-900/60 px-4 py-2.5 text-xs text-zinc-400 font-mono shadow-xs">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 rounded-xl border border-zinc-800 bg-zinc-900/60 p-3 sm:px-4 sm:py-2.5 text-xs text-zinc-400 font-mono shadow-xs w-full max-w-full">
                   <div className="flex items-center gap-2 min-w-0">
                     <CalendarDays className="size-3.5 shrink-0 text-zinc-500" />
-                    <span className="truncate">
+                    <span className="break-words leading-relaxed">
                       No active session for {sport}. Open a new session to record attendance.
                     </span>
                   </div>
                   <button
                     type="button"
                     onClick={handleOpenNewSessionModal}
-                    className="text-xs font-semibold text-zinc-200 hover:text-zinc-100 underline underline-offset-2 shrink-0 cursor-pointer"
+                    className="text-xs font-semibold text-zinc-200 hover:text-zinc-100 underline underline-offset-2 shrink-0 cursor-pointer pt-1 sm:pt-0"
                   >
                     + Open Session
                   </button>
@@ -3043,7 +3051,7 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                         <button
                           type="submit"
                           disabled={isUpdatingAthlete}
-                          className="w-full rounded-lg bg-zinc-100 py-2 text-xs font-semibold text-zinc-950 hover:bg-zinc-200 transition-colors cursor-pointer disabled:opacity-50 flex items-center justify-center gap-1.5"
+                          className="w-full rounded-lg bg-zinc-100 py-2.5 text-xs font-semibold text-zinc-950 hover:bg-zinc-200 transition-colors cursor-pointer disabled:opacity-50 flex items-center justify-center gap-1.5 text-center"
                         >
                           {isUpdatingAthlete ? (
                             <Loader2 className="size-3.5 animate-spin" />
@@ -3056,7 +3064,7 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                     </div>
 
                     {/* Bottom Actions: Copy login & Delete */}
-                    <div className="flex items-center justify-between pt-1 pb-4 px-1">
+                    <div className="flex items-center justify-between pt-1 pb-[max(2.5rem,env(safe-area-inset-bottom,32px))] px-1">
                       <button
                         type="button"
                         onClick={handleCopyUsername}
@@ -3096,8 +3104,8 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
 
       {/* Delete Athlete Confirmation Dialog */}
       <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
-        <DialogPopup className="sm:max-w-sm bg-zinc-950 border-zinc-800 text-zinc-100">
-          <DialogHeader>
+        <DialogPopup className="max-sm:rounded-t-2xl sm:max-w-sm bg-zinc-950 border-zinc-800 text-zinc-100 flex flex-col p-6 pb-[max(1.5rem,env(safe-area-inset-bottom,20px))]">
+          <DialogHeader className="p-0">
             <DialogTitle className="text-base font-semibold text-zinc-100 flex items-center gap-2">
               <Trash2 className="size-4 text-zinc-400" />
               Confirm Athlete Deletion
@@ -3109,15 +3117,15 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
               their linked user login account.
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter variant="bare" className="flex gap-2 pt-3">
-            <DialogClose className="flex-1 rounded-lg border border-zinc-800 bg-zinc-900 py-2 text-xs font-medium text-zinc-300 hover:bg-zinc-800 transition-colors cursor-pointer">
+          <DialogFooter variant="bare" className="p-0 flex flex-row gap-2 pt-4 max-sm:pb-0">
+            <DialogClose className="flex-1 rounded-lg border border-zinc-800 bg-zinc-900 py-2.5 text-xs font-medium text-zinc-300 hover:bg-zinc-800 transition-colors cursor-pointer text-center">
               Cancel
             </DialogClose>
             <button
               type="button"
               disabled={isDeletingAthlete}
               onClick={handleDeleteAthlete}
-              className="flex-1 rounded-lg bg-zinc-100 py-2 text-xs font-semibold text-zinc-950 hover:bg-zinc-200 transition-colors cursor-pointer disabled:opacity-50 flex items-center justify-center gap-1.5"
+              className="flex-1 rounded-lg bg-zinc-100 py-2.5 text-xs font-semibold text-zinc-950 hover:bg-zinc-200 transition-colors cursor-pointer disabled:opacity-50 flex items-center justify-center gap-1.5 text-center"
             >
               {isDeletingAthlete ? (
                 <Loader2 className="size-3.5 animate-spin" />
@@ -3132,8 +3140,8 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
 
       {/* Add Athlete Dialog */}
       <Dialog open={newPlayerOpen} onOpenChange={setNewPlayerOpen}>
-        <DialogPopup className="sm:max-w-sm bg-zinc-950 border-zinc-800 text-zinc-100">
-          <DialogHeader>
+        <DialogPopup className="max-sm:max-h-[90dvh] max-sm:rounded-t-2xl sm:max-w-md bg-zinc-950 border-zinc-800 text-zinc-100 flex flex-col p-0 overflow-hidden">
+          <DialogHeader className="p-6 pb-3 shrink-0 border-b border-zinc-800/60">
             <DialogTitle className="text-base font-semibold text-zinc-100 flex items-center gap-2">
               <Users className="size-4 text-zinc-300" />
               Enroll Athlete
@@ -3143,10 +3151,10 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
               linked login account will be automatically created.
             </DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleAddPlayer} className="space-y-4 pt-2">
-            <DialogPanel className="space-y-3">
+          <form onSubmit={handleAddPlayer} className="flex flex-col flex-1 min-h-0 overflow-hidden">
+            <div className="flex-1 overflow-y-auto max-h-[75vh] max-sm:max-h-[65dvh] min-h-0 px-6 py-4 space-y-4">
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-zinc-400 block">
+                <label className="text-xs font-medium text-zinc-400 block font-mono">
                   Full Name <span className="text-zinc-500">*</span>
                 </label>
                 <input
@@ -3161,7 +3169,7 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-zinc-400 block">
+                  <label className="text-xs font-medium text-zinc-400 block font-mono">
                     Age <span className="text-zinc-500">*</span>
                   </label>
                   <input
@@ -3176,7 +3184,7 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-zinc-400 block">
+                  <label className="text-xs font-medium text-zinc-400 block font-mono">
                     Sport <span className="text-zinc-500">*</span>
                   </label>
                   <select
@@ -3192,7 +3200,7 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
 
               {/* Profile Photo */}
               <div className="space-y-2">
-                <label className="text-xs font-medium text-zinc-400 block">
+                <label className="text-xs font-medium text-zinc-400 block font-mono">
                   Profile Photo <span className="text-[10px] text-zinc-500 font-mono font-normal">(Optional)</span>
                 </label>
                 <div className="flex items-center gap-3">
@@ -3254,15 +3262,15 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                   </div>
                 </div>
               </div>
-            </DialogPanel>
-            <DialogFooter variant="bare" className="flex gap-2 pt-2">
-              <DialogClose className="flex-1 rounded-lg border border-zinc-800 bg-zinc-900 py-2.5 text-xs font-medium text-zinc-300 hover:bg-zinc-800 transition-colors cursor-pointer">
+            </div>
+            <DialogFooter variant="bare" className="shrink-0 border-t border-zinc-800/60 bg-zinc-950 p-4 pb-[max(1rem,env(safe-area-inset-bottom,16px))] flex flex-row gap-2">
+              <DialogClose className="flex-1 rounded-lg border border-zinc-800 bg-zinc-900 py-2.5 text-xs font-medium text-zinc-300 hover:bg-zinc-800 transition-colors cursor-pointer text-center">
                 Cancel
               </DialogClose>
               <button
                 type="submit"
                 disabled={isAddingPlayer}
-                className="flex-1 rounded-lg bg-zinc-100 py-2.5 text-xs font-semibold text-zinc-950 hover:bg-zinc-200 transition-colors cursor-pointer disabled:opacity-50 flex items-center justify-center gap-1.5"
+                className="flex-1 rounded-lg bg-zinc-100 py-2.5 text-xs font-semibold text-zinc-950 hover:bg-zinc-200 transition-colors cursor-pointer disabled:opacity-50 flex items-center justify-center gap-1.5 text-center"
               >
                 {isAddingPlayer ? (
                   <Loader2 className="size-3.5 animate-spin" />
@@ -3278,8 +3286,8 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
 
       {/* Open Session Dialog */}
       <Dialog open={newSessionOpen} onOpenChange={setNewSessionOpen}>
-        <DialogPopup className="sm:max-w-sm bg-zinc-950 border-zinc-800 text-zinc-100">
-          <DialogHeader>
+        <DialogPopup className="max-sm:max-h-[85dvh] max-sm:rounded-t-2xl sm:max-w-sm bg-zinc-950 border-zinc-800 text-zinc-100 flex flex-col p-0 overflow-hidden">
+          <DialogHeader className="p-6 pb-3 shrink-0 border-b border-zinc-800/60">
             <DialogTitle className="text-base font-semibold text-zinc-100">
               Open Training Session
             </DialogTitle>
@@ -3287,10 +3295,10 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
               Create a new attendance roll for {sport}.
             </DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleOpenSession} className="space-y-4 pt-2">
-            <DialogPanel className="space-y-3">
+          <form onSubmit={handleOpenSession} className="flex flex-col flex-1 min-h-0 overflow-hidden">
+            <div className="flex-1 overflow-y-auto max-h-[75vh] max-sm:max-h-[60dvh] min-h-0 px-6 py-4 space-y-4">
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-zinc-400 block">
+                <label className="text-xs font-medium text-zinc-400 block font-mono">
                   Discipline
                 </label>
                 <select
@@ -3303,7 +3311,7 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                 </select>
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-zinc-400 block">
+                <label className="text-xs font-medium text-zinc-400 block font-mono">
                   Session Date
                 </label>
                 <input
@@ -3314,14 +3322,14 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                   className="h-10 w-full rounded-lg border border-zinc-800 bg-zinc-900 px-3 text-xs text-zinc-100 focus:border-zinc-500 focus:outline-none"
                 />
               </div>
-            </DialogPanel>
-            <DialogFooter variant="bare" className="flex gap-2 pt-2">
-              <DialogClose className="flex-1 rounded-lg border border-zinc-800 bg-zinc-900 py-2 text-xs font-medium text-zinc-300 hover:bg-zinc-800 transition-colors cursor-pointer">
+            </div>
+            <DialogFooter variant="bare" className="shrink-0 border-t border-zinc-800/60 bg-zinc-950 p-4 pb-[max(1rem,env(safe-area-inset-bottom,16px))] flex flex-row gap-2">
+              <DialogClose className="flex-1 rounded-lg border border-zinc-800 bg-zinc-900 py-2.5 text-xs font-medium text-zinc-300 hover:bg-zinc-800 transition-colors cursor-pointer text-center">
                 Cancel
               </DialogClose>
               <button
                 type="submit"
-                className="flex-1 rounded-lg bg-zinc-100 py-2 text-xs font-semibold text-zinc-950 hover:bg-zinc-200 transition-colors cursor-pointer"
+                className="flex-1 rounded-lg bg-zinc-100 py-2.5 text-xs font-semibold text-zinc-950 hover:bg-zinc-200 transition-colors cursor-pointer text-center"
               >
                 Open Session
               </button>
@@ -3332,18 +3340,16 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
 
       {/* Record Match Dialog */}
       <Dialog open={newMatchOpen} onOpenChange={setNewMatchOpen}>
-        <DialogPopup className="max-sm:h-[92dvh] max-sm:max-h-[92dvh] max-sm:rounded-t-2xl sm:max-w-md bg-zinc-950 border-zinc-800 text-zinc-100 flex flex-col p-0 overflow-hidden">
-          <div className="p-6 pb-2 shrink-0 border-b border-zinc-800/60">
-            <DialogHeader>
-              <DialogTitle className="text-base font-semibold text-zinc-100 flex items-center gap-2">
-                <Swords className="size-4 text-zinc-300" />
-                Record Match Score
-              </DialogTitle>
-              <DialogDescription className="text-xs text-zinc-400">
-                Only athletes present in a session can participate. Absent athletes are strictly restricted.
-              </DialogDescription>
-            </DialogHeader>
-          </div>
+        <DialogPopup className="max-sm:h-[90dvh] max-sm:max-h-[90dvh] max-sm:rounded-t-2xl sm:max-w-md bg-zinc-950 border-zinc-800 text-zinc-100 flex flex-col p-0 overflow-hidden">
+          <DialogHeader className="p-6 pb-2 shrink-0 border-b border-zinc-800/60">
+            <DialogTitle className="text-base font-semibold text-zinc-100 flex items-center gap-2">
+              <Swords className="size-4 text-zinc-300" />
+              Record Match Score
+            </DialogTitle>
+            <DialogDescription className="text-xs text-zinc-400">
+              Only athletes present in a session can participate. Absent athletes are strictly restricted.
+            </DialogDescription>
+          </DialogHeader>
 
           <form onSubmit={handleRecordMatch} className="flex flex-col flex-1 min-h-0 overflow-hidden">
             <div className="flex-1 overflow-y-auto min-h-0 px-6 py-4 space-y-4">
@@ -3688,7 +3694,7 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
               </div>
             </div>
 
-            <div className="shrink-0 border-t border-zinc-800 bg-zinc-950 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] flex gap-2">
+            <div className="shrink-0 border-t border-zinc-800 bg-zinc-950 p-4 pb-[max(1rem,env(safe-area-inset-bottom,16px))] flex flex-row gap-2">
               <DialogClose className="flex-1 rounded-lg border border-zinc-800 bg-zinc-900 py-2.5 text-xs font-medium text-zinc-300 hover:bg-zinc-800 transition-colors cursor-pointer text-center">
                 Cancel
               </DialogClose>
@@ -3705,18 +3711,16 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
 
       {/* Edit Match Dialog */}
       <Dialog open={editMatchOpen} onOpenChange={setEditMatchOpen}>
-        <DialogPopup className="max-sm:h-[92dvh] max-sm:max-h-[92dvh] max-sm:rounded-t-2xl sm:max-w-md bg-zinc-950 border-zinc-800 text-zinc-100 flex flex-col p-0 overflow-hidden">
-          <div className="p-6 pb-2 shrink-0 border-b border-zinc-800/60">
-            <DialogHeader>
-              <DialogTitle className="text-base font-semibold text-zinc-100 flex items-center gap-2">
-                <Pencil className="size-4 text-zinc-300" />
-                Edit Match Record
-              </DialogTitle>
-              <DialogDescription className="text-xs text-zinc-400">
-                Modify fixture details, opponent, scores, or apply coach attendance overrides.
-              </DialogDescription>
-            </DialogHeader>
-          </div>
+        <DialogPopup className="max-sm:h-[90dvh] max-sm:max-h-[90dvh] max-sm:rounded-t-2xl sm:max-w-md bg-zinc-950 border-zinc-800 text-zinc-100 flex flex-col p-0 overflow-hidden">
+          <DialogHeader className="p-6 pb-2 shrink-0 border-b border-zinc-800/60">
+            <DialogTitle className="text-base font-semibold text-zinc-100 flex items-center gap-2">
+              <Pencil className="size-4 text-zinc-300" />
+              Edit Match Record
+            </DialogTitle>
+            <DialogDescription className="text-xs text-zinc-400">
+              Modify fixture details, opponent, scores, or apply coach attendance overrides.
+            </DialogDescription>
+          </DialogHeader>
 
           <form onSubmit={handleUpdateMatch} className="flex flex-col flex-1 min-h-0 overflow-hidden">
             <div className="flex-1 overflow-y-auto min-h-0 px-6 py-4 space-y-4">
@@ -4055,7 +4059,7 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
               </div>
             </div>
 
-            <div className="shrink-0 border-t border-zinc-800 bg-zinc-950 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] flex gap-2">
+            <div className="shrink-0 border-t border-zinc-800 bg-zinc-950 p-4 pb-[max(1rem,env(safe-area-inset-bottom,16px))] flex flex-row gap-2">
               <DialogClose className="flex-1 rounded-lg border border-zinc-800 bg-zinc-900 py-2.5 text-xs font-medium text-zinc-300 hover:bg-zinc-800 transition-colors cursor-pointer text-center">
                 Cancel
               </DialogClose>
@@ -4074,20 +4078,20 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
 
       {/* Delete Match Confirmation Dialog */}
       <Dialog open={deleteMatchConfirmOpen} onOpenChange={setDeleteMatchConfirmOpen}>
-        <DialogPopup className="sm:max-w-md bg-zinc-950 border-zinc-800 text-zinc-100">
-          <DialogHeader>
+        <DialogPopup className="max-sm:rounded-t-2xl sm:max-w-md bg-zinc-950 border-zinc-800 text-zinc-100 flex flex-col p-6 pb-[max(1.5rem,env(safe-area-inset-bottom,20px))]">
+          <DialogHeader className="p-0">
             <DialogTitle className="text-base font-semibold text-zinc-100 flex items-center gap-2">
               <Trash2 className="size-4 text-zinc-400" />
               Confirm Match Deletion
             </DialogTitle>
-            <DialogDescription className="text-xs text-zinc-400">
+            <DialogDescription className="text-xs text-zinc-400 pt-1">
               Are you sure you want to delete the fixture vs{" "}
               <strong className="text-zinc-200">{deletingMatch?.opponent}</strong> on{" "}
               <strong className="text-zinc-200 font-mono">{deletingMatch?.date}</strong>?
               This will permanently remove the match and recalculate player trial readiness.
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter className="mt-6 flex gap-2">
+          <DialogFooter variant="bare" className="p-0 mt-6 flex flex-row gap-2 max-sm:pb-0">
             <DialogClose className="flex-1 rounded-lg border border-zinc-800 bg-zinc-900 py-2.5 text-xs font-medium text-zinc-300 hover:bg-zinc-800 transition-colors cursor-pointer text-center">
               Cancel
             </DialogClose>
@@ -4104,22 +4108,58 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
         </DialogPopup>
       </Dialog>
 
+      {/* Unlock Session Confirmation Dialog */}
+      <Dialog open={unlockSessionConfirmOpen} onOpenChange={setUnlockSessionConfirmOpen}>
+        <DialogPopup className="max-sm:rounded-t-2xl sm:max-w-md bg-zinc-950 border-zinc-800 text-zinc-100 flex flex-col p-6 pb-[max(1.5rem,env(safe-area-inset-bottom,20px))]">
+          <DialogHeader className="p-0">
+            <DialogTitle className="text-base font-semibold text-zinc-100 flex items-center gap-2">
+              <Unlock className="size-4 text-zinc-300" />
+              Confirm Session Unlock
+            </DialogTitle>
+            <DialogDescription className="text-xs text-zinc-400 pt-1">
+              Are you sure you want to unlock the{" "}
+              <strong className="text-zinc-200">{activeSession?.sport}</strong> practice session from{" "}
+              <strong className="text-zinc-200 font-mono">{activeSession?.date}</strong>?
+              This will reopen the attendance roll for edits.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter variant="bare" className="p-0 mt-6 flex flex-row gap-2 max-sm:pb-0">
+            <DialogClose className="flex-1 rounded-lg border border-zinc-800 bg-zinc-900 py-2.5 text-xs font-medium text-zinc-300 hover:bg-zinc-800 transition-colors cursor-pointer text-center">
+              Cancel
+            </DialogClose>
+            <button
+              type="button"
+              disabled={isUnlockingSession}
+              onClick={handleUnlockSession}
+              className="flex-1 rounded-lg bg-zinc-100 py-2.5 text-xs font-semibold text-zinc-950 hover:bg-zinc-200 transition-colors cursor-pointer text-center disabled:opacity-50 flex items-center justify-center gap-1.5"
+            >
+              {isUnlockingSession ? (
+                <Loader2 className="size-3.5 animate-spin" />
+              ) : (
+                <Unlock className="size-3.5 text-zinc-950" />
+              )}
+              <span>Unlock Session</span>
+            </button>
+          </DialogFooter>
+        </DialogPopup>
+      </Dialog>
+
       {/* Delete Session Confirmation Dialog */}
       <Dialog open={deleteSessionConfirmOpen} onOpenChange={setDeleteSessionConfirmOpen}>
-        <DialogPopup className="sm:max-w-md bg-zinc-950 border-zinc-800 text-zinc-100">
-          <DialogHeader>
+        <DialogPopup className="max-sm:rounded-t-2xl sm:max-w-md bg-zinc-950 border-zinc-800 text-zinc-100 flex flex-col p-6 pb-[max(1.5rem,env(safe-area-inset-bottom,20px))]">
+          <DialogHeader className="p-0">
             <DialogTitle className="text-base font-semibold text-zinc-100 flex items-center gap-2">
               <Trash2 className="size-4 text-zinc-400" />
               Confirm Session Deletion
             </DialogTitle>
-            <DialogDescription className="text-xs text-zinc-400">
+            <DialogDescription className="text-xs text-zinc-400 pt-1">
               Are you sure you want to delete the{" "}
               <strong className="text-zinc-200">{activeSession?.sport}</strong> practice session from{" "}
               <strong className="text-zinc-200 font-mono">{activeSession?.date}</strong>?
               This will permanently remove all attendance records for this session and recalculate trial readiness.
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter className="mt-6 flex gap-2">
+          <DialogFooter variant="bare" className="p-0 mt-6 flex flex-row gap-2 max-sm:pb-0">
             <DialogClose className="flex-1 rounded-lg border border-zinc-800 bg-zinc-900 py-2.5 text-xs font-medium text-zinc-300 hover:bg-zinc-800 transition-colors cursor-pointer text-center">
               Cancel
             </DialogClose>
