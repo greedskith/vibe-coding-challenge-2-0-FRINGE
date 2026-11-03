@@ -1562,7 +1562,7 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                 <CalendarDays className="size-3.5 text-zinc-400" />
                 <span>
                   {activeSession
-                    ? `${formatDisplayDate(activeSession.date)} (${activeSession.date})`
+                    ? formatDisplayDate(activeSession.date)
                     : "No Session"}
                 </span>
                 {activeSession && (
@@ -1615,21 +1615,13 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                   <button
                     type="button"
                     onClick={() => setDeleteSessionConfirmOpen(true)}
-                    className="flex items-center gap-1.5 rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-1.5 text-xs font-medium text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 transition-colors cursor-pointer whitespace-nowrap shrink-0"
+                    className="flex items-center justify-center size-8 rounded-lg border border-zinc-800 bg-zinc-900 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 transition-colors cursor-pointer shrink-0"
                     title="Delete Session"
+                    aria-label="Delete Session"
                   >
                     <Trash2 className="size-3.5" />
-                    Delete Session
                   </button>
                 )}
-                <button
-                  type="button"
-                  onClick={handleOpenAddPlayer}
-                  className="flex items-center gap-1.5 rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-1.5 text-xs font-medium text-zinc-200 hover:bg-zinc-800 transition-colors cursor-pointer whitespace-nowrap shrink-0"
-                >
-                  <Plus className="size-3.5" />
-                  Add Athlete
-                </button>
                 <button
                   type="button"
                   onClick={handleOpenNewSessionModal}
