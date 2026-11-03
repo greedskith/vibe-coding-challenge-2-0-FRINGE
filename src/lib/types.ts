@@ -37,6 +37,7 @@ export interface ScoreEntry {
   playerId: ObjectId | string;
   score: number;
   playerName?: string;
+  coachOverride?: boolean;
 }
 
 export interface Match {
@@ -46,6 +47,7 @@ export interface Match {
   opponent: string;
   outcome?: "win" | "draw" | "loss";
   scores: ScoreEntry[];
+  coachOverrides?: string[];
 }
 
 export interface ReadyResult {

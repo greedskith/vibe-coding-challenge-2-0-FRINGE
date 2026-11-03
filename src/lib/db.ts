@@ -16,7 +16,7 @@ export async function getDb(): Promise<Db> {
     const client = await Promise.race([
       clientPromise,
       new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error("Atlas DB connection timeout")), 1200)
+        setTimeout(() => reject(new Error("Atlas DB connection timeout")), 7000)
       ),
     ]);
     const db = client.db("academy-desk");

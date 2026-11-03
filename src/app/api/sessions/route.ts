@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
+import { ObjectId } from "mongodb";
 
 export async function GET(req: NextRequest): Promise<NextResponse>;
 export async function GET(): Promise<NextResponse>;
@@ -13,6 +14,7 @@ export async function GET(req?: NextRequest): Promise<NextResponse> {
       const dateParam = searchParams.get("date");
       const sportParam = searchParams.get("sport");
       const statusParam = searchParams.get("status");
+      const playerIdParam = searchParams.get("playerId");
 
       if (dateParam) {
         query.date = dateParam.trim();
@@ -23,16 +25,41 @@ export async function GET(req?: NextRequest): Promise<NextResponse> {
       if (statusParam) {
         query.status = statusParam.trim();
       }
+      if (playerIdParam) {
+        const pIdStr = playerIdParam.trim();
+        const possibleIds: any[] = [pIdStr];
+        if (ObjectId.isValid(pIdStr)) {
+          possibleIds.push(new ObjectId(pIdStr));
+        }
+        query["attendance.playerId"] = { $in: possibleIds };
+      }
     }
 
     const sessions = await db.collection("sessions").find(query).sort({ date: -1 }).toArray();
 
     // Populate player names if players exist
-    const allPlayerIds: any[] = [];
+    const allPlayerIds: (ObjectId | string)[] = [];
+    const seenIds = new Set<string>();
     sessions.forEach((s) => {
       if (Array.isArray(s.attendance)) {
         s.attendance.forEach((a: any) => {
-          if (a.playerId) allPlayerIds.push(a.playerId);
+          if (a.playerId) {
+            const raw = a.playerId;
+            const str = raw.toString();
+            if (!seenIds.has(str)) {
+              seenIds.add(str);
+              allPlayerIds.push(raw);
+              if (ObjectId.isValid(str)) {
+                if (typeof raw === "string") {
+                  try {
+                    allPlayerIds.push(new ObjectId(str));
+                  } catch {}
+                } else if (raw instanceof ObjectId) {
+                  allPlayerIds.push(str);
+                }
+              }
+            }
+          }
         });
       }
     });
@@ -40,7 +67,7 @@ export async function GET(req?: NextRequest): Promise<NextResponse> {
     if (allPlayerIds.length > 0) {
       const players = await db
         .collection("players")
-        .find({ _id: { $in: allPlayerIds } })
+        .find({ _id: { $in: allPlayerIds as any } })
         .toArray();
       const playerMap = new Map(players.map((p) => [p._id.toString(), p.name]));
 
@@ -79,10 +106,30 @@ export async function POST(req: NextRequest) {
     const existing = await db.collection("sessions").findOne({ date, sport: sessionSport });
     if (existing) {
       if (Array.isArray(existing.attendance) && existing.attendance.length > 0) {
-        const playerIds = existing.attendance.map((a: any) => a.playerId);
+        const playerIds: (ObjectId | string)[] = [];
+        const seenIds = new Set<string>();
+        existing.attendance.forEach((a: any) => {
+          if (a.playerId) {
+            const raw = a.playerId;
+            const str = raw.toString();
+            if (!seenIds.has(str)) {
+              seenIds.add(str);
+              playerIds.push(raw);
+              if (ObjectId.isValid(str)) {
+                if (typeof raw === "string") {
+                  try {
+                    playerIds.push(new ObjectId(str));
+                  } catch {}
+                } else if (raw instanceof ObjectId) {
+                  playerIds.push(str);
+                }
+              }
+            }
+          }
+        });
         const players = await db
           .collection("players")
-          .find({ _id: { $in: playerIds } })
+          .find({ _id: { $in: playerIds as any } })
           .toArray();
         const playerMap = new Map(players.map((p) => [p._id.toString(), p.name]));
         return NextResponse.json(

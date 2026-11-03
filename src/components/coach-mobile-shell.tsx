@@ -27,6 +27,7 @@ import {
   Loader2,
   ChevronDown,
   Camera,
+  Pencil,
 } from "lucide-react";
 import { AthleteAvatar } from "@/components/athlete-avatar";
 import { Badge } from "@/components/ui/badge";
@@ -213,7 +214,28 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
   const [newMatchOutcome, setNewMatchOutcome] = useState<"win" | "draw" | "loss">("win");
   const [selectedPlayers, setSelectedPlayers] = useState<Record<string, boolean>>({});
   const [matchScores, setMatchScores] = useState<Record<string, number>>({});
+  const [matchOverrides, setMatchOverrides] = useState<Record<string, boolean>>({});
   const [matchError, setMatchError] = useState<string | null>(null);
+
+  // Session Delete State
+  const [deleteSessionConfirmOpen, setDeleteSessionConfirmOpen] = useState(false);
+  const [isDeletingSession, setIsDeletingSession] = useState(false);
+
+  // Match Edit & Delete States
+  const [editMatchOpen, setEditMatchOpen] = useState(false);
+  const [editingMatch, setEditingMatch] = useState<Match | null>(null);
+  const [editMatchDate, setEditMatchDate] = useState("");
+  const [editMatchSport, setEditMatchSport] = useState("Football");
+  const [editMatchOpponent, setEditMatchOpponent] = useState("");
+  const [editMatchOutcome, setEditMatchOutcome] = useState<"win" | "draw" | "loss">("win");
+  const [editSelectedPlayers, setEditSelectedPlayers] = useState<Record<string, boolean>>({});
+  const [editMatchScores, setEditMatchScores] = useState<Record<string, number>>({});
+  const [editMatchOverrides, setEditMatchOverrides] = useState<Record<string, boolean>>({});
+  const [editMatchError, setEditMatchError] = useState<string | null>(null);
+  const [isUpdatingMatch, setIsUpdatingMatch] = useState(false);
+  const [deleteMatchConfirmOpen, setDeleteMatchConfirmOpen] = useState(false);
+  const [deletingMatch, setDeletingMatch] = useState<Match | null>(null);
+  const [isDeletingMatch, setIsDeletingMatch] = useState(false);
 
   // Synchronize tab from URL params if present
   useEffect(() => {
@@ -453,6 +475,78 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
       }
     } catch (err) {
       console.error("Failed to lock session:", err);
+    }
+  };
+
+  const handleUnlockSession = async () => {
+    if (!activeSession) return;
+
+    try {
+      const res = await fetch(`/api/sessions/${activeSession._id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "open" }),
+      });
+      if (res.ok) {
+        const unlocked = await res.json();
+        setActiveSession(unlocked);
+        setSessions((prev) =>
+          prev.map((s) => (s._id?.toString() === unlocked._id?.toString() ? unlocked : s))
+        );
+        fetch("/api/ready")
+          .then((r) => r.json())
+          .then((data) => Array.isArray(data) && setReadyResults(data.filter((r: any) => isAthleteAccount(r.player))));
+        toast.success(`Session for ${unlocked.date} unlocked for editing`);
+      } else {
+        const data = await res.json();
+        toast.error(data.error || "Failed to unlock session");
+      }
+    } catch (err: any) {
+      console.error("Failed to unlock session:", err);
+      toast.error(err.message || "Failed to unlock session");
+    }
+  };
+
+  const handleDeleteSession = async () => {
+    if (!activeSession) return;
+    setIsDeletingSession(true);
+
+    try {
+      const res = await fetch(`/api/sessions/${activeSession._id}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        const deletedId = activeSession._id?.toString();
+        const remaining = sessions.filter(
+          (s) => s._id?.toString() !== deletedId
+        );
+        setSessions(remaining);
+        const nextActive =
+          remaining.find(
+            (s) =>
+              (s.sport || "").toLowerCase() === sport.toLowerCase() &&
+              s.status === "open"
+          ) ||
+          remaining.find(
+            (s) => (s.sport || "").toLowerCase() === sport.toLowerCase()
+          ) ||
+          null;
+        setActiveSession(nextActive);
+        setDeleteSessionConfirmOpen(false);
+        toast.success("Session deleted successfully");
+
+        fetch("/api/ready")
+          .then((r) => r.json())
+          .then((data) => Array.isArray(data) && setReadyResults(data.filter((r: any) => isAthleteAccount(r.player))));
+      } else {
+        const data = await res.json();
+        toast.error(data.error || "Failed to delete session");
+      }
+    } catch (err: any) {
+      console.error("Failed to delete session:", err);
+      toast.error(err.message || "Failed to delete session");
+    } finally {
+      setIsDeletingSession(false);
     }
   };
 
@@ -711,6 +805,7 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
   };
 
   const syncMatchEligiblePlayers = (targetDate: string, targetSport: string) => {
+    setMatchOverrides({});
     const sessionForDate = sessions.find(
       (s) =>
         s.date === targetDate &&
@@ -749,6 +844,7 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
 
   const handleOpenMatchModal = () => {
     setMatchError(null);
+    setMatchOverrides({});
     const activeDiscipline = sport || "Football";
     setNewMatchSport(activeDiscipline);
     const targetDate = activeSession?.date || new Date().toISOString().slice(0, 10);
@@ -763,17 +859,7 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
     e.preventDefault();
     setMatchError(null);
 
-    const sessionForDate = sessions.find(
-      (s) =>
-        s.date === newMatchDate &&
-        (!s.sport || (s.sport || "").toLowerCase() === (newMatchSport || "").toLowerCase())
-    );
-    if (!sessionForDate || sessionForDate.status !== "closed") {
-      setMatchError("No session found. Open and close a session first.");
-      return;
-    }
-
-    const scoresPayload: { playerId: string; score: number }[] = [];
+    const scoresPayload: { playerId: string; score: number; coachOverride?: boolean }[] = [];
     const eligiblePlayers = players
       .filter(isAthleteAccount)
       .filter(
@@ -782,9 +868,11 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
     for (const p of eligiblePlayers) {
       const pId = p._id?.toString() || "";
       if (selectedPlayers[pId]) {
+        const isOverridden = Boolean(matchOverrides[pId]);
         scoresPayload.push({
           playerId: pId,
           score: matchScores[pId] || 0,
+          ...(isOverridden ? { coachOverride: true } : {}),
         });
       }
     }
@@ -795,6 +883,7 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
     }
 
     try {
+      const activeOverrides = Object.keys(matchOverrides).filter((id) => matchOverrides[id]);
       const res = await fetch("/api/matches", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -804,6 +893,7 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
           opponent: newMatchOpponent.trim() || "Opponent",
           outcome: newMatchOutcome,
           scores: scoresPayload,
+          ...(activeOverrides.length > 0 ? { coachOverrides: activeOverrides } : {}),
         }),
       });
 
@@ -816,6 +906,7 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
       const created = await res.json();
       setMatches((prev) => [created, ...prev]);
       setNewMatchOpen(false);
+      toast.success("Match recorded successfully");
 
       fetch("/api/ready")
         .then((r) => r.json())
@@ -825,6 +916,164 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
         .then((data) => Array.isArray(data) && setMatches(data));
     } catch (err: any) {
       setMatchError(err.message || "Failed to record match");
+    }
+  };
+
+  const handleOpenEditMatch = (match: Match) => {
+    setEditingMatch(match);
+    const mDate = match.date || new Date().toISOString().slice(0, 10);
+    const mSport = match.sport || sport || "Football";
+    setEditMatchDate(mDate);
+    setEditMatchSport(mSport);
+    setEditMatchOpponent(match.opponent || "");
+    let initialOutcome: "win" | "draw" | "loss" = "loss";
+    if (match.outcome && ["win", "draw", "loss"].includes(match.outcome.toLowerCase())) {
+      initialOutcome = match.outcome.toLowerCase() as "win" | "draw" | "loss";
+    }
+    setEditMatchOutcome(initialOutcome);
+    setEditMatchError(null);
+
+    const initialSelected: Record<string, boolean> = {};
+    const initialScores: Record<string, number> = {};
+    const initialOverrides: Record<string, boolean> = {};
+
+    const existingOverrides = new Set<string>(
+      (match.coachOverrides || []).map((x: any) => x?.toString())
+    );
+
+    (match.scores || []).forEach((sc: any) => {
+      const pId = sc.playerId?._id
+        ? sc.playerId._id.toString()
+        : sc.playerId?.toString();
+      if (pId) {
+        initialSelected[pId] = true;
+        initialScores[pId] = sc.score || 0;
+        if (sc.coachOverride === true || existingOverrides.has(pId)) {
+          initialOverrides[pId] = true;
+        }
+      }
+    });
+
+    setEditSelectedPlayers(initialSelected);
+    setEditMatchScores(initialScores);
+    setEditMatchOverrides(initialOverrides);
+    setEditMatchOpen(true);
+  };
+
+  const handleUpdateMatch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingMatch?._id) return;
+    setEditMatchError(null);
+    setIsUpdatingMatch(true);
+
+    const scoresPayload: { playerId: string; score: number; coachOverride?: boolean }[] = [];
+    const eligiblePlayers = players
+      .filter(isAthleteAccount)
+      .filter(
+        (p) => !editMatchSport || (p.sport || "").toLowerCase() === editMatchSport.toLowerCase()
+      );
+
+    for (const p of eligiblePlayers) {
+      const pId = p._id?.toString() || "";
+      if (editSelectedPlayers[pId]) {
+        const isOverridden = Boolean(editMatchOverrides[pId]);
+        scoresPayload.push({
+          playerId: pId,
+          score: editMatchScores[pId] || 0,
+          ...(isOverridden ? { coachOverride: true } : {}),
+        });
+      }
+    }
+
+    if (scoresPayload.length === 0) {
+      setEditMatchError("Select at least one player to record match");
+      setIsUpdatingMatch(false);
+      return;
+    }
+
+    try {
+      const activeOverrides = Object.keys(editMatchOverrides).filter(
+        (id) => editMatchOverrides[id]
+      );
+      const res = await fetch(`/api/matches/${editingMatch._id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          date: editMatchDate,
+          sport: editMatchSport,
+          opponent: editMatchOpponent.trim() || "Opponent",
+          outcome: editMatchOutcome,
+          scores: scoresPayload,
+          coachOverrides: activeOverrides,
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        setEditMatchError(data.error || "Failed to update match");
+        setIsUpdatingMatch(false);
+        return;
+      }
+
+      const updated = await res.json();
+      setMatches((prev) =>
+        prev.map((m) =>
+          m._id?.toString() === editingMatch._id?.toString() ? updated : m
+        )
+      );
+      setEditMatchOpen(false);
+      toast.success("Match updated successfully");
+
+      fetch("/api/ready")
+        .then((r) => r.json())
+        .then((data) => Array.isArray(data) && setReadyResults(data.filter((r: any) => isAthleteAccount(r.player))));
+      fetch("/api/matches")
+        .then((r) => r.json())
+        .then((data) => Array.isArray(data) && setMatches(data));
+    } catch (err: any) {
+      setEditMatchError(err.message || "Failed to update match");
+    } finally {
+      setIsUpdatingMatch(false);
+    }
+  };
+
+  const handleOpenDeleteMatch = (match: Match) => {
+    setDeletingMatch(match);
+    setDeleteMatchConfirmOpen(true);
+  };
+
+  const handleDeleteMatch = async () => {
+    if (!deletingMatch?._id) return;
+    setIsDeletingMatch(true);
+
+    try {
+      const res = await fetch(`/api/matches/${deletingMatch._id}`, {
+        method: "DELETE",
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        toast.error(data.error || "Failed to delete match");
+        setIsDeletingMatch(false);
+        return;
+      }
+
+      const deletedId = deletingMatch._id.toString();
+      setMatches((prev) => prev.filter((m) => m._id?.toString() !== deletedId));
+      setDeleteMatchConfirmOpen(false);
+      setDeletingMatch(null);
+      toast.success("Match deleted successfully");
+
+      fetch("/api/ready")
+        .then((r) => r.json())
+        .then((data) => Array.isArray(data) && setReadyResults(data.filter((r: any) => isAthleteAccount(r.player))));
+      fetch("/api/matches")
+        .then((r) => r.json())
+        .then((data) => Array.isArray(data) && setMatches(data));
+    } catch (err: any) {
+      toast.error(err.message || "Failed to delete match");
+    } finally {
+      setIsDeletingMatch(false);
     }
   };
 
@@ -1222,25 +1471,19 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                   <button
                     type="button"
                     onClick={
-                      activeSession.status === "closed" ? undefined : handleLockSession
+                      activeSession.status === "closed" ? handleUnlockSession : handleLockSession
                     }
-                    disabled={activeSession.status === "closed"}
-                    className={cn(
-                      "rounded-lg border px-2 py-1 text-[11px] font-medium transition-colors cursor-pointer",
-                      activeSession.status === "closed"
-                        ? "border-zinc-800 bg-zinc-900 text-zinc-500 cursor-default"
-                        : "border-zinc-700 bg-zinc-800 text-zinc-200 hover:bg-zinc-700"
-                    )}
+                    className="rounded-lg border border-zinc-700 bg-zinc-800 px-2 py-1 text-[11px] font-medium transition-colors cursor-pointer hover:bg-zinc-700 text-zinc-200"
                     title={
                       activeSession.status === "closed"
-                        ? "Session Locked"
+                        ? "Unlock Session (Reopen for edits)"
                         : "Lock Session"
                     }
                   >
                     {activeSession.status === "closed" ? (
-                      <Lock className="size-3" />
+                      <Unlock className="size-3 text-zinc-300" />
                     ) : (
-                      <Unlock className="size-3" />
+                      <Lock className="size-3" />
                     )}
                   </button>
                 )}
@@ -1340,6 +1583,16 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
             {/* Quick Action Buttons on Desktop */}
             {activeTab === "attendance" && (
               <div className="flex items-center gap-2 shrink-0">
+                {activeSession && activeSession.status === "closed" && (
+                  <button
+                    type="button"
+                    onClick={handleUnlockSession}
+                    className="flex items-center gap-1.5 rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs font-medium text-zinc-200 hover:bg-zinc-700 transition-colors cursor-pointer whitespace-nowrap shrink-0"
+                  >
+                    <Unlock className="size-3.5 text-zinc-300" />
+                    Unlock Session
+                  </button>
+                )}
                 {activeSession && activeSession.status !== "closed" && (
                   <button
                     type="button"
@@ -1348,6 +1601,17 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                   >
                     <Lock className="size-3.5 text-zinc-400" />
                     Lock Session
+                  </button>
+                )}
+                {activeSession && (
+                  <button
+                    type="button"
+                    onClick={() => setDeleteSessionConfirmOpen(true)}
+                    className="flex items-center gap-1.5 rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-1.5 text-xs font-medium text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 transition-colors cursor-pointer whitespace-nowrap shrink-0"
+                    title="Delete Session"
+                  >
+                    <Trash2 className="size-3.5" />
+                    Delete Session
                   </button>
                 )}
                 <button
@@ -1451,19 +1715,31 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
 
               {/* Editorial Read-Only Banner when session is closed */}
               {activeSession?.status === "closed" && (
-                <div className="flex items-center justify-between gap-3 rounded-xl border border-zinc-800 bg-zinc-900/80 px-4 py-2.5 text-xs text-zinc-300 font-mono shadow-xs">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 rounded-xl border border-zinc-800 bg-zinc-900/80 px-4 py-2.5 text-xs text-zinc-300 font-mono shadow-xs">
                   <div className="flex items-center gap-2 min-w-0">
                     <Lock className="size-3.5 shrink-0 text-zinc-400" />
                     <span className="font-medium truncate">
                       Locked Session · Recorded on {activeSession.date} (Read-only)
                     </span>
                   </div>
-                  <Badge
-                    variant="secondary"
-                    className="text-[10px] uppercase tracking-wider font-mono shrink-0"
-                  >
-                    Read-only
-                  </Badge>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      type="button"
+                      onClick={handleUnlockSession}
+                      className="flex items-center gap-1.5 rounded-lg border border-zinc-700 bg-zinc-800 px-2.5 py-1 text-xs font-sans font-medium text-zinc-200 hover:bg-zinc-700 transition-colors cursor-pointer"
+                    >
+                      <Unlock className="size-3 text-zinc-300" />
+                      <span>Unlock Session</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDeleteSessionConfirmOpen(true)}
+                      className="flex items-center gap-1.5 rounded-lg border border-zinc-800 bg-zinc-900 px-2.5 py-1 text-xs font-sans font-medium text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 transition-colors cursor-pointer"
+                    >
+                      <Trash2 className="size-3" />
+                      <span>Delete</span>
+                    </button>
+                  </div>
                 </div>
               )}
 
@@ -1777,11 +2053,17 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                           (pl) => pl._id?.toString() === sc.playerId?.toString()
                         );
                         const name = sc.playerName || p?.name || "Player";
+                        const isOverridden = Boolean(
+                          sc.coachOverride === true ||
+                          (Array.isArray(m.coachOverrides) &&
+                            m.coachOverrides.map((x: any) => x?.toString()).includes(sc.playerId?.toString()))
+                        );
                         return {
                           id: sc.playerId?.toString(),
                           name,
                           imageUrl: p?.imageUrl,
                           score: sc.score || 0,
+                          isOverridden,
                         };
                       });
 
@@ -1863,6 +2145,12 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                                         >
                                           {playerItem.name}
                                         </span>
+                                        {playerItem.isOverridden && (
+                                          <span className="inline-flex items-center gap-0.5 rounded border border-zinc-700 bg-zinc-800 px-1.5 py-0.2 text-[9.5px] font-mono text-zinc-300">
+                                            <Unlock className="size-2 text-zinc-400" />
+                                            Override
+                                          </span>
+                                        )}
                                         {playerItem.score > 0 ? (
                                           <div
                                             className="flex items-center gap-1 shrink-0 ml-1.5"
@@ -1918,6 +2206,25 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                                     <span>LOSS</span>
                                   </div>
                                 )}
+
+                                <div className="flex items-center gap-1 border-l border-zinc-800 pl-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleOpenEditMatch(m)}
+                                    className="p-1 rounded-md text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-colors cursor-pointer"
+                                    title="Edit Match"
+                                  >
+                                    <Pencil className="size-3.5" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleOpenDeleteMatch(m)}
+                                    className="p-1 rounded-md text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-colors cursor-pointer"
+                                    title="Delete Match"
+                                  >
+                                    <Trash2 className="size-3.5" />
+                                  </button>
+                                </div>
                               </div>
                             </div>
                           </div>
@@ -3177,7 +3484,7 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                         <span>No session found for {newMatchDate} ({newMatchSport})</span>
                       </div>
                       <p className="text-[11px] text-zinc-500">
-                        No session found. Open and close a session first in Attendance to establish athlete eligibility.
+                        No session recorded on this date. All enrolled {newMatchSport} athletes are eligible to participate.
                       </p>
                     </div>
                   );
@@ -3187,11 +3494,11 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                   return (
                     <div className="rounded-lg border border-zinc-800 bg-zinc-900/60 p-3 text-xs text-zinc-400 space-y-1">
                       <div className="flex items-center gap-1.5 font-medium text-zinc-300">
-                        <Lock className="size-3.5 text-zinc-400" />
+                        <Unlock className="size-3.5 text-zinc-400" />
                         <span>Session is currently open</span>
                       </div>
                       <p className="text-[11px] text-zinc-500">
-                        Attendance is not yet locked. Close the training session first to finalize eligibility.
+                        Attendance recorded. Present athletes can be selected, or use coach overrides for absent athletes.
                       </p>
                     </div>
                   );
@@ -3211,7 +3518,7 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                       Closed session verified
                     </span>
                     <span className="text-[11px] font-mono text-zinc-500">
-                      {presentCount} present · {absentCount} restricted
+                      {presentCount} present · {absentCount} absent (override available)
                     </span>
                   </div>
                 );
@@ -3224,7 +3531,7 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                     Squad Participants & Scores
                   </span>
                   <span className="text-[11px] text-zinc-500 font-mono">
-                    Absent athletes locked
+                    Absent athletes locked unless overridden
                   </span>
                 </div>
 
@@ -3243,6 +3550,7 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                         newMatchDate,
                         newMatchSport
                       );
+                      const isOverridden = Boolean(matchOverrides[pId]);
                       const isChecked = selectedPlayers[pId] ?? false;
                       const currentScore = matchScores[pId] || 0;
 
@@ -3251,18 +3559,20 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                           key={pId}
                           className={cn(
                             "flex items-center justify-between rounded-lg border p-3 transition-colors",
-                            isAbsent
-                              ? "border-zinc-800/60 bg-zinc-950/40 opacity-60"
-                              : isChecked
-                                ? "border-zinc-700 bg-zinc-900/80"
-                                : "border-zinc-800 bg-zinc-900/40"
+                            isAbsent && !isOverridden
+                              ? "border-zinc-800/60 bg-zinc-950/40 opacity-70"
+                              : isOverridden
+                                ? "border-zinc-700 bg-zinc-900/90 shadow-xs"
+                                : isChecked
+                                  ? "border-zinc-700 bg-zinc-900/80"
+                                  : "border-zinc-800 bg-zinc-900/40"
                           )}
                         >
                           <div className="flex items-center gap-3 min-w-0 pr-2">
                             <input
                               type="checkbox"
-                              checked={isChecked && !isAbsent}
-                              disabled={isAbsent}
+                              checked={isChecked && (!isAbsent || isOverridden)}
+                              disabled={isAbsent && !isOverridden}
                               onChange={(e) =>
                                 setSelectedPlayers((prev) => ({
                                   ...prev,
@@ -3275,16 +3585,60 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                               <p
                                 className={cn(
                                   "text-xs font-semibold truncate",
-                                  isAbsent ? "text-zinc-500" : "text-zinc-200"
+                                  isAbsent && !isOverridden
+                                    ? "text-zinc-500"
+                                    : "text-zinc-200"
                                 )}
                               >
                                 {p.name}
                               </p>
-                              {isAbsent ? (
-                                <span className="flex items-center gap-1 text-[11px] text-zinc-500 font-mono mt-0.5">
-                                  <Lock className="size-3" />
-                                  Ineligible · Absent
-                                </span>
+                              {isAbsent && !isOverridden ? (
+                                <div className="flex items-center gap-2 mt-1">
+                                  <span className="flex items-center gap-1 text-[11px] text-zinc-500 font-mono">
+                                    <Lock className="size-3" />
+                                    Absent
+                                  </span>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setMatchOverrides((prev) => ({
+                                        ...prev,
+                                        [pId]: true,
+                                      }));
+                                      setSelectedPlayers((prev) => ({
+                                        ...prev,
+                                        [pId]: true,
+                                      }));
+                                    }}
+                                    className="flex items-center gap-1 rounded border border-zinc-700 bg-zinc-800 px-1.5 py-0.5 text-[10.5px] font-mono text-zinc-300 hover:text-zinc-100 hover:bg-zinc-700 transition-colors cursor-pointer"
+                                  >
+                                    <Unlock className="size-2.5 text-zinc-400" />
+                                    <span>Override</span>
+                                  </button>
+                                </div>
+                              ) : isAbsent && isOverridden ? (
+                                <div className="flex items-center gap-2 mt-1">
+                                  <span className="inline-flex items-center gap-1 rounded border border-zinc-700 bg-zinc-800 px-1.5 py-0.5 text-[10.5px] font-mono text-zinc-200">
+                                    <Unlock className="size-2.5 text-zinc-400" />
+                                    Absent (Overridden)
+                                  </span>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setMatchOverrides((prev) => ({
+                                        ...prev,
+                                        [pId]: false,
+                                      }));
+                                      setSelectedPlayers((prev) => ({
+                                        ...prev,
+                                        [pId]: false,
+                                      }));
+                                    }}
+                                    className="text-[10px] font-mono text-zinc-500 hover:text-zinc-300 underline cursor-pointer"
+                                  >
+                                    Cancel override
+                                  </button>
+                                </div>
                               ) : isChecked && currentScore > 0 ? (
                                 <div className="flex items-center gap-1 mt-0.5">
                                   {Array.from({
@@ -3316,13 +3670,13 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                             <CossNumberField11
                               value={currentScore}
                               onValueChange={(val) => {
-                                if (isAbsent) return;
+                                if (isAbsent && !isOverridden) return;
                                 setMatchScores((prev) => ({
                                   ...prev,
                                   [pId]: Math.max(0, val),
                                 }));
                               }}
-                              disabled={isAbsent || !isChecked}
+                              disabled={(isAbsent && !isOverridden) || !isChecked}
                               min={0}
                               max={newMatchSport === "Cricket" ? 500 : 99}
                             />
@@ -3346,6 +3700,439 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
               </button>
             </div>
           </form>
+        </DialogPopup>
+      </Dialog>
+
+      {/* Edit Match Dialog */}
+      <Dialog open={editMatchOpen} onOpenChange={setEditMatchOpen}>
+        <DialogPopup className="max-sm:h-[92dvh] max-sm:max-h-[92dvh] max-sm:rounded-t-2xl sm:max-w-md bg-zinc-950 border-zinc-800 text-zinc-100 flex flex-col p-0 overflow-hidden">
+          <div className="p-6 pb-2 shrink-0 border-b border-zinc-800/60">
+            <DialogHeader>
+              <DialogTitle className="text-base font-semibold text-zinc-100 flex items-center gap-2">
+                <Pencil className="size-4 text-zinc-300" />
+                Edit Match Record
+              </DialogTitle>
+              <DialogDescription className="text-xs text-zinc-400">
+                Modify fixture details, opponent, scores, or apply coach attendance overrides.
+              </DialogDescription>
+            </DialogHeader>
+          </div>
+
+          <form onSubmit={handleUpdateMatch} className="flex flex-col flex-1 min-h-0 overflow-hidden">
+            <div className="flex-1 overflow-y-auto min-h-0 px-6 py-4 space-y-4">
+              {editMatchError && (
+                <div className="flex items-center gap-2 rounded-lg bg-zinc-900 border border-zinc-700/80 p-3 text-xs text-zinc-200">
+                  <AlertCircle className="size-4 shrink-0 text-zinc-400" />
+                  <span>{editMatchError}</span>
+                </div>
+              )}
+
+              {/* Discipline Switcher */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-zinc-400 block font-mono">
+                  Discipline
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  {["Football", "Cricket"].map((spOption) => (
+                    <button
+                      key={spOption}
+                      type="button"
+                      onClick={() => setEditMatchSport(spOption)}
+                      className={cn(
+                        "rounded-lg border py-2 text-xs font-mono font-medium transition-colors cursor-pointer text-center",
+                        editMatchSport === spOption
+                          ? "border-zinc-100 bg-zinc-100 text-zinc-950 font-bold"
+                          : "border-zinc-800 bg-zinc-900 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/60"
+                      )}
+                    >
+                      {spOption}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Match Meta: Date & Opponent */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-zinc-400 block font-mono">
+                    Match Date
+                  </label>
+                  <input
+                    type="date"
+                    value={editMatchDate}
+                    onChange={(e) => {
+                      setEditMatchDate(e.target.value);
+                      setEditMatchError(null);
+                    }}
+                    required
+                    className="h-10 w-full rounded-lg border border-zinc-800 bg-zinc-900 px-3 text-xs text-zinc-100 focus:border-zinc-500 focus:outline-none font-mono"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-zinc-400 block font-mono">
+                    Opponent Club
+                  </label>
+                  <input
+                    type="text"
+                    value={editMatchOpponent}
+                    onChange={(e) => setEditMatchOpponent(e.target.value)}
+                    placeholder="e.g. City XI"
+                    required
+                    className="h-10 w-full rounded-lg border border-zinc-800 bg-zinc-900 px-3 text-xs text-zinc-100 focus:border-zinc-500 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              {/* Fixture Outcome */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-zinc-400 block font-mono">
+                  Fixture Outcome
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setEditMatchOutcome("win")}
+                    className={cn(
+                      "flex items-center justify-center gap-1.5 rounded-lg border py-2 text-xs font-mono font-medium transition-colors cursor-pointer",
+                      editMatchOutcome === "win"
+                        ? "border-zinc-100 bg-zinc-100 text-zinc-950 font-bold"
+                        : "border-zinc-800 bg-zinc-900 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/60"
+                    )}
+                  >
+                    <span className="size-2 rounded-full bg-zinc-950" />
+                    <span>Win</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEditMatchOutcome("draw")}
+                    className={cn(
+                      "flex items-center justify-center gap-1.5 rounded-lg border py-2 text-xs font-mono font-medium transition-colors cursor-pointer",
+                      editMatchOutcome === "draw"
+                        ? "border-zinc-600 bg-zinc-800 text-zinc-100 font-bold"
+                        : "border-zinc-800 bg-zinc-900 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/60"
+                    )}
+                  >
+                    <span className="size-2 rounded-full overflow-hidden border border-zinc-400 flex">
+                      <span className="w-1/2 h-full bg-zinc-100" />
+                      <span className="w-1/2 h-full bg-zinc-950" />
+                    </span>
+                    <span>Draw</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEditMatchOutcome("loss")}
+                    className={cn(
+                      "flex items-center justify-center gap-1.5 rounded-lg border py-2 text-xs font-mono font-medium transition-colors cursor-pointer",
+                      editMatchOutcome === "loss"
+                        ? "border-zinc-700 bg-zinc-900 text-zinc-200 font-bold"
+                        : "border-zinc-800 bg-zinc-900 text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/60"
+                    )}
+                  >
+                    <span className="size-2 rounded-full border border-zinc-500 bg-transparent" />
+                    <span>Loss</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Resolved Session Status & Editorial Note */}
+              {(() => {
+                const sessionDoc = sessions.find(
+                  (s) =>
+                    s.date === editMatchDate &&
+                    (!s.sport || (s.sport || "").toLowerCase() === (editMatchSport || "").toLowerCase())
+                );
+
+                if (!sessionDoc) {
+                  return (
+                    <div className="rounded-lg border border-zinc-800 bg-zinc-900/60 p-3 text-xs text-zinc-400 space-y-1">
+                      <div className="flex items-center gap-1.5 font-medium text-zinc-300">
+                        <AlertCircle className="size-3.5 text-zinc-400" />
+                        <span>No session found for {editMatchDate} ({editMatchSport})</span>
+                      </div>
+                      <p className="text-[11px] text-zinc-500">
+                        No session recorded on this date. All enrolled athletes are eligible for match selection.
+                      </p>
+                    </div>
+                  );
+                }
+
+                if (sessionDoc.status === "open") {
+                  return (
+                    <div className="rounded-lg border border-zinc-800 bg-zinc-900/60 p-3 text-xs text-zinc-400 space-y-1">
+                      <div className="flex items-center gap-1.5 font-medium text-zinc-300">
+                        <Unlock className="size-3.5 text-zinc-400" />
+                        <span>Session is currently open</span>
+                      </div>
+                      <p className="text-[11px] text-zinc-500">
+                        Attendance recorded. Present athletes can be selected, or use coach overrides for absent athletes.
+                      </p>
+                    </div>
+                  );
+                }
+
+                const presentCount = (sessionDoc.attendance || []).filter(
+                  (a: any) => a.status === "present"
+                ).length;
+                const absentCount = (sessionDoc.attendance || []).filter(
+                  (a: any) => a.status === "absent"
+                ).length;
+
+                return (
+                  <div className="rounded-lg border border-zinc-800/80 bg-zinc-900/40 p-2.5 text-xs text-zinc-400 flex items-center justify-between">
+                    <span className="flex items-center gap-1.5 text-[11.5px] font-mono text-zinc-300">
+                      <Check className="size-3.5 text-zinc-400" />
+                      Closed session verified
+                    </span>
+                    <span className="text-[11px] font-mono text-zinc-500">
+                      {presentCount} present · {absentCount} absent (override available)
+                    </span>
+                  </div>
+                );
+              })()}
+
+              {/* Squad Scoring Section */}
+              <div className="pt-2">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-medium text-zinc-400 font-mono">
+                    Squad Participants & Scores
+                  </span>
+                  <span className="text-[11px] text-zinc-500 font-mono">
+                    Absent athletes locked unless overridden
+                  </span>
+                </div>
+
+                <div className="space-y-2">
+                  {players
+                    .filter(isAthleteAccount)
+                    .filter(
+                      (p) =>
+                        !editMatchSport ||
+                        (p.sport || "").toLowerCase() === editMatchSport.toLowerCase()
+                    )
+                    .map((p) => {
+                      const pId = p._id?.toString() || "";
+                      const isAbsent = isPlayerAbsentOnMatchDate(
+                        pId,
+                        editMatchDate,
+                        editMatchSport
+                      );
+                      const isOverridden = Boolean(editMatchOverrides[pId]);
+                      const isChecked = editSelectedPlayers[pId] ?? false;
+                      const currentScore = editMatchScores[pId] || 0;
+
+                      return (
+                        <div
+                          key={pId}
+                          className={cn(
+                            "flex items-center justify-between rounded-lg border p-3 transition-colors",
+                            isAbsent && !isOverridden
+                              ? "border-zinc-800/60 bg-zinc-950/40 opacity-70"
+                              : isOverridden
+                                ? "border-zinc-700 bg-zinc-900/90 shadow-xs"
+                                : isChecked
+                                  ? "border-zinc-700 bg-zinc-900/80"
+                                  : "border-zinc-800 bg-zinc-900/40"
+                          )}
+                        >
+                          <div className="flex items-center gap-3 min-w-0 pr-2">
+                            <input
+                              type="checkbox"
+                              checked={isChecked && (!isAbsent || isOverridden)}
+                              disabled={isAbsent && !isOverridden}
+                              onChange={(e) =>
+                                setEditSelectedPlayers((prev) => ({
+                                  ...prev,
+                                  [pId]: e.target.checked,
+                                }))
+                              }
+                              className="size-4 rounded accent-zinc-100 bg-zinc-900 border-zinc-700 disabled:opacity-30 cursor-pointer"
+                            />
+                            <div className="min-w-0">
+                              <p
+                                className={cn(
+                                  "text-xs font-semibold truncate",
+                                  isAbsent && !isOverridden
+                                    ? "text-zinc-500"
+                                    : "text-zinc-200"
+                                )}
+                              >
+                                {p.name}
+                              </p>
+                              {isAbsent && !isOverridden ? (
+                                <div className="flex items-center gap-2 mt-1">
+                                  <span className="flex items-center gap-1 text-[11px] text-zinc-500 font-mono">
+                                    <Lock className="size-3" />
+                                    Absent
+                                  </span>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setEditMatchOverrides((prev) => ({
+                                        ...prev,
+                                        [pId]: true,
+                                      }));
+                                      setEditSelectedPlayers((prev) => ({
+                                        ...prev,
+                                        [pId]: true,
+                                      }));
+                                    }}
+                                    className="flex items-center gap-1 rounded border border-zinc-700 bg-zinc-800 px-1.5 py-0.5 text-[10.5px] font-mono text-zinc-300 hover:text-zinc-100 hover:bg-zinc-700 transition-colors cursor-pointer"
+                                  >
+                                    <Unlock className="size-2.5 text-zinc-400" />
+                                    <span>Override</span>
+                                  </button>
+                                </div>
+                              ) : isAbsent && isOverridden ? (
+                                <div className="flex items-center gap-2 mt-1">
+                                  <span className="inline-flex items-center gap-1 rounded border border-zinc-700 bg-zinc-800 px-1.5 py-0.5 text-[10.5px] font-mono text-zinc-200">
+                                    <Unlock className="size-2.5 text-zinc-400" />
+                                    Absent (Overridden)
+                                  </span>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setEditMatchOverrides((prev) => ({
+                                        ...prev,
+                                        [pId]: false,
+                                      }));
+                                      setEditSelectedPlayers((prev) => ({
+                                        ...prev,
+                                        [pId]: false,
+                                      }));
+                                    }}
+                                    className="text-[10px] font-mono text-zinc-500 hover:text-zinc-300 underline cursor-pointer"
+                                  >
+                                    Cancel override
+                                  </button>
+                                </div>
+                              ) : isChecked && currentScore > 0 ? (
+                                <div className="flex items-center gap-1 mt-0.5">
+                                  {Array.from({
+                                    length: Math.min(5, currentScore),
+                                  }).map((_, i) => (
+                                    <span
+                                      key={i}
+                                      className="size-1.5 rounded-full bg-zinc-100"
+                                    />
+                                  ))}
+                                  {currentScore > 5 && (
+                                    <span className="text-[10px] font-mono text-zinc-400">
+                                      +{currentScore - 5}
+                                    </span>
+                                  )}
+                                  <span className="text-[10px] font-mono text-zinc-400 ml-1">
+                                    ({currentScore} {editMatchSport === "Cricket" ? "runs" : "goals"})
+                                  </span>
+                                </div>
+                              ) : isChecked ? (
+                                <span className="text-[10.5px] font-mono text-zinc-500 mt-0.5 block">
+                                  Appearance only (0 scored)
+                                </span>
+                              ) : null}
+                            </div>
+                          </div>
+
+                          <div className="shrink-0">
+                            <CossNumberField11
+                              value={currentScore}
+                              onValueChange={(val) => {
+                                if (isAbsent && !isOverridden) return;
+                                setEditMatchScores((prev) => ({
+                                  ...prev,
+                                  [pId]: Math.max(0, val),
+                                }));
+                              }}
+                              disabled={(isAbsent && !isOverridden) || !isChecked}
+                              min={0}
+                              max={editMatchSport === "Cricket" ? 500 : 99}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+                </div>
+              </div>
+            </div>
+
+            <div className="shrink-0 border-t border-zinc-800 bg-zinc-950 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] flex gap-2">
+              <DialogClose className="flex-1 rounded-lg border border-zinc-800 bg-zinc-900 py-2.5 text-xs font-medium text-zinc-300 hover:bg-zinc-800 transition-colors cursor-pointer text-center">
+                Cancel
+              </DialogClose>
+              <button
+                type="submit"
+                disabled={isUpdatingMatch}
+                className="flex-1 rounded-lg bg-zinc-100 py-2.5 text-xs font-semibold text-zinc-950 hover:bg-zinc-200 transition-colors cursor-pointer text-center disabled:opacity-50 flex items-center justify-center gap-1.5"
+              >
+                {isUpdatingMatch && <Loader2 className="size-3.5 animate-spin" />}
+                Save Changes
+              </button>
+            </div>
+          </form>
+        </DialogPopup>
+      </Dialog>
+
+      {/* Delete Match Confirmation Dialog */}
+      <Dialog open={deleteMatchConfirmOpen} onOpenChange={setDeleteMatchConfirmOpen}>
+        <DialogPopup className="sm:max-w-md bg-zinc-950 border-zinc-800 text-zinc-100">
+          <DialogHeader>
+            <DialogTitle className="text-base font-semibold text-zinc-100 flex items-center gap-2">
+              <Trash2 className="size-4 text-zinc-400" />
+              Confirm Match Deletion
+            </DialogTitle>
+            <DialogDescription className="text-xs text-zinc-400">
+              Are you sure you want to delete the fixture vs{" "}
+              <strong className="text-zinc-200">{deletingMatch?.opponent}</strong> on{" "}
+              <strong className="text-zinc-200 font-mono">{deletingMatch?.date}</strong>?
+              This will permanently remove the match and recalculate player trial readiness.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="mt-6 flex gap-2">
+            <DialogClose className="flex-1 rounded-lg border border-zinc-800 bg-zinc-900 py-2.5 text-xs font-medium text-zinc-300 hover:bg-zinc-800 transition-colors cursor-pointer text-center">
+              Cancel
+            </DialogClose>
+            <button
+              type="button"
+              onClick={handleDeleteMatch}
+              disabled={isDeletingMatch}
+              className="flex-1 rounded-lg bg-zinc-100 py-2.5 text-xs font-semibold text-zinc-950 hover:bg-zinc-200 transition-colors cursor-pointer text-center disabled:opacity-50 flex items-center justify-center gap-1.5"
+            >
+              {isDeletingMatch && <Loader2 className="size-3.5 animate-spin" />}
+              Delete Match
+            </button>
+          </DialogFooter>
+        </DialogPopup>
+      </Dialog>
+
+      {/* Delete Session Confirmation Dialog */}
+      <Dialog open={deleteSessionConfirmOpen} onOpenChange={setDeleteSessionConfirmOpen}>
+        <DialogPopup className="sm:max-w-md bg-zinc-950 border-zinc-800 text-zinc-100">
+          <DialogHeader>
+            <DialogTitle className="text-base font-semibold text-zinc-100 flex items-center gap-2">
+              <Trash2 className="size-4 text-zinc-400" />
+              Confirm Session Deletion
+            </DialogTitle>
+            <DialogDescription className="text-xs text-zinc-400">
+              Are you sure you want to delete the{" "}
+              <strong className="text-zinc-200">{activeSession?.sport}</strong> practice session from{" "}
+              <strong className="text-zinc-200 font-mono">{activeSession?.date}</strong>?
+              This will permanently remove all attendance records for this session and recalculate trial readiness.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="mt-6 flex gap-2">
+            <DialogClose className="flex-1 rounded-lg border border-zinc-800 bg-zinc-900 py-2.5 text-xs font-medium text-zinc-300 hover:bg-zinc-800 transition-colors cursor-pointer text-center">
+              Cancel
+            </DialogClose>
+            <button
+              type="button"
+              onClick={handleDeleteSession}
+              disabled={isDeletingSession}
+              className="flex-1 rounded-lg bg-zinc-100 py-2.5 text-xs font-semibold text-zinc-950 hover:bg-zinc-200 transition-colors cursor-pointer text-center disabled:opacity-50 flex items-center justify-center gap-1.5"
+            >
+              {isDeletingSession && <Loader2 className="size-3.5 animate-spin" />}
+              Delete Session
+            </button>
+          </DialogFooter>
         </DialogPopup>
       </Dialog>
     </div>

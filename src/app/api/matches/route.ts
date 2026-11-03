@@ -109,6 +109,17 @@ export async function POST(req: NextRequest) {
     if (session && Array.isArray(session.attendance)) {
       for (const entry of scores) {
         const pIdStr = entry.playerId.toString();
+
+        const isOverridden = Boolean(
+          entry.coachOverride === true ||
+          (Array.isArray(body.coachOverrides) &&
+            body.coachOverrides.map((id: any) => id?.toString()).includes(pIdStr))
+        );
+
+        if (isOverridden) {
+          continue;
+        }
+
         const record = session.attendance.find(
           (a: any) =>
             (a.playerId?._id ? a.playerId._id.toString() : a.playerId?.toString()) === pIdStr
@@ -139,8 +150,17 @@ export async function POST(req: NextRequest) {
       scores: scores.map((s: any) => ({
         playerId: new ObjectId(s.playerId),
         score: Math.max(0, Number(s.score) || 0),
+        ...(s.coachOverride === true ||
+        (Array.isArray(body.coachOverrides) &&
+          body.coachOverrides.map((id: any) => id?.toString()).includes(s.playerId.toString()))
+          ? { coachOverride: true }
+          : {}),
       })),
     };
+
+    if (Array.isArray(body.coachOverrides) && body.coachOverrides.length > 0) {
+      matchDoc.coachOverrides = body.coachOverrides;
+    }
 
     if (outcome && ["win", "draw", "loss"].includes(outcome.toLowerCase())) {
       matchDoc.outcome = outcome.toLowerCase();
