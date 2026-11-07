@@ -278,6 +278,18 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
       if (Array.isArray(sData)) {
         setSessions(sData);
         setActiveSession((prev) => {
+          let savedId: string | null = null;
+          try {
+            savedId = localStorage.getItem(`academy_active_session_${sport.toLowerCase()}`);
+          } catch {}
+
+          if (savedId) {
+            const savedSession = sData.find(
+              (s: Session) => s._id?.toString() === savedId && (s.sport || "").toLowerCase() === sport.toLowerCase()
+            );
+            if (savedSession) return savedSession;
+          }
+
           if (
             prev &&
             (prev.sport || "").toLowerCase() === sport.toLowerCase()
@@ -310,6 +322,18 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  // Persist current active session to local storage so page reloads remember the selected session
+  useEffect(() => {
+    if (activeSession?._id && activeSession?.sport) {
+      try {
+        localStorage.setItem(
+          `academy_active_session_${activeSession.sport.toLowerCase()}`,
+          activeSession._id.toString()
+        );
+      } catch {}
+    }
+  }, [activeSession]);
 
   // Keep selectedAthlete reactive to players state changes
   useEffect(() => {
@@ -1287,7 +1311,7 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
         <div className="space-y-6">
           {/* Academy Branding */}
           <div className="flex items-center gap-3 px-2 py-1">
-            <div className="flex size-9 items-center justify-center rounded-sm border-2 border-zinc-700 bg-zinc-900 text-zinc-100 shadow-[2px_2px_0px_0px_#ffffff]">
+            <div className="flex size-9 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900 text-zinc-100 shadow-sm">
               <Trophy className="size-4 text-zinc-100" />
             </div>
             <div className="min-w-0 flex-1">
@@ -1342,10 +1366,10 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                   data-tour={item.id === "ready" ? "coach-ready" : undefined}
                   onClick={() => handleTabChange(item.id)}
                   className={cn(
-                    "flex w-full items-center gap-3 rounded-sm px-3 py-2 text-xs font-mono uppercase tracking-wider transition-all cursor-pointer",
+                    "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-xs font-mono uppercase tracking-wider transition-all cursor-pointer",
                     isActive
-                      ? "border-2 border-zinc-100 bg-zinc-900 text-zinc-100 font-bold shadow-[2px_2px_0px_0px_#ffffff]"
-                      : "border-2 border-transparent text-zinc-400 hover:border-zinc-800 hover:text-zinc-200 hover:bg-zinc-900/60"
+                      ? "border border-zinc-700 bg-zinc-900 text-zinc-100 font-semibold shadow-xs"
+                      : "border border-transparent text-zinc-400 hover:border-zinc-800 hover:text-zinc-200 hover:bg-zinc-900/60"
                   )}
                 >
                   <Icon className="size-4 shrink-0" />
@@ -1447,14 +1471,26 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
               <div className="flex items-center gap-1.5 min-w-0 shrink">
                 <DropdownMenu>
                   <DropdownMenuTrigger
-                    className="flex items-center gap-1 sm:gap-1.5 rounded-sm border-2 border-zinc-700 bg-zinc-900/90 hover:border-zinc-500 hover:text-white px-2 sm:px-2.5 py-1 text-[11px] font-mono text-zinc-200 transition-all cursor-pointer outline-none min-w-0 max-w-[190px] sm:max-w-none shadow-[2px_2px_0px_0px_#ffffff]"
+                    className="flex items-center gap-1 sm:gap-1.5 rounded-lg border border-zinc-700 bg-zinc-900/90 hover:border-zinc-500 hover:text-white px-2 sm:px-2.5 py-1 text-[11px] font-mono text-zinc-200 transition-all cursor-pointer outline-none min-w-0 shadow-xs"
                     title="Switch or open session"
                   >
                     <CalendarDays className="size-3 text-zinc-400 shrink-0" />
                     <span className="truncate">
-                      {activeSession
-                        ? formatDisplayDate(activeSession.date)
-                        : "Select Session"}
+                      {activeSession ? (
+                        <>
+                          <span className="hidden xs:inline">
+                            {formatDisplayDate(activeSession.date).split(", ")[0]},{" "}
+                          </span>
+                          <span>
+                            {activeSession.date
+                              ? formatDisplayDate(activeSession.date).split(", ")[1] ||
+                                formatDisplayDate(activeSession.date)
+                              : "Today"}
+                          </span>
+                        </>
+                      ) : (
+                        "Select"
+                      )}
                     </span>
                     {activeSession && (
                       <>
@@ -1486,7 +1522,7 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                         ? () => setUnlockSessionConfirmOpen(true)
                         : handleLockSession
                     }
-                    className="rounded-sm border-2 border-zinc-700 bg-zinc-900 px-2 py-1 text-[11px] font-mono font-medium transition-all cursor-pointer hover:border-zinc-500 text-zinc-200 shrink-0 shadow-[2px_2px_0px_0px_#ffffff]"
+                    className="rounded-lg border border-zinc-700 bg-zinc-900 px-1.5 sm:px-2 py-1 text-[10.5px] sm:text-[11px] font-mono font-medium transition-all cursor-pointer hover:border-zinc-500 hover:bg-zinc-800 text-zinc-200 shrink-0 shadow-xs"
                     title={
                       activeSession.status === "closed"
                         ? "Unlock Session (Reopen for edits)"
@@ -1508,9 +1544,9 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
               <button
                 type="button"
                 onClick={handleOpenMatchModal}
-                className="flex items-center gap-1 rounded-sm border-2 border-zinc-100 bg-zinc-100 px-2.5 py-1 text-[11px] font-mono font-bold uppercase tracking-wider text-zinc-950 hover:bg-white active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all cursor-pointer shrink-0 shadow-[2px_2px_0px_0px_#ffffff]"
+                className="flex items-center gap-1 rounded-lg bg-zinc-100 hover:bg-white px-2.5 py-1 text-[11px] font-mono font-semibold uppercase tracking-wider text-zinc-950 shadow-xs transition-all cursor-pointer shrink-0 active:scale-[0.98]"
               >
-                <Plus className="size-3 stroke-[3]" />
+                <Plus className="size-3 stroke-[2.5]" />
                 <span>Match</span>
               </button>
             )}
@@ -1524,9 +1560,9 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                 <button
                   type="button"
                   onClick={handleOpenAddPlayer}
-                  className="flex items-center gap-1 rounded-sm border-2 border-zinc-100 bg-zinc-100 px-2.5 py-1 text-[11px] font-mono font-bold uppercase tracking-wider text-zinc-950 hover:bg-white active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all cursor-pointer shrink-0 shadow-[2px_2px_0px_0px_#ffffff]"
+                  className="flex items-center gap-1 rounded-lg bg-zinc-100 hover:bg-white px-2.5 py-1 text-[11px] font-mono font-semibold uppercase tracking-wider text-zinc-950 shadow-xs transition-all cursor-pointer shrink-0 active:scale-[0.98]"
                 >
-                  <Plus className="size-3 stroke-[3]" />
+                  <Plus className="size-3 stroke-[2.5]" />
                   <span>Add</span>
                 </button>
               </div>
@@ -1562,7 +1598,7 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
             <DropdownMenu>
               <DropdownMenuTrigger
                 data-tour="coach-session"
-                className="flex items-center gap-2 rounded-sm border-2 border-zinc-700 bg-zinc-900/90 hover:border-zinc-500 px-3 py-1.5 text-xs font-mono text-zinc-100 transition-all cursor-pointer outline-none shadow-[2px_2px_0px_0px_#ffffff] whitespace-nowrap shrink-0"
+                className="flex items-center gap-2 rounded-lg border border-zinc-700 bg-zinc-900/90 hover:border-zinc-500 px-3 py-1.5 text-xs font-mono text-zinc-100 transition-all cursor-pointer outline-none shadow-xs whitespace-nowrap shrink-0"
                 title="Switch or open session"
               >
                 <CalendarDays className="size-3.5 text-zinc-300" />
@@ -1601,7 +1637,7 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                   <button
                     type="button"
                     onClick={() => setUnlockSessionConfirmOpen(true)}
-                    className="flex items-center gap-1.5 rounded-sm border-2 border-zinc-700 bg-zinc-900 px-3 py-1.5 text-xs font-mono font-medium text-zinc-200 hover:border-zinc-500 hover:text-white transition-all cursor-pointer whitespace-nowrap shrink-0 shadow-[2px_2px_0px_0px_#ffffff]"
+                    className="flex items-center gap-1.5 rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-1.5 text-xs font-mono font-medium text-zinc-200 hover:border-zinc-500 hover:bg-zinc-800 hover:text-white transition-all cursor-pointer whitespace-nowrap shrink-0 shadow-xs"
                   >
                     <Unlock className="size-3.5 text-zinc-300" />
                     Unlock Session
@@ -1611,7 +1647,7 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                   <button
                     type="button"
                     onClick={handleLockSession}
-                    className="flex items-center gap-1.5 rounded-sm border-2 border-zinc-700 bg-zinc-900 px-3 py-1.5 text-xs font-mono font-medium text-zinc-200 hover:border-zinc-500 hover:text-white transition-all cursor-pointer whitespace-nowrap shrink-0 shadow-[2px_2px_0px_0px_#ffffff]"
+                    className="flex items-center gap-1.5 rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-1.5 text-xs font-mono font-medium text-zinc-200 hover:border-zinc-500 hover:bg-zinc-800 hover:text-white transition-all cursor-pointer whitespace-nowrap shrink-0 shadow-xs"
                   >
                     <Lock className="size-3.5 text-zinc-400" />
                     Lock Session
@@ -1621,7 +1657,7 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                   <button
                     type="button"
                     onClick={() => setDeleteSessionConfirmOpen(true)}
-                    className="flex items-center justify-center size-8 rounded-sm border-2 border-zinc-700 bg-zinc-900 text-zinc-400 hover:text-zinc-100 hover:border-zinc-500 transition-all cursor-pointer shrink-0 shadow-[2px_2px_0px_0px_#ffffff]"
+                    className="flex items-center justify-center size-8 rounded-lg border border-zinc-700 bg-zinc-900 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 hover:border-zinc-500 transition-all cursor-pointer shrink-0 shadow-xs"
                     title="Delete Session"
                     aria-label="Delete Session"
                   >
@@ -1631,7 +1667,7 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                 <button
                   type="button"
                   onClick={handleOpenNewSessionModal}
-                  className="flex items-center gap-1.5 rounded-sm border-2 border-zinc-100 bg-zinc-100 px-3.5 py-1.5 text-xs font-mono font-bold uppercase tracking-wider text-zinc-950 shadow-[3px_3px_0px_0px_#ffffff] hover:bg-white active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all cursor-pointer whitespace-nowrap shrink-0"
+                  className="flex items-center gap-1.5 rounded-lg bg-zinc-100 hover:bg-white px-3.5 py-1.5 text-xs font-mono font-semibold uppercase tracking-wider text-zinc-950 shadow-xs active:scale-[0.98] transition-all cursor-pointer whitespace-nowrap shrink-0"
                 >
                   <Plus className="size-3.5 stroke-[3]" />
                   Open Session
@@ -1643,9 +1679,9 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
               <button
                 type="button"
                 onClick={handleOpenMatchModal}
-                className="flex items-center gap-1.5 rounded-sm border-2 border-zinc-100 bg-zinc-100 px-3.5 py-1.5 text-xs font-mono font-bold uppercase tracking-wider text-zinc-950 shadow-[3px_3px_0px_0px_#ffffff] hover:bg-white active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all cursor-pointer whitespace-nowrap shrink-0"
+                className="flex items-center gap-1.5 rounded-lg bg-zinc-100 hover:bg-white px-3.5 py-1.5 text-xs font-mono font-semibold uppercase tracking-wider text-zinc-950 shadow-xs active:scale-[0.98] transition-all cursor-pointer whitespace-nowrap shrink-0"
               >
-                <Plus className="size-3.5 stroke-[3]" />
+                <Plus className="size-3.5 stroke-[2.5]" />
                 Record Match
               </button>
             )}
@@ -1658,9 +1694,9 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                 <button
                   type="button"
                   onClick={handleOpenAddPlayer}
-                  className="flex items-center gap-1.5 rounded-sm border-2 border-zinc-100 bg-zinc-100 px-3.5 py-1.5 text-xs font-mono font-bold uppercase tracking-wider text-zinc-950 shadow-[3px_3px_0px_0px_#ffffff] hover:bg-white active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all cursor-pointer whitespace-nowrap shrink-0"
+                  className="flex items-center gap-1.5 rounded-lg bg-zinc-100 hover:bg-white px-3.5 py-1.5 text-xs font-mono font-semibold uppercase tracking-wider text-zinc-950 shadow-xs active:scale-[0.98] transition-all cursor-pointer whitespace-nowrap shrink-0"
                 >
-                  <Plus className="size-3.5 stroke-[3]" />
+                  <Plus className="size-3.5 stroke-[2.5]" />
                   Add Athlete
                 </button>
               </div>
@@ -1777,9 +1813,9 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                     type="button"
                     onClick={() => handleMarkAll(true)}
                     disabled={activeSession?.status === "closed" || !activeSession}
-                    className="flex items-center gap-1.5 rounded-sm border-2 border-zinc-700 bg-zinc-900 px-3.5 py-1.5 text-xs font-mono font-bold text-zinc-100 shadow-[2px_2px_0px_0px_#ffffff] hover:border-zinc-500 hover:text-white active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed uppercase tracking-wider"
+                    className="flex items-center gap-1.5 rounded-lg border border-zinc-700 bg-zinc-800/90 px-2.5 sm:px-3.5 py-1.5 text-[11px] sm:text-xs font-mono font-semibold text-zinc-100 shadow-xs hover:bg-zinc-700 hover:text-white active:scale-[0.98] transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed uppercase tracking-tight xs:tracking-wider whitespace-nowrap"
                   >
-                    <Check className="size-3.5 text-zinc-100 stroke-[3]" />
+                    <Check className="size-3.5 text-zinc-100 stroke-[2.5]" />
                     <span>All present</span>
                   </button>
 
@@ -1787,9 +1823,9 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                     type="button"
                     onClick={() => handleMarkAll(false)}
                     disabled={activeSession?.status === "closed" || !activeSession}
-                    className="flex items-center gap-1.5 rounded-sm border-2 border-zinc-800 bg-zinc-950 px-3.5 py-1.5 text-xs font-mono font-semibold text-zinc-400 hover:border-zinc-600 hover:text-zinc-200 active:translate-x-[1px] active:translate-y-[1px] transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed uppercase tracking-wider"
+                    className="flex items-center gap-1.5 rounded-lg border border-zinc-800 bg-zinc-900/80 px-2.5 sm:px-3.5 py-1.5 text-[11px] sm:text-xs font-mono font-medium text-zinc-400 hover:border-zinc-700 hover:text-zinc-200 active:scale-[0.98] transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed uppercase tracking-tight xs:tracking-wider whitespace-nowrap"
                   >
-                    <RotateCcw className="size-3.5 stroke-[2.5]" />
+                    <RotateCcw className="size-3.5 stroke-[2]" />
                     <span>Reset</span>
                   </button>
                 </div>
@@ -1797,10 +1833,10 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                 <button
                   type="button"
                   onClick={handleOpenAddPlayer}
-                  className="flex items-center justify-center size-8.5 rounded-sm border-2 border-zinc-700 bg-zinc-900 text-zinc-200 hover:border-zinc-500 hover:text-white shadow-[2px_2px_0px_0px_#ffffff] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all cursor-pointer"
+                  className="flex items-center justify-center size-8 sm:size-8.5 rounded-lg border border-zinc-700 bg-zinc-900 text-zinc-200 hover:border-zinc-500 hover:bg-zinc-800 hover:text-white shadow-xs active:scale-[0.98] transition-all cursor-pointer shrink-0"
                   title="Enroll Athlete"
                 >
-                  <Plus className="size-4 stroke-[3]" />
+                  <Plus className="size-4 stroke-[2.5]" />
                 </button>
               </div>
 
@@ -2051,10 +2087,10 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                       return (
                         <div key={m._id?.toString()} className="relative">
                           {/* Timeline Node on Spine */}
-                          <div className="absolute -left-6 sm:-left-8 top-7 -translate-x-1/2 flex items-center justify-center z-10">
+                          <div className="absolute left-[-13px] sm:left-[-17px] top-6.5 -translate-x-1/2 flex items-center justify-center z-10">
                             {outcome === "win" && (
                               <div
-                                className="size-3.5 rounded-xs bg-zinc-100 ring-4 ring-zinc-950 shadow-[1px_1px_0px_0px_#ffffff]"
+                                className="size-3.5 rounded-xs bg-zinc-100 ring-4 ring-zinc-950 shadow-[0_0_8px_rgba(255,255,255,0.4)]"
                                 title="Win"
                               />
                             )}
@@ -2078,118 +2114,122 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                           {/* Fixture Card */}
                           <div
                             className={cn(
-                              "rounded-2xl border border-zinc-800/80 bg-zinc-950/80 p-5 backdrop-blur-md shadow-sm ring-1 ring-white/5 transition-all hover:border-zinc-700/80",
+                              "rounded-2xl border border-zinc-800/80 bg-zinc-950/80 p-3.5 sm:p-5 backdrop-blur-md shadow-sm ring-1 ring-white/5 transition-all hover:border-zinc-700/80",
                               isMarquee && "border-zinc-700/90"
                             )}
                           >
-                            <div className="flex items-start justify-between gap-3 sm:gap-4">
-                              <div className="flex items-start gap-3.5 sm:gap-4 min-w-0 flex-1">
-                                <div className="flex flex-col items-center justify-center border-r border-zinc-800/80 pr-3.5 sm:pr-4 shrink-0 min-w-[50px] pt-0.5">
-                                  <span className="text-2xl sm:text-3xl font-bold font-mono tracking-tight text-zinc-100 leading-none">
-                                    {day}
-                                  </span>
-                                  <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-400 font-semibold mt-1">
-                                    {month}
-                                  </span>
-                                </div>
+                            <div className="flex items-start gap-3 sm:gap-4 min-w-0">
+                              {/* Date Column */}
+                              <div className="flex flex-col items-center justify-center border-r border-zinc-800/80 pr-3 sm:pr-4 shrink-0 min-w-[42px] sm:min-w-[48px] pt-0.5">
+                                <span className="text-xl sm:text-3xl font-bold font-mono tracking-tight text-zinc-100 leading-none">
+                                  {day}
+                                </span>
+                                <span className="text-[9.5px] sm:text-[10px] font-mono uppercase tracking-wider text-zinc-400 font-semibold mt-1">
+                                  {month}
+                                </span>
+                              </div>
 
-                                <div className="space-y-2.5 min-w-0 flex-1">
-                                  <div className="flex items-center gap-2">
-                                    <h3 className="text-base sm:text-lg font-semibold text-zinc-100 truncate leading-tight">
+                              {/* Card Body */}
+                              <div className="space-y-2 sm:space-y-2.5 min-w-0 flex-1">
+                                {/* Header Row: Opponent + Sport Badge on Left, Outcome + Actions on Right */}
+                                <div className="flex items-center justify-between gap-2 min-w-0">
+                                  <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1">
+                                    <h3 className="text-sm sm:text-base font-semibold text-zinc-100 truncate leading-tight">
                                       vs {m.opponent}
                                     </h3>
-                                    <span className="rounded-md border border-zinc-800 bg-zinc-900 px-2 py-0.5 text-[10px] font-mono text-zinc-400">
+                                    <span className="rounded-md border border-zinc-800 bg-zinc-900 px-1.5 sm:px-2 py-0.5 text-[9.5px] sm:text-[10px] font-mono text-zinc-400 shrink-0">
                                       {m.sport}
                                     </span>
                                   </div>
 
-                                  <div className="space-y-2 pt-0.5">
-                                    {squad.map((playerItem) => (
-                                      <div
-                                        key={playerItem.id}
-                                        className="flex items-center justify-between gap-2 min-w-0 py-0.5"
-                                      >
-                                        <div className="flex items-center gap-2 min-w-0">
-                                          <AthleteAvatar
-                                            name={playerItem.name}
-                                            imageUrl={playerItem.imageUrl}
-                                            className="size-6 text-[10px] rounded-lg shrink-0"
-                                          />
-                                          <span
-                                            className={cn(
-                                              "text-xs truncate",
-                                              playerItem.score > 0
-                                                ? "font-medium text-zinc-200"
-                                                : "text-zinc-400 font-normal"
-                                            )}
-                                          >
-                                            {playerItem.name}
-                                          </span>
-                                          {playerItem.isOverridden && (
-                                            <span className="inline-flex items-center gap-0.5 rounded-full border border-zinc-700 bg-zinc-800 px-2 py-0.2 text-[9.5px] font-mono text-zinc-300">
-                                              <Unlock className="size-2 text-zinc-400" />
-                                              Override
-                                            </span>
-                                          )}
-                                        </div>
-
-                                        <div className="shrink-0 font-mono text-xs">
-                                          {playerItem.score > 0 ? (
-                                            <span className="font-semibold text-zinc-100 bg-zinc-900 border border-zinc-800 px-2 py-0.5 rounded-md">
-                                              {playerItem.score} {m.sport === "Football" ? (playerItem.score === 1 ? "goal" : "goals") : "runs"}
-                                            </span>
-                                          ) : (
-                                            <span className="text-[11px] text-zinc-500">
-                                              Appeared
-                                            </span>
-                                          )}
-                                        </div>
+                                  <div className="shrink-0 flex items-center gap-1.5 sm:gap-2">
+                                    {outcome === "win" && (
+                                      <div className="flex items-center gap-1 rounded-full bg-zinc-100 px-2 sm:px-2.5 py-0.5 sm:py-1 text-[9.5px] sm:text-[10px] font-mono font-bold text-zinc-950 shadow-xs">
+                                        <span className="size-1.5 rounded-full bg-zinc-950" />
+                                        <span>WIN</span>
                                       </div>
-                                    ))}
+                                    )}
+                                    {outcome === "draw" && (
+                                      <div className="flex items-center gap-1 rounded-full border border-zinc-700 bg-zinc-900 px-2 sm:px-2.5 py-0.5 sm:py-1 text-[9.5px] sm:text-[10px] font-mono font-medium text-zinc-200">
+                                        <span className="size-1.5 rounded-full overflow-hidden border border-zinc-400 flex">
+                                          <span className="w-1/2 h-full bg-zinc-100" />
+                                          <span className="w-1/2 h-full bg-zinc-950" />
+                                        </span>
+                                        <span>DRAW</span>
+                                      </div>
+                                    )}
+                                    {outcome === "loss" && (
+                                      <div className="flex items-center gap-1 rounded-md border border-zinc-800 bg-zinc-950 px-2 sm:px-2.5 py-0.5 sm:py-1 text-[9.5px] sm:text-[10px] font-mono font-medium text-zinc-500">
+                                        <span className="size-1.5 sm:size-2 rounded-full border border-zinc-500 bg-transparent" />
+                                        <span>LOSS</span>
+                                      </div>
+                                    )}
+
+                                    <div className="flex items-center gap-0.5 sm:gap-1 border-l border-zinc-800/80 pl-1.5 sm:pl-2">
+                                      <button
+                                        type="button"
+                                        onClick={() => handleOpenEditMatch(m)}
+                                        className="p-1 rounded-md text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-colors cursor-pointer"
+                                        title="Edit Match"
+                                      >
+                                        <Pencil className="size-3 sm:size-3.5" />
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => handleOpenDeleteMatch(m)}
+                                        className="p-1 rounded-md text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-colors cursor-pointer"
+                                        title="Delete Match"
+                                      >
+                                        <Trash2 className="size-3 sm:size-3.5" />
+                                      </button>
+                                    </div>
                                   </div>
                                 </div>
-                              </div>
 
-                              <div className="shrink-0 flex items-center gap-2 pt-0.5">
-                                {outcome === "win" && (
-                                  <div className="flex items-center gap-1.5 rounded-full bg-zinc-100 px-2.5 py-1 text-[10px] font-mono font-bold text-zinc-950 shadow-xs">
-                                    <span className="size-1.5 rounded-full bg-zinc-950" />
-                                    <span>WIN</span>
-                                  </div>
-                                )}
-                                {outcome === "draw" && (
-                                  <div className="flex items-center gap-1.5 rounded-full border border-zinc-700 bg-zinc-900 px-2.5 py-1 text-[10px] font-mono font-medium text-zinc-200">
-                                    <span className="size-1.5 rounded-full overflow-hidden border border-zinc-400 flex">
-                                      <span className="w-1/2 h-full bg-zinc-100" />
-                                      <span className="w-1/2 h-full bg-zinc-950" />
-                                    </span>
-                                    <span>DRAW</span>
-                                  </div>
-                                )}
-                                {outcome === "loss" && (
-                                  <div className="flex items-center gap-1.5 rounded-md border border-zinc-800 bg-zinc-950 px-2.5 py-1 text-[10px] font-mono font-medium text-zinc-500">
-                                    <span className="size-2 rounded-full border border-zinc-500 bg-transparent" />
-                                    <span>LOSS</span>
-                                  </div>
-                                )}
+                                {/* Squad Scoring List */}
+                                <div className="space-y-1.5 sm:space-y-2 pt-1 border-t border-zinc-900">
+                                  {squad.map((playerItem) => (
+                                    <div
+                                      key={playerItem.id}
+                                      className="flex items-center justify-between gap-2 min-w-0 py-0.5"
+                                    >
+                                      <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+                                        <AthleteAvatar
+                                          name={playerItem.name}
+                                          imageUrl={playerItem.imageUrl}
+                                          className="size-5 sm:size-6 text-[9.5px] sm:text-[10px] rounded-md sm:rounded-lg shrink-0"
+                                        />
+                                        <span
+                                          className={cn(
+                                            "text-xs truncate",
+                                            playerItem.score > 0
+                                              ? "font-medium text-zinc-200"
+                                              : "text-zinc-400 font-normal"
+                                          )}
+                                        >
+                                          {playerItem.name}
+                                        </span>
+                                        {playerItem.isOverridden && (
+                                          <span className="inline-flex items-center gap-0.5 rounded-full border border-zinc-700 bg-zinc-800 px-1.5 sm:px-2 py-0.2 text-[9px] sm:text-[9.5px] font-mono text-zinc-300">
+                                            <Unlock className="size-2 text-zinc-400" />
+                                            Override
+                                          </span>
+                                        )}
+                                      </div>
 
-                                <div className="flex items-center gap-1 border-l border-zinc-800 pl-2">
-                                  <button
-                                    type="button"
-                                    onClick={() => handleOpenEditMatch(m)}
-                                    className="p-1 rounded-md text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-colors cursor-pointer"
-                                    title="Edit Match"
-                                  >
-                                    <Pencil className="size-3.5" />
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => handleOpenDeleteMatch(m)}
-                                    className="p-1 rounded-md text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-colors cursor-pointer"
-                                    title="Delete Match"
-                                  >
-                                    <Trash2 className="size-3.5" />
-                                  </button>
+                                      <div className="shrink-0 font-mono text-xs">
+                                        {playerItem.score > 0 ? (
+                                          <span className="font-semibold text-zinc-100 bg-zinc-900 border border-zinc-800 px-1.5 sm:px-2 py-0.5 rounded-md text-[11px] sm:text-xs">
+                                            {playerItem.score} {m.sport === "Football" ? (playerItem.score === 1 ? "goal" : "goals") : "runs"}
+                                          </span>
+                                        ) : (
+                                          <span className="text-[10.5px] sm:text-[11px] text-zinc-500">
+                                            Appeared
+                                          </span>
+                                        )}
+                                      </div>
+                                    </div>
+                                  ))}
                                 </div>
                               </div>
                             </div>
@@ -2222,9 +2262,9 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                   <button
                     type="button"
                     onClick={handleOpenAddPlayer}
-                    className="hidden lg:flex items-center gap-1.5 rounded-sm border-2 border-zinc-100 bg-zinc-100 px-3.5 py-1.5 text-xs font-mono font-bold uppercase tracking-wider text-zinc-950 hover:bg-white active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all cursor-pointer shadow-[2px_2px_0px_0px_#ffffff] whitespace-nowrap"
+                    className="hidden lg:flex items-center gap-1.5 rounded-lg bg-zinc-100 hover:bg-white px-3.5 py-1.5 text-xs font-mono font-semibold uppercase tracking-wider text-zinc-950 active:scale-[0.98] transition-all cursor-pointer shadow-xs whitespace-nowrap"
                   >
-                    <Plus className="size-3.5 stroke-[3]" />
+                    <Plus className="size-3.5 stroke-[2.5]" />
                     <span>Add Athlete</span>
                   </button>
                 </div>
@@ -2239,7 +2279,7 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                     placeholder="Search by name, age, or bracket (U17)..."
                     value={rosterSearch}
                     onChange={(e) => setRosterSearch(e.target.value)}
-                    className="h-9 w-full rounded-sm border-2 border-zinc-700 bg-zinc-900/90 pl-9 pr-3 text-xs text-zinc-200 font-mono placeholder:text-zinc-500 focus:border-zinc-100 focus:outline-none transition-all shadow-[2px_2px_0px_0px_#ffffff]"
+                    className="h-9 w-full rounded-lg border border-zinc-700 bg-zinc-900/90 pl-9 pr-3 text-xs text-zinc-200 font-mono placeholder:text-zinc-500 focus:border-zinc-500 focus:outline-none transition-all shadow-xs"
                   />
                 </div>
 
@@ -2253,15 +2293,15 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
 
               {/* Athlete Card Grid adhering to Monochromatic Swiss Greyscale */}
               {sportPlayers.length === 0 ? (
-                <div className="rounded-sm border-2 border-dashed border-zinc-800 p-12 text-center text-zinc-500 space-y-3">
+                <div className="rounded-xl border border-dashed border-zinc-800 p-12 text-center text-zinc-500 space-y-3">
                   <Users className="size-8 mx-auto text-zinc-600" />
                   <p className="text-xs font-mono">0 athletes registered in {sport}</p>
                   <button
                     type="button"
                     onClick={handleOpenAddPlayer}
-                    className="inline-flex items-center gap-1.5 rounded-sm border-2 border-zinc-100 bg-zinc-100 px-3.5 py-1.5 text-xs font-mono font-bold uppercase tracking-wider text-zinc-950 hover:bg-white transition-all cursor-pointer shadow-[2px_2px_0px_0px_#ffffff]"
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-zinc-100 hover:bg-white px-3.5 py-1.5 text-xs font-mono font-semibold uppercase tracking-wider text-zinc-950 transition-all cursor-pointer shadow-xs active:scale-[0.98]"
                   >
-                    <Plus className="size-3.5 stroke-[3]" />
+                    <Plus className="size-3.5 stroke-[2.5]" />
                     <span>Add First {sport} Athlete</span>
                   </button>
                 </div>
@@ -2692,19 +2732,28 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                   type="button"
                   onClick={() => handleTabChange(item.id)}
                   className={cn(
-                    "relative flex w-full flex-col items-center justify-center gap-1 py-2 text-[10.5px] font-medium transition-colors cursor-pointer px-1",
+                    "relative flex w-full flex-col items-center justify-center gap-1 py-2 text-[9.5px] xs:text-[10.5px] font-medium transition-colors cursor-pointer px-0.5 xs:px-1",
                     isActive
                       ? "text-zinc-100 font-semibold"
                       : "text-zinc-500 hover:text-zinc-300"
                   )}
                 >
                   {isActive && (
-                    <span className="absolute top-0 inset-x-2 h-0.5 bg-zinc-100 shadow-[0_1px_2px_#ffffff]" />
+                    <span className="absolute top-0 inset-x-2 h-0.5 bg-zinc-100 shadow-[0_1px_4px_rgba(255,255,255,0.4)]" />
                   )}
                   <Icon className="size-4 shrink-0" />
-                  <span className="truncate max-w-full uppercase tracking-wider">{item.label}</span>
+                  <span className="truncate max-w-full uppercase tracking-tight xs:tracking-wider">
+                    {item.id === "ready" ? (
+                      <>
+                        <span className="xs:hidden">Ready</span>
+                        <span className="hidden xs:inline">Ready Board</span>
+                      </>
+                    ) : (
+                      item.label
+                    )}
+                  </span>
                   {item.id === "ready" && sportQualifiedCount > 0 && (
-                    <span className="absolute top-1.5 right-1.5 sm:right-3 flex size-3.5 items-center justify-center rounded-xs bg-zinc-100 text-[8.5px] font-mono text-zinc-950 font-bold border border-zinc-950">
+                    <span className="absolute top-1.5 right-1 xs:right-2 sm:right-3 flex size-3.5 items-center justify-center rounded-xs bg-zinc-100 text-[8.5px] font-mono text-zinc-950 font-bold border border-zinc-950">
                       {sportQualifiedCount}
                     </span>
                   )}

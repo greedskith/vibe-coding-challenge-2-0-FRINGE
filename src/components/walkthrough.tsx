@@ -321,7 +321,7 @@ export function Walkthrough({ role, steps, isOpen, onClose }: WalkthroughProps) 
             <button
               type="button"
               onClick={handleNext}
-              className="flex items-center gap-1 rounded-sm border-2 border-zinc-100 bg-zinc-100 px-3 py-1 text-xs font-mono font-bold uppercase tracking-wider text-zinc-950 hover:bg-white active:translate-x-[1px] active:translate-y-[1px] shadow-[2px_2px_0px_0px_#ffffff] transition-all cursor-pointer"
+              className="flex items-center gap-1 rounded-lg bg-zinc-100 hover:bg-white px-3 py-1 text-xs font-mono font-semibold uppercase tracking-wider text-zinc-950 shadow-xs transition-all cursor-pointer"
             >
               <span>{isLast ? "Done" : "Next"}</span>
               {isLast ? (

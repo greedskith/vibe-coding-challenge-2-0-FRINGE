@@ -102,9 +102,13 @@ export async function POST(req: NextRequest) {
     const sessionSport = (sport || "Football").trim();
     const db = await getDb();
 
-    // Check if open session already exists for this date and sport
+    // Check if session already exists for this date and sport
     const existing = await db.collection("sessions").findOne({ date, sport: sessionSport });
     if (existing) {
+      if (existing.status === "closed") {
+        await db.collection("sessions").updateOne({ _id: existing._id }, { $set: { status: "open" } });
+        existing.status = "open";
+      }
       if (Array.isArray(existing.attendance) && existing.attendance.length > 0) {
         const playerIds: (ObjectId | string)[] = [];
         const seenIds = new Set<string>();

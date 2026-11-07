@@ -24,7 +24,7 @@ export function CossToggleGroup4({
       role="group"
       aria-label="Select sport"
       className={cn(
-        "inline-flex items-center rounded-sm bg-zinc-950 border-2 border-zinc-700 p-0.5 shadow-[2px_2px_0px_0px_#ffffff]",
+        "inline-flex items-center rounded-lg bg-zinc-900/80 border border-zinc-800 p-0.5 shadow-xs backdrop-blur-sm",
         className
       )}
     >
@@ -36,10 +36,10 @@ export function CossToggleGroup4({
             type="button"
             onClick={() => onValueChange(opt.value)}
             className={cn(
-              "flex-1 text-center rounded-xs px-3 py-1 text-xs font-mono transition-all cursor-pointer select-none uppercase tracking-wider",
+              "flex-1 text-center rounded-md px-2.5 sm:px-3 py-1 text-xs font-mono transition-all cursor-pointer select-none uppercase tracking-wider",
               isSelected
-                ? "bg-zinc-100 text-zinc-950 font-black shadow-[1px_1px_0px_0px_#ffffff]"
-                : "text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900"
+                ? "bg-zinc-100 text-zinc-950 font-bold shadow-xs"
+                : "text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/60"
             )}
           >
             <span className="hidden sm:inline">{opt.label}</span>
