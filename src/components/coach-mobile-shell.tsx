@@ -1280,9 +1280,9 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
   };
 
   return (
-    <div className="flex min-h-dvh w-full max-w-full overflow-x-hidden bg-zinc-950 text-zinc-50">
+    <div className="flex min-h-dvh w-full max-w-full overflow-x-hidden text-zinc-50">
       {/* 1. Desktop Left Sidebar */}
-      <aside className="hidden lg:flex lg:w-64 shrink-0 flex-col justify-between border-r border-zinc-800 bg-zinc-950 p-4 sticky top-0 h-dvh overflow-y-auto">
+      <aside className="hidden lg:flex lg:w-64 shrink-0 flex-col justify-between border-r border-zinc-800 bg-zinc-950/95 p-4 sticky top-0 h-dvh overflow-y-auto">
         <div className="space-y-6">
           {/* Academy Branding */}
           <div className="flex items-center gap-3 px-2 py-1">
@@ -1395,7 +1395,7 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
       {/* 2. Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 min-h-dvh overflow-x-hidden">
         {/* Mobile Header (< lg) */}
-        <header className="flex lg:hidden sticky top-0 z-30 flex-col border-b border-zinc-800 bg-zinc-950/95 backdrop-blur">
+        <header className="flex lg:hidden sticky top-0 z-30 flex-col border-b border-zinc-800/80 bg-zinc-950/95 shadow-sm">
           {/* Top Bar: Academy branding, Coach badge, Sign Out */}
           <div className="flex items-center justify-between px-4 py-2.5">
             <div className="flex items-center gap-2.5">
@@ -1537,7 +1537,7 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
         </header>
 
         {/* Desktop Top Header Bar (lg:) */}
-        <header className="hidden lg:flex sticky top-0 z-20 items-center justify-between border-b border-zinc-800/80 bg-zinc-950/80 px-6 sm:px-8 py-3.5 backdrop-blur">
+        <header className="hidden lg:flex sticky top-0 z-20 items-center justify-between border-b border-zinc-800/80 bg-zinc-950/92 px-6 sm:px-8 py-3.5 shadow-sm">
           <div className="flex items-center gap-3">
             <span className="text-xs font-mono text-zinc-500 uppercase tracking-wider">
               Dashboard
@@ -2714,7 +2714,7 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
       {/* 3. Fixed Mobile Bottom Navigation: 4 First-Class Tabs Without Overflow */}
       <nav
         aria-label="Primary"
-        className="lg:hidden fixed inset-x-0 bottom-0 z-40 border-t border-zinc-800 bg-zinc-950/95 backdrop-blur pb-[env(safe-area-inset-bottom)]"
+        className="lg:hidden fixed inset-x-0 bottom-0 z-40 border-t border-zinc-800/80 bg-zinc-950/95 shadow-lg pb-[env(safe-area-inset-bottom)]"
       >
         <ul className="flex items-stretch">
           {NAV_TABS.map((item) => {

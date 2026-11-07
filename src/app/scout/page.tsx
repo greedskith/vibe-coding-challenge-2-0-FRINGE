@@ -5,6 +5,7 @@ import { signOut } from "next-auth/react";
 import { LogOut, Trophy, Check, ShieldAlert } from "lucide-react";
 import { CossBadge16 } from "@/components/p-badge-16";
 import { AthleteAvatar } from "@/components/athlete-avatar";
+import { P5ArtBackground } from "@/components/p5-art-background";
 import { ReadyResult } from "@/lib/types";
 
 export default function ScoutPage() {
@@ -36,9 +37,18 @@ export default function ScoutPage() {
   }, []);
 
   return (
-    <div className="flex min-h-dvh w-full flex-col bg-zinc-950 text-zinc-50">
+    <div className="relative flex min-h-dvh w-full flex-col text-zinc-50 overflow-x-hidden">
+      {/* Generative ambient p5 art background */}
+      <P5ArtBackground mode="ambient" shapeCount={360} opacityMultiplier={0.7} />
+
+      {/* Deep vignette scrim for contrast and legibility */}
+      <div
+        aria-hidden="true"
+        className="fixed inset-0 pointer-events-none select-none z-[1] bg-radial from-transparent via-zinc-950/45 to-zinc-950/90"
+      />
+
       {/* Top Header Bar */}
-      <header className="sticky top-0 z-30 border-b border-zinc-800/80 bg-zinc-950/80 px-4 sm:px-8 py-3.5 backdrop-blur">
+      <header className="sticky top-0 z-30 border-b border-zinc-800/80 bg-zinc-950/92 px-4 sm:px-8 py-3.5 shadow-sm">
         <div className="mx-auto flex max-w-6xl items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="flex size-9 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900 text-zinc-200">
@@ -71,7 +81,7 @@ export default function ScoutPage() {
       </header>
 
       {/* Main Content Area */}
-      <main className="flex-1 px-4 py-6 sm:px-8 sm:py-8">
+      <main className="relative z-10 flex-1 px-4 py-6 sm:px-8 sm:py-8">
         <div className="mx-auto max-w-6xl space-y-6">
           {/* Header & Overview */}
           <div className="flex items-center justify-between">
@@ -86,7 +96,7 @@ export default function ScoutPage() {
 
           {/* Candidates Grid */}
           {candidates.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-zinc-800 p-12 text-center text-zinc-500 space-y-2">
+            <div className="rounded-xl border border-dashed border-zinc-800 bg-zinc-950/80 p-12 text-center text-zinc-500 space-y-2">
               <ShieldAlert className="size-8 mx-auto text-zinc-600" />
               <p className="text-sm font-medium text-zinc-400">No candidates qualified for trials yet</p>
             </div>
@@ -104,7 +114,7 @@ export default function ScoutPage() {
                 return (
                   <div
                     key={pId}
-                    className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-4 sm:p-5 space-y-4 shadow-xs"
+                    className="rounded-xl border border-zinc-800/80 bg-zinc-950/80 p-4 sm:p-5 space-y-4 shadow-sm"
                   >
                     {/* Header */}
                     <div className="flex flex-wrap sm:flex-nowrap items-start sm:items-center justify-between gap-2.5 sm:gap-4">

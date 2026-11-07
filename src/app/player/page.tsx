@@ -5,6 +5,7 @@ import { signOut, useSession } from "next-auth/react";
 import { LogOut, Trophy, Check, Calendar, Activity } from "lucide-react";
 import { CossBadge16 } from "@/components/p-badge-16";
 import { AthleteAvatar } from "@/components/athlete-avatar";
+import { P5ArtBackground } from "@/components/p5-art-background";
 import { ReadyResult } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -71,9 +72,18 @@ export default function PlayerPage() {
   const athleteName = session?.user?.name || playerData?.player?.name || "Athlete";
 
   return (
-    <div className="flex min-h-dvh w-full flex-col bg-zinc-950 text-zinc-50">
+    <div className="relative flex min-h-dvh w-full flex-col text-zinc-50 overflow-x-hidden">
+      {/* Generative ambient p5 art background */}
+      <P5ArtBackground mode="ambient" shapeCount={360} opacityMultiplier={0.7} />
+
+      {/* Deep vignette scrim for contrast and legibility */}
+      <div
+        aria-hidden="true"
+        className="fixed inset-0 pointer-events-none select-none z-[1] bg-radial from-transparent via-zinc-950/45 to-zinc-950/90"
+      />
+
       {/* Top Header Bar */}
-      <header className="sticky top-0 z-30 border-b border-zinc-800/80 bg-zinc-950/80 px-4 sm:px-8 py-3.5 backdrop-blur">
+      <header className="sticky top-0 z-30 border-b border-zinc-800/80 bg-zinc-950/92 px-4 sm:px-8 py-3.5 shadow-sm">
         <div className="mx-auto flex max-w-4xl items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="flex size-9 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900 text-zinc-200">
@@ -106,10 +116,10 @@ export default function PlayerPage() {
       </header>
 
       {/* Main Content Area */}
-      <main className="flex-1 px-4 py-6 sm:px-8 sm:py-8">
+      <main className="relative z-10 flex-1 px-4 py-6 sm:px-8 sm:py-8">
         <div className="mx-auto max-w-2xl space-y-6">
           {/* Unified High-Taste Athlete Card */}
-          <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-6 sm:p-7 space-y-6 shadow-xs">
+          <div className="rounded-xl border border-zinc-800/80 bg-zinc-950/80 p-6 sm:p-7 space-y-6 shadow-sm">
             {/* Header: Avatar, Name, Sport/Age, and Ready Badge */}
             <div className="flex items-center justify-between gap-4">
               <div className="flex items-center gap-3.5 min-w-0 flex-1">
@@ -134,7 +144,7 @@ export default function PlayerPage() {
 
             {/* Metrics Row: Two Crisp Tiles */}
             <div className="grid grid-cols-2 gap-3">
-              <div className="rounded-lg border border-zinc-800/80 bg-zinc-950/60 p-3.5">
+              <div className="rounded-lg border border-zinc-800/80 bg-zinc-900/70 p-3.5">
                 <span className="text-xs font-mono text-zinc-400 block">
                   Attendance
                 </span>
@@ -146,7 +156,7 @@ export default function PlayerPage() {
                 </span>
               </div>
 
-              <div className="rounded-lg border border-zinc-800/80 bg-zinc-950/60 p-3.5">
+              <div className="rounded-lg border border-zinc-800/80 bg-zinc-900/70 p-3.5">
                 <span className="text-xs font-mono text-zinc-400 block">
                   Matches Played
                 </span>
@@ -198,7 +208,7 @@ export default function PlayerPage() {
           </div>
 
           {/* Personal Attendance History */}
-          <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-6 space-y-4 shadow-xs">
+          <div className="rounded-xl border border-zinc-800/80 bg-zinc-950/80 p-6 space-y-4 shadow-sm">
             <div className="flex items-center justify-between border-b border-zinc-800/80 pb-3">
               <div className="flex items-center gap-2">
                 <Calendar className="size-4 text-zinc-400" />
@@ -206,7 +216,7 @@ export default function PlayerPage() {
                   Attendance History
                 </h3>
               </div>
-              <span className="rounded border border-zinc-800 bg-zinc-950 px-2 py-0.5 text-xs font-mono text-zinc-400">
+              <span className="rounded border border-zinc-800 bg-zinc-900/90 px-2 py-0.5 text-xs font-mono text-zinc-400">
                 {attendanceHistory.length} Recorded
               </span>
             </div>
@@ -224,7 +234,7 @@ export default function PlayerPage() {
                   return (
                     <div
                       key={rec.sessionId || `${rec.date}-${idx}`}
-                      className="flex items-center justify-between rounded-lg border border-zinc-800/70 bg-zinc-950/60 px-3.5 py-2.5 transition-colors hover:border-zinc-700"
+                      className="flex items-center justify-between rounded-lg border border-zinc-800/70 bg-zinc-900/60 px-3.5 py-2.5 transition-colors hover:border-zinc-700"
                     >
                       <div className="flex items-center gap-3">
                         <span
@@ -265,7 +275,7 @@ export default function PlayerPage() {
           </div>
 
           {/* Match Contributions */}
-          <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-4 sm:p-6 space-y-4 shadow-xs">
+          <div className="rounded-xl border border-zinc-800/80 bg-zinc-950/80 p-4 sm:p-6 space-y-4 shadow-sm">
             <div className="flex items-center justify-between border-b border-zinc-800/80 pb-3">
               <div className="flex items-center gap-2">
                 <Activity className="size-4 text-zinc-400" />
@@ -273,7 +283,7 @@ export default function PlayerPage() {
                   Match Contributions
                 </h3>
               </div>
-              <span className="rounded border border-zinc-800 bg-zinc-950 px-2 py-0.5 text-xs font-mono text-zinc-400">
+              <span className="rounded border border-zinc-800 bg-zinc-900/90 px-2 py-0.5 text-xs font-mono text-zinc-400">
                 {matchHistory.length} Matches
               </span>
             </div>
@@ -289,7 +299,7 @@ export default function PlayerPage() {
                 {matchHistory.map((m, idx) => (
                   <div
                     key={m.matchId || `${m.date}-${idx}`}
-                    className="flex items-center justify-between rounded-lg border border-zinc-800/70 bg-zinc-950/60 p-3 sm:p-3.5 transition-colors hover:border-zinc-700"
+                    className="flex items-center justify-between rounded-lg border border-zinc-800/70 bg-zinc-900/60 p-3 sm:p-3.5 transition-colors hover:border-zinc-700"
                   >
                     <div className="space-y-0.5 min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 min-w-0">

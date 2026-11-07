@@ -54,11 +54,37 @@ function addCurveVertex(p: any, x: number, y: number) {
   }
 }
 
-export function P5ArtBackground() {
+export interface P5ArtBackgroundProps {
+  /**
+   * Mode:
+   * - "shuffle": Continuously redraws on interval (ideal for login showcase)
+   * - "ambient" / "static": Single render on mount/resize (zero ongoing CPU usage, ideal for dashboards)
+   */
+  mode?: "shuffle" | "ambient" | "static";
+  /** Shuffle interval in ms (only used when mode === "shuffle", default 500) */
+  shuffleIntervalMs?: number;
+  /** Number of generative noise flow shapes (default: 650 for shuffle, 360 for ambient) */
+  shapeCount?: number;
+  /** Multiplier for shape opacity (0.0 to 1.0, default: 1.0 for shuffle, 0.75 for ambient) */
+  opacityMultiplier?: number;
+  className?: string;
+}
+
+export function P5ArtBackground({
+  mode = "shuffle",
+  shuffleIntervalMs = 500,
+  shapeCount,
+  opacityMultiplier,
+  className = "",
+}: P5ArtBackgroundProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const p5InstanceRef = useRef<any>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [mounted, setMounted] = useState(false);
+
+  const isAmbient = mode === "ambient" || mode === "static";
+  const effectiveShapeCount = shapeCount ?? (isAmbient ? 360 : 650);
+  const effectiveOpacity = opacityMultiplier ?? (isAmbient ? 0.75 : 1.0);
 
   useEffect(() => {
     setMounted(true);
@@ -119,16 +145,19 @@ export function P5ArtBackground() {
           // Set HSB color mode once for the entire render
           p.colorMode(p.HSB, 360, 100, 100, 255);
 
-          // 1. Dark background
+          // 1. Dark ambient background
           const bgHSB = pal1HSB[Math.floor(p.random(pal1HSB.length))];
-          p.background(bgHSB[0], bgHSB[1] * 0.45, Math.max(8, bgHSB[2] * 0.22));
+          const bgSat = bgHSB[1] * (isAmbient ? 0.35 : 0.45);
+          const bgBri = Math.max(isAmbient ? 6 : 8, bgHSB[2] * (isAmbient ? 0.16 : 0.22));
+          p.background(bgHSB[0], bgSat, bgBri);
 
           // 2. Layered flowing background waves
           p.noStroke();
           const numWaves = Math.floor(p.random(2, 4));
           for (let i = 0; i < numWaves; i++) {
             const wHSB = pal1HSB[Math.floor(p.random(pal1HSB.length))];
-            p.fill(wHSB[0], wHSB[1] * 0.55, Math.max(12, wHSB[2] * 0.35), 65);
+            const waveAlpha = (isAmbient ? 45 : 65) * effectiveOpacity;
+            p.fill(wHSB[0], wHSB[1] * 0.55, Math.max(12, wHSB[2] * 0.35), waveAlpha);
             p.push();
             p.translate(W / 2, H / 2);
             p.rotate(p.random(Math.PI * 2));
@@ -149,7 +178,8 @@ export function P5ArtBackground() {
           const numCircles = Math.floor(p.random(2, 4));
           for (let i = 0; i < numCircles; i++) {
             const cHSB = pal2HSB[Math.floor(p.random(pal2HSB.length))];
-            p.fill(cHSB[0], cHSB[1] * 0.75, cHSB[2] * 0.7, 40);
+            const circleAlpha = (isAmbient ? 25 : 40) * effectiveOpacity;
+            p.fill(cHSB[0], cHSB[1] * 0.75, cHSB[2] * 0.7, circleAlpha);
             p.noStroke();
             const minDim = Math.min(W, H);
             const diam = p.random(minDim * 0.2, minDim * 0.45);
@@ -162,10 +192,10 @@ export function P5ArtBackground() {
             { x: p.random(W * 0.1, W * 0.9), y: p.random(H * 0.1, H * 0.9), weight: p.random(0.3, 0.6) },
           ];
 
-          // 5. Balanced shape count (650 shapes - fast and dense)
+          // 5. Balanced shape count
           const baseScale = Math.min(W, H) / 750;
           const sclStart = p.random(1.2, 2.2) * baseScale;
-          const tries = 650;
+          const tries = effectiveShapeCount;
           const minScale = 0.25 * baseScale;
           const sclReduct = (sclStart / tries) * 1.2;
           let currentScale = sclStart;
@@ -176,10 +206,10 @@ export function P5ArtBackground() {
           if (strokeType < 1.0) {
             p.noStroke();
           } else if (strokeType < 2.3) {
-            p.stroke(0, 0, 0, 30);
+            p.stroke(0, 0, 0, Math.round(25 * effectiveOpacity));
             p.strokeWeight(0.5);
           } else {
-            p.stroke(0, 0, 100, 20);
+            p.stroke(0, 0, 100, Math.round(18 * effectiveOpacity));
             p.strokeWeight(0.5);
           }
 
@@ -206,11 +236,13 @@ export function P5ArtBackground() {
             const colorIdx = Math.floor(n2 * hsbColors.length) % hsbColors.length;
             const [hBase, sBase, bBase] = hsbColors[colorIdx];
 
+            const shapeAlpha = p.random(150, 220) * effectiveOpacity;
+
             p.fill(
               (hBase + p.random(-8, 8) + 360) % 360,
-              Math.min(100, sBase * p.random(1.05, 1.25)),
-              Math.min(100, bBase * p.random(0.75, 0.95)),
-              p.random(160, 230)
+              Math.min(100, sBase * (isAmbient ? 1.0 : p.random(1.05, 1.25))),
+              Math.min(100, bBase * (isAmbient ? 0.7 : p.random(0.75, 0.95))),
+              shapeAlpha
             );
 
             p.push();
@@ -224,7 +256,7 @@ export function P5ArtBackground() {
               p.rectMode(p.CENTER);
               p.rect(0, 0, w, h, 4);
             } else {
-              // Steve's Makerspace organic petal / leaf curve using p5 2.3.4 splineVertex
+              // Organic petal / leaf curve using p5 2.3.4 splineVertex
               p.beginShape();
               addCurveVertex(p, 0, h / 2);
               addCurveVertex(p, 0, h / 2);
@@ -269,18 +301,20 @@ export function P5ArtBackground() {
 
       p5InstanceRef.current = new P5Constructor(sketch);
 
-      // Recursive self-scheduling timer that guarantees no frame queueing
-      function scheduleNext() {
-        if (destroyed) return;
-        timerRef.current = setTimeout(() => {
-          if (!destroyed && p5InstanceRef.current?._generateArt) {
-            p5InstanceRef.current._generateArt();
-          }
-          scheduleNext();
-        }, 500);
-      }
+      // Recursive self-scheduling timer ONLY if mode is "shuffle"
+      if (!isAmbient) {
+        function scheduleNext() {
+          if (destroyed) return;
+          timerRef.current = setTimeout(() => {
+            if (!destroyed && p5InstanceRef.current?._generateArt) {
+              p5InstanceRef.current._generateArt();
+            }
+            scheduleNext();
+          }, shuffleIntervalMs);
+        }
 
-      scheduleNext();
+        scheduleNext();
+      }
     }
 
     loadAndStart();
@@ -300,13 +334,13 @@ export function P5ArtBackground() {
         p5InstanceRef.current = null;
       }
     };
-  }, []);
+  }, [isAmbient, shuffleIntervalMs, effectiveShapeCount, effectiveOpacity]);
 
   return (
     <div
       ref={containerRef}
       aria-hidden="true"
-      className="fixed inset-0 w-full h-[100dvh] overflow-hidden pointer-events-none select-none z-0"
+      className={`fixed inset-0 w-full h-[100dvh] overflow-hidden pointer-events-none select-none z-0 ${className}`}
     >
       {!mounted && <div className="absolute inset-0 bg-zinc-950" />}
     </div>
