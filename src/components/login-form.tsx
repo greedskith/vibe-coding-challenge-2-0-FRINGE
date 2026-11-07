@@ -70,32 +70,32 @@ export function LoginForm() {
   return (
     <div className="w-full max-w-sm mx-auto space-y-6">
       {/* Visual Header */}
-      <div className="flex items-center gap-2.5 rounded-xl border border-zinc-800 bg-zinc-950/90 px-3 py-2 shadow-lg w-fit">
-        <div className="flex size-8 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900 text-zinc-200">
-          <Trophy className="size-4 text-zinc-300" />
+      <div className="flex items-center gap-2.5 rounded-md border-2 border-zinc-100 bg-zinc-950 px-3.5 py-2 shadow-[3px_3px_0px_0px_#ffffff] w-fit">
+        <div className="flex size-8 items-center justify-center rounded-sm border border-zinc-700 bg-zinc-900 text-zinc-100">
+          <Trophy className="size-4 text-zinc-100" />
         </div>
         <div>
-          <h1 className="text-base font-semibold tracking-tight text-zinc-100">
+          <h1 className="text-sm font-bold tracking-tight text-zinc-100 uppercase font-mono">
             Academy Desk
           </h1>
-          <p className="text-[11px] text-zinc-400 font-mono">One Academy</p>
+          <p className="text-[10px] text-zinc-400 font-mono tracking-wider">ONE ACADEMY</p>
         </div>
       </div>
 
       {/* Login Card */}
-      <div className="rounded-2xl border border-zinc-800/90 bg-zinc-950/92 p-6 shadow-2xl">
+      <div className="rounded-md border-2 border-zinc-100 bg-zinc-950 p-6 sm:p-7 shadow-[6px_6px_0px_0px_#ffffff]">
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
-            <div className="flex items-center gap-2 rounded-lg bg-red-950/40 border border-red-900/60 p-3 text-xs text-red-400">
+            <div className="flex items-center gap-2 rounded-sm bg-red-950/60 border-2 border-red-500 p-3 text-xs text-red-200 font-mono">
               <AlertCircle className="size-4 shrink-0" />
               <span>{error}</span>
             </div>
           )}
 
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-zinc-400">Username</label>
+            <label className="text-[11px] font-mono uppercase tracking-wider text-zinc-300 font-medium">Username</label>
             <div className="relative">
-              <User className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-zinc-500" />
+              <User className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-zinc-400" />
               <input
                 type="text"
                 value={username}
@@ -108,15 +108,15 @@ export function LoginForm() {
                 autoCapitalize="none"
                 autoCorrect="off"
                 spellCheck={false}
-                className="h-10 w-full rounded-lg border border-zinc-800 bg-zinc-950 pl-10 pr-3 text-base sm:text-sm text-zinc-100 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-600 transition-colors"
+                className="h-10 w-full rounded-sm border-2 border-zinc-700 bg-zinc-900/90 pl-10 pr-3 text-sm text-zinc-100 font-mono focus:border-zinc-100 focus:outline-none transition-colors"
               />
             </div>
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-zinc-400">Password</label>
+            <label className="text-[11px] font-mono uppercase tracking-wider text-zinc-300 font-medium">Password</label>
             <div className="relative">
-              <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-zinc-500" />
+              <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-zinc-400" />
               <input
                 type="password"
                 value={password}
@@ -129,7 +129,7 @@ export function LoginForm() {
                 autoCapitalize="none"
                 autoCorrect="off"
                 spellCheck={false}
-                className="h-10 w-full rounded-lg border border-zinc-800 bg-zinc-950 pl-10 pr-3 text-base sm:text-sm text-zinc-100 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-600 transition-colors"
+                className="h-10 w-full rounded-sm border-2 border-zinc-700 bg-zinc-900/90 pl-10 pr-3 text-sm text-zinc-100 font-mono focus:border-zinc-100 focus:outline-none transition-colors"
               />
             </div>
           </div>
@@ -137,29 +137,30 @@ export function LoginForm() {
           <button
             type="submit"
             disabled={loading}
-            className="flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-zinc-100 font-semibold text-xs uppercase tracking-wide text-zinc-950 shadow hover:bg-zinc-200 transition-colors cursor-pointer disabled:opacity-50 mt-2"
+            className="flex h-11 w-full items-center justify-center gap-2 rounded-sm border-2 border-zinc-100 bg-zinc-100 font-bold text-xs uppercase tracking-wider text-zinc-950 shadow-[3px_3px_0px_0px_#ffffff] hover:bg-white active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all cursor-pointer disabled:opacity-50 mt-3"
           >
             {loading ? (
               <Loader2 className="size-4 animate-spin" />
             ) : (
               <>
                 <span>Continue</span>
-                <ArrowRight className="size-4" />
+                <ArrowRight className="size-4 stroke-[2.5]" />
               </>
             )}
           </button>
         </form>
 
         {/* Quick Demo Role Pills */}
-        <div className="mt-5 pt-4 border-t border-zinc-800/80">
+        <div className="mt-6 pt-4 border-t-2 border-zinc-800">
+          <p className="text-[10px] font-mono uppercase tracking-widest text-zinc-400 mb-2.5">Quick Select</p>
           <div className="grid grid-cols-3 gap-2">
             <button
               type="button"
               onClick={() => selectRolePill("coach")}
-              className={`flex h-9 items-center justify-center rounded-lg border text-xs font-mono transition-colors cursor-pointer ${
+              className={`flex h-9 items-center justify-center rounded-sm text-xs font-mono transition-all cursor-pointer uppercase tracking-wider ${
                 activeRole === "coach"
-                  ? "border-zinc-500 bg-zinc-800 text-zinc-100 font-semibold"
-                  : "border-zinc-800 bg-zinc-950 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900"
+                  ? "border-2 border-zinc-100 bg-zinc-100 text-zinc-950 font-bold shadow-[2px_2px_0px_0px_#ffffff]"
+                  : "border-2 border-zinc-800 bg-zinc-900/80 text-zinc-300 hover:border-zinc-600 hover:text-white"
               }`}
             >
               coach
@@ -167,10 +168,10 @@ export function LoginForm() {
             <button
               type="button"
               onClick={() => selectRolePill("scout")}
-              className={`flex h-9 items-center justify-center rounded-lg border text-xs font-mono transition-colors cursor-pointer ${
+              className={`flex h-9 items-center justify-center rounded-sm text-xs font-mono transition-all cursor-pointer uppercase tracking-wider ${
                 activeRole === "scout"
-                  ? "border-zinc-500 bg-zinc-800 text-zinc-100 font-semibold"
-                  : "border-zinc-800 bg-zinc-950 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900"
+                  ? "border-2 border-zinc-100 bg-zinc-100 text-zinc-950 font-bold shadow-[2px_2px_0px_0px_#ffffff]"
+                  : "border-2 border-zinc-800 bg-zinc-900/80 text-zinc-300 hover:border-zinc-600 hover:text-white"
               }`}
             >
               scout
@@ -178,10 +179,10 @@ export function LoginForm() {
             <button
               type="button"
               onClick={() => selectRolePill("player")}
-              className={`flex h-9 items-center justify-center rounded-lg border text-xs font-mono transition-colors cursor-pointer ${
+              className={`flex h-9 items-center justify-center rounded-sm text-xs font-mono transition-all cursor-pointer uppercase tracking-wider ${
                 activeRole === "player"
-                  ? "border-zinc-500 bg-zinc-800 text-zinc-100 font-semibold"
-                  : "border-zinc-800 bg-zinc-950 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900"
+                  ? "border-2 border-zinc-100 bg-zinc-100 text-zinc-950 font-bold shadow-[2px_2px_0px_0px_#ffffff]"
+                  : "border-2 border-zinc-800 bg-zinc-900/80 text-zinc-300 hover:border-zinc-600 hover:text-white"
               }`}
             >
               player

@@ -119,21 +119,21 @@ export default function PlayerPage() {
       <main className="relative z-10 flex-1 px-4 py-6 sm:px-8 sm:py-8">
         <div className="mx-auto max-w-2xl space-y-6">
           {/* Unified High-Taste Athlete Card */}
-          <div className="rounded-xl border border-zinc-800 bg-zinc-950/92 p-6 sm:p-7 space-y-6 shadow-sm">
+          <div className="rounded-md border-2 border-zinc-100 bg-zinc-950 p-6 sm:p-7 space-y-6 shadow-[5px_5px_0px_0px_#ffffff]">
             {/* Header: Avatar, Name, Sport/Age, and Ready Badge */}
             <div className="flex items-center justify-between gap-4">
               <div className="flex items-center gap-3.5 min-w-0 flex-1">
                 <AthleteAvatar
                   name={athleteName}
                   imageUrl={playerData?.player?.imageUrl}
-                  className="size-11 sm:size-12 border-zinc-700 bg-zinc-800"
+                  className="size-11 sm:size-12 rounded-sm border-2 border-zinc-700 bg-zinc-800"
                   textClassName="text-xs sm:text-sm"
                 />
                 <div className="min-w-0 flex-1">
-                  <h2 className="text-base sm:text-lg font-bold tracking-tight text-zinc-100 truncate">
+                  <h2 className="text-base sm:text-lg font-bold tracking-tight text-zinc-100 truncate uppercase font-mono">
                     {athleteName}
                   </h2>
-                  <p className="text-xs text-zinc-400 font-normal truncate mt-0.5">
+                  <p className="text-xs text-zinc-400 font-normal truncate mt-0.5 font-mono">
                     {playerData?.player?.sport || "Multi-sport"} · Age {playerData?.player?.age || 17} · One Academy
                   </p>
                 </div>
@@ -144,11 +144,11 @@ export default function PlayerPage() {
 
             {/* Metrics Row: Two Crisp Tiles */}
             <div className="grid grid-cols-2 gap-3">
-              <div className="rounded-lg border border-zinc-800/80 bg-zinc-900/90 p-3.5">
-                <span className="text-xs font-mono text-zinc-400 block">
+              <div className="rounded-sm border-2 border-zinc-700 bg-zinc-900/90 p-4 shadow-[2px_2px_0px_0px_#ffffff]">
+                <span className="text-[11px] font-mono uppercase tracking-wider text-zinc-400 block font-semibold">
                   Attendance
                 </span>
-                <div className="mt-1 text-2xl font-bold tracking-tight text-zinc-100">
+                <div className="mt-1 text-3xl font-black font-mono tracking-tight text-zinc-100">
                   {attendancePct}%
                 </div>
                 <span className="text-[11px] font-mono text-zinc-500 block mt-0.5">
@@ -156,13 +156,13 @@ export default function PlayerPage() {
                 </span>
               </div>
 
-              <div className="rounded-lg border border-zinc-800/80 bg-zinc-900/90 p-3.5">
-                <span className="text-xs font-mono text-zinc-400 block">
+              <div className="rounded-sm border-2 border-zinc-700 bg-zinc-900/90 p-4 shadow-[2px_2px_0px_0px_#ffffff]">
+                <span className="text-[11px] font-mono uppercase tracking-wider text-zinc-400 block font-semibold">
                   Matches Played
                 </span>
-                <div className="mt-1 text-2xl font-bold tracking-tight text-zinc-100 flex items-center gap-1.5">
+                <div className="mt-1 text-3xl font-black font-mono tracking-tight text-zinc-100 flex items-center gap-1.5">
                   <span>{matchCount}</span>
-                  {matchCount >= 2 && <Check className="size-4 text-zinc-100 stroke-[2.5]" />}
+                  {matchCount >= 2 && <Check className="size-5 text-zinc-100 stroke-[3]" />}
                 </div>
                 <span className="text-[11px] font-mono text-zinc-500 block mt-0.5">
                   Target: 2 matches min
@@ -208,15 +208,15 @@ export default function PlayerPage() {
           </div>
 
           {/* Personal Attendance History */}
-          <div className="rounded-xl border border-zinc-800 bg-zinc-950/92 p-6 space-y-4 shadow-sm">
-            <div className="flex items-center justify-between border-b border-zinc-800/80 pb-3">
+          <div className="rounded-md border-2 border-zinc-100 bg-zinc-950 p-6 space-y-4 shadow-[4px_4px_0px_0px_#ffffff]">
+            <div className="flex items-center justify-between border-b-2 border-zinc-800 pb-3">
               <div className="flex items-center gap-2">
-                <Calendar className="size-4 text-zinc-400" />
-                <h3 className="text-sm font-semibold tracking-tight text-zinc-100">
+                <Calendar className="size-4 text-zinc-300" />
+                <h3 className="text-sm font-bold tracking-tight text-zinc-100 uppercase font-mono">
                   Attendance History
                 </h3>
               </div>
-              <span className="rounded border border-zinc-800 bg-zinc-900/90 px-2 py-0.5 text-xs font-mono text-zinc-400">
+              <span className="rounded-sm border-2 border-zinc-700 bg-zinc-900 px-2 py-0.5 text-xs font-mono text-zinc-200 font-semibold">
                 {attendanceHistory.length} Recorded
               </span>
             </div>
@@ -275,15 +275,15 @@ export default function PlayerPage() {
           </div>
 
           {/* Match Contributions */}
-          <div className="rounded-xl border border-zinc-800 bg-zinc-950/92 p-4 sm:p-6 space-y-4 shadow-sm">
-            <div className="flex items-center justify-between border-b border-zinc-800/80 pb-3">
+          <div className="rounded-md border-2 border-zinc-100 bg-zinc-950 p-4 sm:p-6 space-y-4 shadow-[4px_4px_0px_0px_#ffffff]">
+            <div className="flex items-center justify-between border-b-2 border-zinc-800 pb-3">
               <div className="flex items-center gap-2">
-                <Activity className="size-4 text-zinc-400" />
-                <h3 className="text-sm font-semibold tracking-tight text-zinc-100">
+                <Activity className="size-4 text-zinc-300" />
+                <h3 className="text-sm font-bold tracking-tight text-zinc-100 uppercase font-mono">
                   Match Contributions
                 </h3>
               </div>
-              <span className="rounded border border-zinc-800 bg-zinc-900/90 px-2 py-0.5 text-xs font-mono text-zinc-400">
+              <span className="rounded-sm border-2 border-zinc-700 bg-zinc-900 px-2 py-0.5 text-xs font-mono text-zinc-200 font-semibold">
                 {matchHistory.length} Matches
               </span>
             </div>

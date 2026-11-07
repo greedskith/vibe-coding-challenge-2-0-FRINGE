@@ -85,20 +85,20 @@ export default function ScoutPage() {
         <div className="mx-auto max-w-6xl space-y-6">
           {/* Header & Overview */}
           <div className="flex items-center justify-between">
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-100">
+            <h1 className="text-xl sm:text-2xl font-black tracking-tight text-zinc-100 uppercase font-mono">
               Trial Roster
             </h1>
 
-            <span className="rounded-md border border-zinc-800 bg-zinc-900/80 px-3 py-1 text-xs font-mono font-medium text-zinc-300">
+            <span className="rounded-sm border-2 border-zinc-700 bg-zinc-900 px-3 py-1 text-xs font-mono font-bold text-zinc-200">
               {candidates.length} Qualified
             </span>
           </div>
 
           {/* Candidates Grid */}
           {candidates.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-zinc-800 bg-zinc-950/80 p-12 text-center text-zinc-500 space-y-2">
-              <ShieldAlert className="size-8 mx-auto text-zinc-600" />
-              <p className="text-sm font-medium text-zinc-400">No candidates qualified for trials yet</p>
+            <div className="rounded-md border-2 border-dashed border-zinc-700 bg-zinc-950/90 p-12 text-center text-zinc-400 space-y-2">
+              <ShieldAlert className="size-8 mx-auto text-zinc-400" />
+              <p className="text-sm font-mono font-medium text-zinc-300">No candidates qualified for trials yet</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -114,7 +114,7 @@ export default function ScoutPage() {
                 return (
                   <div
                     key={pId}
-                    className="rounded-xl border border-zinc-800 bg-zinc-950/92 p-4 sm:p-5 space-y-4 shadow-sm"
+                    className="rounded-md border-2 border-zinc-100 bg-zinc-950 p-4 sm:p-5 space-y-4 shadow-[4px_4px_0px_0px_#ffffff]"
                   >
                     {/* Header */}
                     <div className="flex flex-wrap sm:flex-nowrap items-start sm:items-center justify-between gap-2.5 sm:gap-4">
@@ -122,14 +122,14 @@ export default function ScoutPage() {
                         <AthleteAvatar
                           name={item.player.name}
                           imageUrl={item.player.imageUrl}
-                          className="size-9 sm:size-10 border-zinc-700 bg-zinc-800"
+                          className="size-9 sm:size-10 rounded-sm border-2 border-zinc-700 bg-zinc-800"
                           alt={`${item.player.name} (${initials})`}
                         />
                         <div className="min-w-0 flex-1">
-                          <h3 className="text-sm sm:text-base font-semibold text-zinc-100 truncate">
+                          <h3 className="text-sm sm:text-base font-bold text-zinc-100 truncate font-mono uppercase">
                             {item.player.name}
                           </h3>
-                          <p className="text-xs text-zinc-400 font-normal mt-0.5 truncate">
+                          <p className="text-xs text-zinc-400 font-mono mt-0.5 truncate">
                             {item.player.sport} · Age {item.player.age}
                           </p>
                         </div>
@@ -142,16 +142,16 @@ export default function ScoutPage() {
                     <div className="space-y-1.5 pt-1">
                       <div className="flex justify-between text-xs font-mono">
                         <span className="text-zinc-400">
-                          Attendance: <strong className="text-zinc-100">{item.attendancePct}%</strong>
+                          Attendance: <strong className="text-zinc-100 font-bold">{item.attendancePct}%</strong>
                         </span>
-                        <span className="text-zinc-300 font-semibold">
+                        <span className="text-zinc-200 font-bold">
                           75% Target
                         </span>
                       </div>
 
-                      <div className="relative h-2 w-full rounded-full bg-zinc-800 overflow-hidden">
+                      <div className="relative h-2.5 w-full rounded-none bg-zinc-900 border border-zinc-700 overflow-hidden">
                         <div
-                          className="h-full rounded-full bg-zinc-100 transition-all duration-300"
+                          className="h-full bg-zinc-100 transition-all duration-300"
                           style={{
                             width: `${Math.min(100, item.attendancePct)}%`,
                           }}
@@ -165,14 +165,14 @@ export default function ScoutPage() {
                     </div>
 
                     {/* Criteria Footer */}
-                    <div className="flex items-center justify-between pt-2 border-t border-zinc-800/80 text-xs font-mono">
-                      <span className="inline-flex items-center gap-1.5 text-zinc-300">
-                        <Trophy className="size-3.5 text-zinc-400" />
+                    <div className="flex items-center justify-between pt-2 border-t-2 border-zinc-800 text-xs font-mono">
+                      <span className="inline-flex items-center gap-1.5 text-zinc-200 font-semibold">
+                        <Trophy className="size-3.5 text-zinc-300" />
                         {item.matchCount} {item.matchCount === 1 ? "Match" : "Matches"}
                       </span>
 
-                      <span className="text-zinc-300 font-medium flex items-center gap-1">
-                        <Check className="size-3.5 text-zinc-100" />
+                      <span className="text-zinc-100 font-bold flex items-center gap-1">
+                        <Check className="size-3.5 text-zinc-100 stroke-[3]" />
                         Qualified
                       </span>
                     </div>

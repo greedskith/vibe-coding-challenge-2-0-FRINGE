@@ -1889,11 +1889,11 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                           }
                         }}
                         className={cn(
-                          "relative flex flex-col items-center justify-center text-center p-4 sm:p-5 rounded-2xl border transition-all cursor-pointer select-none space-y-2.5 sm:space-y-3",
+                          "relative flex flex-col items-center justify-center text-center p-4 sm:p-5 rounded-md border-2 transition-all cursor-pointer select-none space-y-2.5 sm:space-y-3",
                           present
-                            ? "border-zinc-300 bg-zinc-900/90 shadow-[0_0_20px_-10px_rgba(255,255,255,0.15)] ring-1 ring-zinc-300/40"
-                            : "border-zinc-800 bg-zinc-950/85 hover:border-zinc-700/80 hover:bg-zinc-900/70",
-                          (isLocked || !activeSession) && "opacity-75 cursor-not-allowed hover:border-zinc-800/80 shadow-none ring-0"
+                            ? "border-zinc-100 bg-zinc-900 shadow-[3px_3px_0px_0px_#ffffff]"
+                            : "border-zinc-800 bg-zinc-950/90 hover:border-zinc-600 hover:bg-zinc-900/50",
+                          (isLocked || !activeSession) && "opacity-75 cursor-not-allowed hover:border-zinc-800 shadow-none"
                         )}
                         title={
                           !activeSession
@@ -2097,10 +2097,10 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                           {/* Fixture Card */}
                           <div
                             className={cn(
-                              "rounded-2xl border p-4 sm:p-5 transition-all shadow-xs",
+                              "rounded-md border-2 p-4 sm:p-5 transition-all",
                               isMarquee
-                                ? "border-zinc-400/90 bg-gradient-to-b from-zinc-900/95 to-zinc-950/95 shadow-[0_0_25px_-10px_rgba(255,255,255,0.14)]"
-                                : "border-zinc-800 bg-zinc-950/85 hover:border-zinc-700 hover:bg-zinc-900/70"
+                                ? "border-zinc-100 bg-zinc-950 shadow-[5px_5px_0px_0px_#ffffff]"
+                                : "border-zinc-100 bg-zinc-950 shadow-[4px_4px_0px_0px_#ffffff]"
                             )}
                           >
                             <div className="flex items-start justify-between gap-3 sm:gap-4">
@@ -2334,7 +2334,7 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                             handleOpenAthleteDrawer(player);
                           }
                         }}
-                        className="group relative flex flex-col justify-between p-4 sm:p-5 rounded-2xl border border-zinc-800 bg-zinc-950/85 hover:border-zinc-700 hover:bg-zinc-900/80 transition-all cursor-pointer text-left select-none space-y-4 shadow-xs"
+                        className="group relative flex flex-col justify-between p-4 sm:p-5 rounded-md border-2 border-zinc-100 bg-zinc-950 shadow-[4px_4px_0px_0px_#ffffff] hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[5px_5px_0px_0px_#ffffff] transition-all cursor-pointer text-left select-none space-y-4"
                       >
                         {/* Card Top: Avatar, Name, Age Group & Readiness Pill */}
                         <div className="flex items-start justify-between gap-3 min-w-0">
