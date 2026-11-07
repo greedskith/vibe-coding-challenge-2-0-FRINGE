@@ -11,10 +11,10 @@ export default function LoginPage() {
       {/* Generative P5.js shuffling art background */}
       <P5ArtBackground />
 
-      {/* Subtle vignette scrim to guarantee contrast and comfort */}
+      {/* Optical lens vignette with subtle gold atmosphere */}
       <div
         aria-hidden="true"
-        className="fixed inset-0 pointer-events-none select-none z-[1] bg-radial from-zinc-950/50 via-zinc-950/70 to-zinc-950/90"
+        className="fixed inset-0 pointer-events-none select-none z-[1] bg-radial from-amber-500/5 via-zinc-950/20 to-zinc-950/65"
       />
 
       {/* Login container placed above the artwork */}

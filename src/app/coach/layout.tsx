@@ -14,10 +14,10 @@ export default function CoachLayout({
       {/* Generative ambient p5 art background */}
       <P5ArtBackground mode="ambient" shapeCount={360} opacityMultiplier={0.7} />
 
-      {/* Deep vignette scrim for contrast and zero clash */}
+      {/* Balanced ambient focus scrim */}
       <div
         aria-hidden="true"
-        className="fixed inset-0 pointer-events-none select-none z-[1] bg-radial from-zinc-950/70 via-zinc-950/85 to-zinc-950/95"
+        className="fixed inset-0 pointer-events-none select-none z-[1] bg-radial from-amber-500/4 via-zinc-950/35 to-zinc-950/75"
       />
 
       {/* Main interactive content above artwork */}
