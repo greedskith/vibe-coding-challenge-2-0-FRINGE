@@ -17,7 +17,7 @@ export default function CoachLayout({
       {/* Deep vignette scrim for contrast and zero clash */}
       <div
         aria-hidden="true"
-        className="fixed inset-0 pointer-events-none select-none z-[1] bg-radial from-transparent via-zinc-950/45 to-zinc-950/90"
+        className="fixed inset-0 pointer-events-none select-none z-[1] bg-radial from-zinc-950/70 via-zinc-950/85 to-zinc-950/95"
       />
 
       {/* Main interactive content above artwork */}

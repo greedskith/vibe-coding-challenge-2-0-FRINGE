@@ -79,7 +79,7 @@ export default function PlayerPage() {
       {/* Deep vignette scrim for contrast and legibility */}
       <div
         aria-hidden="true"
-        className="fixed inset-0 pointer-events-none select-none z-[1] bg-radial from-transparent via-zinc-950/45 to-zinc-950/90"
+        className="fixed inset-0 pointer-events-none select-none z-[1] bg-radial from-zinc-950/70 via-zinc-950/85 to-zinc-950/95"
       />
 
       {/* Top Header Bar */}
@@ -119,7 +119,7 @@ export default function PlayerPage() {
       <main className="relative z-10 flex-1 px-4 py-6 sm:px-8 sm:py-8">
         <div className="mx-auto max-w-2xl space-y-6">
           {/* Unified High-Taste Athlete Card */}
-          <div className="rounded-xl border border-zinc-800/80 bg-zinc-950/80 p-6 sm:p-7 space-y-6 shadow-sm">
+          <div className="rounded-xl border border-zinc-800 bg-zinc-950/92 p-6 sm:p-7 space-y-6 shadow-sm">
             {/* Header: Avatar, Name, Sport/Age, and Ready Badge */}
             <div className="flex items-center justify-between gap-4">
               <div className="flex items-center gap-3.5 min-w-0 flex-1">
@@ -144,7 +144,7 @@ export default function PlayerPage() {
 
             {/* Metrics Row: Two Crisp Tiles */}
             <div className="grid grid-cols-2 gap-3">
-              <div className="rounded-lg border border-zinc-800/80 bg-zinc-900/70 p-3.5">
+              <div className="rounded-lg border border-zinc-800/80 bg-zinc-900/90 p-3.5">
                 <span className="text-xs font-mono text-zinc-400 block">
                   Attendance
                 </span>
@@ -156,7 +156,7 @@ export default function PlayerPage() {
                 </span>
               </div>
 
-              <div className="rounded-lg border border-zinc-800/80 bg-zinc-900/70 p-3.5">
+              <div className="rounded-lg border border-zinc-800/80 bg-zinc-900/90 p-3.5">
                 <span className="text-xs font-mono text-zinc-400 block">
                   Matches Played
                 </span>
@@ -208,7 +208,7 @@ export default function PlayerPage() {
           </div>
 
           {/* Personal Attendance History */}
-          <div className="rounded-xl border border-zinc-800/80 bg-zinc-950/80 p-6 space-y-4 shadow-sm">
+          <div className="rounded-xl border border-zinc-800 bg-zinc-950/92 p-6 space-y-4 shadow-sm">
             <div className="flex items-center justify-between border-b border-zinc-800/80 pb-3">
               <div className="flex items-center gap-2">
                 <Calendar className="size-4 text-zinc-400" />
@@ -275,7 +275,7 @@ export default function PlayerPage() {
           </div>
 
           {/* Match Contributions */}
-          <div className="rounded-xl border border-zinc-800/80 bg-zinc-950/80 p-4 sm:p-6 space-y-4 shadow-sm">
+          <div className="rounded-xl border border-zinc-800 bg-zinc-950/92 p-4 sm:p-6 space-y-4 shadow-sm">
             <div className="flex items-center justify-between border-b border-zinc-800/80 pb-3">
               <div className="flex items-center gap-2">
                 <Activity className="size-4 text-zinc-400" />

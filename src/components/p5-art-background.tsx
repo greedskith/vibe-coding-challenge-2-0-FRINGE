@@ -83,8 +83,8 @@ export function P5ArtBackground({
   const [mounted, setMounted] = useState(false);
 
   const isAmbient = mode === "ambient" || mode === "static";
-  const effectiveShapeCount = shapeCount ?? (isAmbient ? 360 : 650);
-  const effectiveOpacity = opacityMultiplier ?? (isAmbient ? 0.75 : 1.0);
+  const effectiveShapeCount = shapeCount ?? (isAmbient ? 320 : 650);
+  const effectiveOpacity = opacityMultiplier ?? (isAmbient ? 0.45 : 1.0);
 
   useEffect(() => {
     setMounted(true);
@@ -147,8 +147,8 @@ export function P5ArtBackground({
 
           // 1. Dark ambient background
           const bgHSB = pal1HSB[Math.floor(p.random(pal1HSB.length))];
-          const bgSat = bgHSB[1] * (isAmbient ? 0.35 : 0.45);
-          const bgBri = Math.max(isAmbient ? 6 : 8, bgHSB[2] * (isAmbient ? 0.16 : 0.22));
+          const bgSat = bgHSB[1] * (isAmbient ? 0.25 : 0.45);
+          const bgBri = Math.max(isAmbient ? 4 : 8, bgHSB[2] * (isAmbient ? 0.10 : 0.22));
           p.background(bgHSB[0], bgSat, bgBri);
 
           // 2. Layered flowing background waves
@@ -156,8 +156,8 @@ export function P5ArtBackground({
           const numWaves = Math.floor(p.random(2, 4));
           for (let i = 0; i < numWaves; i++) {
             const wHSB = pal1HSB[Math.floor(p.random(pal1HSB.length))];
-            const waveAlpha = (isAmbient ? 45 : 65) * effectiveOpacity;
-            p.fill(wHSB[0], wHSB[1] * 0.55, Math.max(12, wHSB[2] * 0.35), waveAlpha);
+            const waveAlpha = (isAmbient ? 25 : 65) * effectiveOpacity;
+            p.fill(wHSB[0], wHSB[1] * (isAmbient ? 0.35 : 0.55), Math.max(isAmbient ? 8 : 12, wHSB[2] * (isAmbient ? 0.20 : 0.35)), waveAlpha);
             p.push();
             p.translate(W / 2, H / 2);
             p.rotate(p.random(Math.PI * 2));
@@ -178,8 +178,8 @@ export function P5ArtBackground({
           const numCircles = Math.floor(p.random(2, 4));
           for (let i = 0; i < numCircles; i++) {
             const cHSB = pal2HSB[Math.floor(p.random(pal2HSB.length))];
-            const circleAlpha = (isAmbient ? 25 : 40) * effectiveOpacity;
-            p.fill(cHSB[0], cHSB[1] * 0.75, cHSB[2] * 0.7, circleAlpha);
+            const circleAlpha = (isAmbient ? 15 : 40) * effectiveOpacity;
+            p.fill(cHSB[0], cHSB[1] * (isAmbient ? 0.45 : 0.75), cHSB[2] * (isAmbient ? 0.40 : 0.7), circleAlpha);
             p.noStroke();
             const minDim = Math.min(W, H);
             const diam = p.random(minDim * 0.2, minDim * 0.45);
@@ -236,12 +236,12 @@ export function P5ArtBackground({
             const colorIdx = Math.floor(n2 * hsbColors.length) % hsbColors.length;
             const [hBase, sBase, bBase] = hsbColors[colorIdx];
 
-            const shapeAlpha = p.random(150, 220) * effectiveOpacity;
+            const shapeAlpha = p.random(isAmbient ? 80 : 150, isAmbient ? 140 : 220) * effectiveOpacity;
 
             p.fill(
               (hBase + p.random(-8, 8) + 360) % 360,
-              Math.min(100, sBase * (isAmbient ? 1.0 : p.random(1.05, 1.25))),
-              Math.min(100, bBase * (isAmbient ? 0.7 : p.random(0.75, 0.95))),
+              Math.min(100, sBase * (isAmbient ? 0.75 : p.random(1.05, 1.25))),
+              Math.min(isAmbient ? 55 : 100, bBase * (isAmbient ? 0.45 : p.random(0.75, 0.95))),
               shapeAlpha
             );
 

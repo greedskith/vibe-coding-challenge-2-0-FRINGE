@@ -44,7 +44,7 @@ export default function ScoutPage() {
       {/* Deep vignette scrim for contrast and legibility */}
       <div
         aria-hidden="true"
-        className="fixed inset-0 pointer-events-none select-none z-[1] bg-radial from-transparent via-zinc-950/45 to-zinc-950/90"
+        className="fixed inset-0 pointer-events-none select-none z-[1] bg-radial from-zinc-950/70 via-zinc-950/85 to-zinc-950/95"
       />
 
       {/* Top Header Bar */}
@@ -114,7 +114,7 @@ export default function ScoutPage() {
                 return (
                   <div
                     key={pId}
-                    className="rounded-xl border border-zinc-800/80 bg-zinc-950/80 p-4 sm:p-5 space-y-4 shadow-sm"
+                    className="rounded-xl border border-zinc-800 bg-zinc-950/92 p-4 sm:p-5 space-y-4 shadow-sm"
                   >
                     {/* Header */}
                     <div className="flex flex-wrap sm:flex-nowrap items-start sm:items-center justify-between gap-2.5 sm:gap-4">

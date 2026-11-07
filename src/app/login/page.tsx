@@ -14,7 +14,7 @@ export default function LoginPage() {
       {/* Subtle vignette scrim to guarantee contrast and comfort */}
       <div
         aria-hidden="true"
-        className="fixed inset-0 pointer-events-none select-none z-[1] bg-radial from-transparent via-zinc-950/20 to-zinc-950/70"
+        className="fixed inset-0 pointer-events-none select-none z-[1] bg-radial from-zinc-950/50 via-zinc-950/70 to-zinc-950/90"
       />
 
       {/* Login container placed above the artwork */}
