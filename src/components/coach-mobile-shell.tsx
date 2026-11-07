@@ -1286,8 +1286,8 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
         <div className="space-y-6">
           {/* Academy Branding */}
           <div className="flex items-center gap-3 px-2 py-1">
-            <div className="flex size-9 items-center justify-center rounded-sm border border-amber-400/50 bg-amber-950/30 text-amber-400">
-              <Trophy className="size-4 text-amber-400" />
+            <div className="flex size-9 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900 text-zinc-200">
+              <Trophy className="size-4 text-zinc-300" />
             </div>
             <div className="min-w-0 flex-1">
               <div className="text-sm font-semibold tracking-tight text-zinc-100 truncate">
@@ -1349,7 +1349,7 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                   <Icon className="size-4 shrink-0 text-zinc-400" />
                   <span>{item.label}</span>
                   {item.id === "ready" && sportQualifiedCount > 0 && (
-                    <span className="ml-auto flex size-5 items-center justify-center rounded-sm bg-gradient-to-r from-amber-400 to-yellow-500 text-[10px] font-mono text-zinc-950 font-black">
+                    <span className="ml-auto flex size-5 items-center justify-center rounded-full bg-zinc-800 text-[10px] font-mono text-zinc-200 border border-zinc-700/60">
                       {sportQualifiedCount}
                     </span>
                   )}
@@ -1891,7 +1891,7 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                         className={cn(
                           "relative flex flex-col items-center justify-center text-center p-4 sm:p-5 rounded-md border-2 transition-all cursor-pointer select-none space-y-2.5 sm:space-y-3",
                           present
-                            ? "border-amber-300 bg-zinc-900 shadow-[3px_3px_0px_0px_#f59e0b]"
+                            ? "border-zinc-100 bg-zinc-900 shadow-[3px_3px_0px_0px_#ffffff]"
                             : "border-zinc-800 bg-zinc-950/90 hover:border-zinc-600 hover:bg-zinc-900/50",
                           (isLocked || !activeSession) && "opacity-75 cursor-not-allowed hover:border-zinc-800 shadow-none"
                         )}

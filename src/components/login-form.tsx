@@ -70,15 +70,15 @@ export function LoginForm() {
   return (
     <div className="w-full max-w-sm mx-auto space-y-6">
       {/* Visual Header */}
-      <div className="flex items-center gap-2.5 rounded-md border-2 border-amber-300/80 bg-zinc-950 px-3.5 py-2 shadow-[3px_3px_0px_0px_#f59e0b] w-fit">
-        <div className="flex size-8 items-center justify-center rounded-sm border border-amber-400/60 bg-amber-950/40 text-amber-400">
-          <Trophy className="size-4 text-amber-400" />
+      <div className="flex items-center gap-2.5 rounded-md border-2 border-zinc-100 bg-zinc-950 px-3.5 py-2 shadow-[3px_3px_0px_0px_#ffffff] w-fit">
+        <div className="flex size-8 items-center justify-center rounded-sm border border-zinc-700 bg-zinc-900 text-zinc-100">
+          <Trophy className="size-4 text-zinc-100" />
         </div>
         <div>
-          <h1 className="text-sm font-bold tracking-tight bg-gradient-to-r from-amber-200 via-yellow-300 to-amber-400 bg-clip-text text-transparent uppercase font-mono">
+          <h1 className="text-sm font-bold tracking-tight text-zinc-100 uppercase font-mono">
             Academy Desk
           </h1>
-          <p className="text-[10px] text-amber-500/80 font-mono tracking-wider font-semibold">ONE ACADEMY</p>
+          <p className="text-[10px] text-zinc-400 font-mono tracking-wider">ONE ACADEMY</p>
         </div>
       </div>
 
@@ -137,14 +137,14 @@ export function LoginForm() {
           <button
             type="submit"
             disabled={loading}
-            className="flex h-11 w-full items-center justify-center gap-2 rounded-sm border-2 border-amber-300 bg-gradient-to-r from-amber-200 via-yellow-400 to-amber-500 font-black text-xs uppercase tracking-wider text-zinc-950 shadow-[3px_3px_0px_0px_#b45309] hover:brightness-105 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all cursor-pointer disabled:opacity-50 mt-3"
+            className="flex h-11 w-full items-center justify-center gap-2 rounded-sm border-2 border-zinc-100 bg-zinc-100 font-bold text-xs uppercase tracking-wider text-zinc-950 shadow-[3px_3px_0px_0px_#ffffff] hover:bg-white active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all cursor-pointer disabled:opacity-50 mt-3"
           >
             {loading ? (
-              <Loader2 className="size-4 animate-spin text-zinc-950" />
+              <Loader2 className="size-4 animate-spin" />
             ) : (
               <>
                 <span>Continue</span>
-                <ArrowRight className="size-4 stroke-[3]" />
+                <ArrowRight className="size-4 stroke-[2.5]" />
               </>
             )}
           </button>

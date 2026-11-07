@@ -76,18 +76,18 @@ export default function PlayerPage() {
       {/* Generative ambient p5 art background */}
       <P5ArtBackground mode="ambient" shapeCount={360} opacityMultiplier={0.7} />
 
-      {/* Balanced optical lens vignette */}
+      {/* Deep vignette scrim for contrast and legibility */}
       <div
         aria-hidden="true"
-        className="fixed inset-0 pointer-events-none select-none z-[1] bg-radial from-amber-500/4 via-zinc-950/30 to-zinc-950/75"
+        className="fixed inset-0 pointer-events-none select-none z-[1] bg-radial from-zinc-950/70 via-zinc-950/85 to-zinc-950/95"
       />
 
       {/* Top Header Bar */}
       <header className="sticky top-0 z-30 border-b border-zinc-800/80 bg-zinc-950/92 px-4 sm:px-8 py-3.5 shadow-sm">
         <div className="mx-auto flex max-w-4xl items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex size-9 items-center justify-center rounded-sm border border-amber-400/50 bg-amber-950/30 text-amber-400">
-              <Trophy className="size-4 text-amber-400" />
+            <div className="flex size-9 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900 text-zinc-200">
+              <Trophy className="size-4 text-zinc-300" />
             </div>
             <div>
               <span className="text-sm font-semibold tracking-tight text-zinc-100">
@@ -174,17 +174,15 @@ export default function PlayerPage() {
             <div className="space-y-1.5 pt-1">
               <div className="flex justify-between items-center text-xs font-mono">
                 <span className="text-zinc-400">Readiness Benchmark</span>
-                <span className={attendancePct >= 75 ? "text-amber-300 font-bold" : "text-zinc-400"} title="Target 75%">
+                <span className={attendancePct >= 75 ? "text-zinc-200 font-semibold" : "text-zinc-400"} title="Target 75%">
                   Target: 75% Ready Threshold
                 </span>
               </div>
 
-              <div className="relative h-2.5 w-full rounded-none bg-zinc-900 border border-zinc-700 overflow-hidden">
+              <div className="relative h-2.5 w-full rounded-full bg-zinc-800 overflow-hidden">
                 <div
-                  className={`h-full transition-all duration-300 ${
-                    attendancePct >= 75
-                      ? "bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500"
-                      : "bg-zinc-500"
+                  className={`h-full rounded-full transition-all duration-300 ${
+                    attendancePct >= 75 ? "bg-zinc-100" : "bg-zinc-500"
                   }`}
                   style={{ width: `${Math.min(100, attendancePct)}%` }}
                 />
@@ -200,9 +198,7 @@ export default function PlayerPage() {
               {/* Anchored Visible Label Under Gauge */}
               <div className="relative w-full text-[10px] font-mono text-zinc-500 pt-0.5">
                 <div
-                  className={`absolute -translate-x-1/2 flex items-center font-bold whitespace-nowrap ${
-                    attendancePct >= 75 ? "text-amber-400" : "text-zinc-400"
-                  }`}
+                  className="absolute -translate-x-1/2 flex items-center text-zinc-400 font-medium whitespace-nowrap"
                   style={{ left: "75%" }}
                 >
                   ▲ 75% Target
