@@ -70,7 +70,7 @@ export function LoginForm() {
   return (
     <div className="w-full max-w-sm mx-auto space-y-6">
       {/* Visual Header */}
-      <div className="flex items-center gap-2.5 rounded-xl border border-zinc-800/80 bg-zinc-950/80 px-3 py-2 backdrop-blur-md shadow-lg w-fit">
+      <div className="flex items-center gap-2.5 rounded-xl border border-zinc-800 bg-zinc-950/90 px-3 py-2 shadow-lg w-fit">
         <div className="flex size-8 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900 text-zinc-200">
           <Trophy className="size-4 text-zinc-300" />
         </div>
@@ -83,7 +83,7 @@ export function LoginForm() {
       </div>
 
       {/* Login Card */}
-      <div className="rounded-2xl border border-zinc-800/80 bg-zinc-950/85 p-6 backdrop-blur-xl shadow-2xl">
+      <div className="rounded-2xl border border-zinc-800/90 bg-zinc-950/92 p-6 shadow-2xl">
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
             <div className="flex items-center gap-2 rounded-lg bg-red-950/40 border border-red-900/60 p-3 text-xs text-red-400">

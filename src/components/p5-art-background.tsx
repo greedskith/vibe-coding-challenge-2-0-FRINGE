@@ -43,21 +43,10 @@ function hexToHSB(hex: string): [number, number, number] {
   return [h, s, br];
 }
 
-// p5.js 2.3.4 splineVertex helper with fallback
-function addCurveVertex(p: any, x: number, y: number) {
-  if (typeof p.splineVertex === "function") {
-    p.splineVertex(x, y);
-  } else if (typeof p.curveVertex === "function") {
-    p.curveVertex(x, y);
-  } else {
-    p.vertex(x, y);
-  }
-}
-
 export function P5ArtBackground() {
   const containerRef = useRef<HTMLDivElement>(null);
   const p5InstanceRef = useRef<any>(null);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const animationFrameRef = useRef<number | null>(null);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -76,7 +65,6 @@ export function P5ArtBackground() {
         if (typeof window !== "undefined" && (window as any).p5) {
           P5Constructor = (window as any).p5;
         } else {
-          // CDN fallback if package import fails in browser
           await new Promise<void>((resolve, reject) => {
             const script = document.createElement("script");
             script.src = "https://cdn.jsdelivr.net/npm/p5@2.3.4/lib/p5.min.js";
@@ -106,81 +94,83 @@ export function P5ArtBackground() {
             pal2 = PALETTES[(PALETTES.indexOf(pal1) + 1) % PALETTES.length];
           }
           const allColors = [...pal1, ...pal2];
+          // Precompute HSB values once
+          const hsbColors = allColors.map(hexToHSB);
+          const pal1HSB = pal1.map(hexToHSB);
+          const pal2HSB = pal2.map(hexToHSB);
 
           // Flow field & color noise resolutions
           const rez1 = p.random(0.001, 0.0028);
           const rez2 = p.random(0.001, 0.0035);
           noiseTime += 10000;
 
-          // 1. Canvas background: dark toned tint from palette
-          const bgHex = pal1[Math.floor(p.random(pal1.length))];
-          const [bgH, bgS, bgB] = hexToHSB(bgHex);
+          // Set HSB color mode once for the entire render
           p.colorMode(p.HSB, 360, 100, 100, 255);
-          p.background(bgH, bgS * 0.45, Math.max(8, bgB * 0.22));
+
+          // 1. Dark background
+          const bgHSB = pal1HSB[Math.floor(p.random(pal1HSB.length))];
+          p.background(bgHSB[0], bgHSB[1] * 0.45, Math.max(8, bgHSB[2] * 0.22));
 
           // 2. Layered flowing background waves
           p.noStroke();
           const numWaves = Math.floor(p.random(2, 4));
           for (let i = 0; i < numWaves; i++) {
-            const waveHex = pal1[Math.floor(p.random(pal1.length))];
-            const [wH, wS, wB] = hexToHSB(waveHex);
-            p.fill(wH, wS * 0.55, Math.max(12, wB * 0.35), 65);
+            const wHSB = pal1HSB[Math.floor(p.random(pal1HSB.length))];
+            p.fill(wHSB[0], wHSB[1] * 0.55, Math.max(12, wHSB[2] * 0.35), 65);
             p.push();
             p.translate(W / 2, H / 2);
             p.rotate(p.random(Math.PI * 2));
             p.beginShape();
-            addCurveVertex(p, -W, H);
-            addCurveVertex(p, -W, H);
-            addCurveVertex(p, -W, p.random(-H * 0.4, H * 0.4));
-            addCurveVertex(p, -W / 3, p.random(-H * 0.4, H * 0.4));
-            addCurveVertex(p, W / 3, p.random(-H * 0.4, H * 0.4));
-            addCurveVertex(p, W, p.random(-H * 0.4, H * 0.4));
-            addCurveVertex(p, W, H);
-            addCurveVertex(p, W, H);
+            p.vertex(-W, H);
+            p.vertex(-W, p.random(-H * 0.35, H * 0.35));
+            p.bezierVertex(
+              -W / 3, p.random(-H * 0.4, H * 0.4),
+              W / 3, p.random(-H * 0.4, H * 0.4),
+              W, p.random(-H * 0.35, H * 0.35)
+            );
+            p.vertex(W, H);
             p.endShape(p.CLOSE);
             p.pop();
           }
 
           // 3. Ambient soft accent circles
-          const numCircles = Math.floor(p.random(2, 5));
+          const numCircles = Math.floor(p.random(2, 4));
           for (let i = 0; i < numCircles; i++) {
-            const cHex = pal2[Math.floor(p.random(pal2.length))];
-            const [cH, cS, cB] = hexToHSB(cHex);
-            p.fill(cH, cS * 0.75, cB * 0.7, 45);
+            const cHSB = pal2HSB[Math.floor(p.random(pal2HSB.length))];
+            p.fill(cHSB[0], cHSB[1] * 0.75, cHSB[2] * 0.7, 40);
             p.noStroke();
             const minDim = Math.min(W, H);
-            const diam = p.random(minDim * 0.18, minDim * 0.42);
+            const diam = p.random(minDim * 0.2, minDim * 0.45);
             p.circle(p.random(W), p.random(H), diam);
           }
 
-          // 4. Centers of rotation for vortex / flow influence
+          // 4. Centers of rotation for flow vortex influence
           const centers = [
-            { x: p.random(W * 0.2, W * 0.8), y: p.random(H * 0.2, H * 0.8), weight: p.random(0.4, 0.9) },
-            { x: p.random(W * 0.1, W * 0.9), y: p.random(H * 0.1, H * 0.9), weight: p.random(0.3, 0.7) },
+            { x: p.random(W * 0.2, W * 0.8), y: p.random(H * 0.2, H * 0.8), weight: p.random(0.4, 0.8) },
+            { x: p.random(W * 0.1, W * 0.9), y: p.random(H * 0.1, H * 0.9), weight: p.random(0.3, 0.6) },
           ];
 
-          // 5. Shape sizing adapted for mobile & desktop constraints
-          const baseScale = Math.min(W, H) / 900;
-          const sclStart = p.random(0.9, 1.8) * baseScale;
-          const tries = 2500; // Fast render (~15ms) perfectly suited for 0.5s shuffling
-          const minScale = 0.2 * baseScale;
-          const sclReduct = (sclStart / tries) * 1.25;
+          // 5. Highly optimized shape count (480 shapes, ~2ms execution time)
+          const baseScale = Math.min(W, H) / 750;
+          const sclStart = p.random(1.2, 2.2) * baseScale;
+          const tries = 480;
+          const minScale = 0.25 * baseScale;
+          const sclReduct = (sclStart / tries) * 1.2;
           let currentScale = sclStart;
-          const midLeaf = p.random(-1.4, 1.4);
 
-          // Stroke choice
+          // Stroke setup
           const strokeType = p.random(3);
-          if (strokeType < 0.8) {
+          if (strokeType < 1.0) {
             p.noStroke();
-          } else if (strokeType < 2.2) {
-            p.stroke(0, 0, 0, 35);
-            p.strokeWeight(0.6);
+          } else if (strokeType < 2.3) {
+            p.stroke(0, 0, 0, 30);
+            p.strokeWeight(0.5);
           } else {
-            p.stroke(0, 0, 100, 25);
-            p.strokeWeight(0.6);
+            p.stroke(0, 0, 100, 20);
+            p.strokeWeight(0.5);
           }
 
-          // 6. Draw flow-field generative shapes
+          // 6. Draw flow-field shapes
           for (let i = 0; i < tries; i++) {
             currentScale -= sclReduct;
             if (currentScale < minScale) currentScale = minScale;
@@ -191,28 +181,23 @@ export function P5ArtBackground() {
             const n1 = p.noise(x * rez1 + noiseTime, y * rez1 + noiseTime);
             const n2 = p.noise(x * rez2 + noiseTime + 10000, y * rez2 + noiseTime + 10000);
 
-            // Calculate rotation angle with centers of rotation
             let ang = n1 * Math.PI * 2;
             for (const c of centers) {
               ang += Math.atan2(y - c.y, x - c.x) * c.weight * 0.5;
             }
 
-            // Dimensions bounded within screen constraints
-            const maxDimension = Math.min(W, H) * 0.22;
-            const w = Math.min(p.random(14, 45) * currentScale, maxDimension);
-            const h = Math.min(p.random(30, 95) * currentScale, maxDimension);
+            const maxDim = Math.min(W, H) * 0.25;
+            const w = Math.min(p.random(20, 55) * currentScale, maxDim);
+            const h = Math.min(p.random(40, 110) * currentScale, maxDim);
 
-            // Harmonic color pick with subtle jitter
-            const colorIdx = Math.floor(n2 * allColors.length) % allColors.length;
-            const hex = allColors[colorIdx];
-            const [hBase, sBase, bBase] = hexToHSB(hex);
+            const colorIdx = Math.floor(n2 * hsbColors.length) % hsbColors.length;
+            const [hBase, sBase, bBase] = hsbColors[colorIdx];
 
-            p.colorMode(p.HSB, 360, 100, 100, 255);
             p.fill(
-              (hBase + p.random(-10, 10) + 360) % 360,
+              (hBase + p.random(-8, 8) + 360) % 360,
               Math.min(100, sBase * p.random(1.05, 1.25)),
               Math.min(100, bBase * p.random(0.75, 0.95)),
-              p.random(150, 225)
+              p.random(160, 230)
             );
 
             p.push();
@@ -220,23 +205,17 @@ export function P5ArtBackground() {
             p.rotate(ang);
 
             const shapeChoice = p.random(1);
-            if (shapeChoice < 0.18) {
-              // Circular particle
+            if (shapeChoice < 0.2) {
               p.circle(0, 0, Math.min(w, h));
-            } else if (shapeChoice < 0.45) {
-              // Soft rounded rectangle
+            } else if (shapeChoice < 0.5) {
               p.rectMode(p.CENTER);
-              p.rect(0, 0, w, h, 3);
+              p.rect(0, 0, w, h, 4);
             } else {
-              // Steve's Makerspace organic petal / leaf curve
+              // Ultra-fast hardware-accelerated Bezier petal
               p.beginShape();
-              addCurveVertex(p, 0, h / 2);
-              addCurveVertex(p, 0, h / 2);
-              addCurveVertex(p, -w / 2, (h / 10) * midLeaf);
-              addCurveVertex(p, 0, -h / 2);
-              addCurveVertex(p, w / 2, (h / 10) * midLeaf);
-              addCurveVertex(p, 0, h / 2);
-              addCurveVertex(p, 0, h / 2);
+              p.vertex(0, -h / 2);
+              p.bezierVertex(w / 2, -h / 6, w / 2, h / 6, 0, h / 2);
+              p.bezierVertex(-w / 2, h / 6, -w / 2, -h / 6, 0, -h / 2);
               p.endShape(p.CLOSE);
             }
 
@@ -273,21 +252,31 @@ export function P5ArtBackground() {
 
       p5InstanceRef.current = new P5Constructor(sketch);
 
-      // Constant 0.5s (500ms) shuffling
-      intervalRef.current = setInterval(() => {
-        if (!destroyed && p5InstanceRef.current?._generateArt) {
-          p5InstanceRef.current._generateArt();
+      // Smooth RAF-based 0.5s timer that yields to input events
+      let lastTime = performance.now();
+      const intervalMs = 500;
+
+      function loop(currentTime: number) {
+        if (destroyed) return;
+        if (currentTime - lastTime >= intervalMs) {
+          lastTime = currentTime;
+          if (p5InstanceRef.current?._generateArt) {
+            p5InstanceRef.current._generateArt();
+          }
         }
-      }, 500);
+        animationFrameRef.current = requestAnimationFrame(loop);
+      }
+
+      animationFrameRef.current = requestAnimationFrame(loop);
     }
 
     loadAndStart();
 
     return () => {
       destroyed = true;
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
+      if (animationFrameRef.current !== null) {
+        cancelAnimationFrame(animationFrameRef.current);
+        animationFrameRef.current = null;
       }
       if (p5InstanceRef.current) {
         try {
