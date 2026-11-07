@@ -44,7 +44,6 @@ import {
   DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogPanel,
   DialogPopup,
   DialogTitle,
 } from "@/components/p-dialog-1";
@@ -1286,11 +1285,11 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
         <div className="space-y-6">
           {/* Academy Branding */}
           <div className="flex items-center gap-3 px-2 py-1">
-            <div className="flex size-9 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900 text-zinc-200">
-              <Trophy className="size-4 text-zinc-300" />
+            <div className="flex size-9 items-center justify-center rounded-sm border-2 border-zinc-700 bg-zinc-900 text-zinc-100 shadow-[2px_2px_0px_0px_#ffffff]">
+              <Trophy className="size-4 text-zinc-100" />
             </div>
             <div className="min-w-0 flex-1">
-              <div className="text-sm font-semibold tracking-tight text-zinc-100 truncate">
+              <div className="text-sm font-bold tracking-tight text-zinc-100 truncate font-mono uppercase">
                 Academy Desk
               </div>
               <div className="text-[11px] text-zinc-400 font-mono truncate">
@@ -1302,19 +1301,19 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
           {/* Role Indicator & Sport Switcher */}
           <div className="space-y-3 px-2">
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-mono uppercase tracking-wider text-zinc-500">
+              <span className="text-[11px] font-mono uppercase tracking-wider text-zinc-500 font-semibold">
                 Role
               </span>
               <Badge
                 variant="outline"
-                className="border-zinc-800 bg-zinc-900/80 text-[10px] text-zinc-300 font-mono py-0 px-2"
+                className="border-2 border-zinc-700 bg-zinc-900 text-[10px] text-zinc-100 font-mono py-0 px-2 rounded-sm"
               >
                 Coach
               </Badge>
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-[11px] font-mono text-zinc-400 block">
+              <label className="text-[11px] font-mono text-zinc-400 block font-semibold uppercase tracking-wider">
                 Discipline
               </label>
               <CossToggleGroup4
@@ -1340,16 +1339,16 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                   type="button"
                   onClick={() => handleTabChange(item.id)}
                   className={cn(
-                    "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-xs font-medium transition-colors cursor-pointer",
+                    "flex w-full items-center gap-3 rounded-sm px-3 py-2 text-xs font-mono uppercase tracking-wider transition-all cursor-pointer",
                     isActive
-                      ? "bg-zinc-800/90 text-zinc-100 shadow-xs"
-                      : "text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200"
+                      ? "border-2 border-zinc-100 bg-zinc-900 text-zinc-100 font-bold shadow-[2px_2px_0px_0px_#ffffff]"
+                      : "border-2 border-transparent text-zinc-400 hover:border-zinc-800 hover:text-zinc-200 hover:bg-zinc-900/60"
                   )}
                 >
-                  <Icon className="size-4 shrink-0 text-zinc-400" />
+                  <Icon className="size-4 shrink-0" />
                   <span>{item.label}</span>
                   {item.id === "ready" && sportQualifiedCount > 0 && (
-                    <span className="ml-auto flex size-5 items-center justify-center rounded-full bg-zinc-800 text-[10px] font-mono text-zinc-200 border border-zinc-700/60">
+                    <span className="ml-auto flex size-5 items-center justify-center rounded-sm bg-zinc-100 text-[10px] font-mono text-zinc-950 font-bold">
                       {sportQualifiedCount}
                     </span>
                   )}
@@ -1368,11 +1367,11 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
         <div className="border-t border-zinc-800/80 pt-4 px-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5 min-w-0 pr-2">
-              <div className="flex size-8 shrink-0 items-center justify-center rounded-full border border-zinc-700 bg-zinc-800 text-xs font-semibold text-zinc-200 font-mono">
+              <div className="flex size-8 shrink-0 items-center justify-center rounded-sm border-2 border-zinc-700 bg-zinc-800 text-xs font-semibold text-zinc-200 font-mono">
                 HC
               </div>
               <div className="min-w-0">
-                <p className="text-xs font-semibold text-zinc-200 truncate">
+                <p className="text-xs font-semibold text-zinc-200 truncate font-mono">
                   Coach
                 </p>
                 <p className="text-[10px] text-zinc-500 font-mono truncate">
@@ -1383,7 +1382,7 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
             <button
               type="button"
               onClick={() => signOut({ callbackUrl: "/login" })}
-              className="rounded-lg border border-zinc-800 bg-zinc-900/60 p-2 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100 transition-colors cursor-pointer shrink-0"
+              className="rounded-sm border-2 border-zinc-800 bg-zinc-900/60 p-2 text-zinc-400 hover:border-zinc-600 hover:text-zinc-100 transition-colors cursor-pointer shrink-0"
               title="Sign Out"
             >
               <LogOut className="size-4" />
@@ -1442,7 +1441,7 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
               <div className="flex items-center gap-1.5 min-w-0 shrink">
                 <DropdownMenu>
                   <DropdownMenuTrigger
-                    className="flex items-center gap-1 sm:gap-1.5 rounded-lg border border-zinc-800 bg-zinc-900/60 hover:bg-zinc-800/80 hover:border-zinc-700 px-2 sm:px-2.5 py-1 text-[11px] font-mono text-zinc-200 transition-colors cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-zinc-400 min-w-0 max-w-[190px] sm:max-w-none"
+                    className="flex items-center gap-1 sm:gap-1.5 rounded-sm border-2 border-zinc-700 bg-zinc-900/90 hover:border-zinc-500 hover:text-white px-2 sm:px-2.5 py-1 text-[11px] font-mono text-zinc-200 transition-all cursor-pointer outline-none min-w-0 max-w-[190px] sm:max-w-none shadow-[2px_2px_0px_0px_#ffffff]"
                     title="Switch or open session"
                   >
                     <CalendarDays className="size-3 text-zinc-400 shrink-0" />
@@ -1481,7 +1480,7 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                         ? () => setUnlockSessionConfirmOpen(true)
                         : handleLockSession
                     }
-                    className="rounded-lg border border-zinc-700 bg-zinc-800 px-2 py-1 text-[11px] font-medium transition-colors cursor-pointer hover:bg-zinc-700 text-zinc-200 shrink-0"
+                    className="rounded-sm border-2 border-zinc-700 bg-zinc-900 px-2 py-1 text-[11px] font-mono font-medium transition-all cursor-pointer hover:border-zinc-500 text-zinc-200 shrink-0 shadow-[2px_2px_0px_0px_#ffffff]"
                     title={
                       activeSession.status === "closed"
                         ? "Unlock Session (Reopen for edits)"
@@ -1503,9 +1502,9 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
               <button
                 type="button"
                 onClick={handleOpenMatchModal}
-                className="flex items-center gap-1 rounded-lg bg-zinc-100 px-2.5 py-1 text-[11px] font-semibold text-zinc-950 hover:bg-zinc-200 transition-colors cursor-pointer shrink-0"
+                className="flex items-center gap-1 rounded-sm border-2 border-zinc-100 bg-zinc-100 px-2.5 py-1 text-[11px] font-mono font-bold uppercase tracking-wider text-zinc-950 hover:bg-white active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all cursor-pointer shrink-0 shadow-[2px_2px_0px_0px_#ffffff]"
               >
-                <Plus className="size-3" />
+                <Plus className="size-3 stroke-[3]" />
                 <span>Match</span>
               </button>
             )}
@@ -1513,15 +1512,15 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
             {/* Roster Tab Controls */}
             {activeTab === "roster" && (
               <div className="flex items-center gap-2 shrink-0">
-                <span className="text-[11px] font-mono text-zinc-400">
-                  {sportPlayers.length} Athletes
+                <span className="text-[11px] font-mono text-zinc-400 font-semibold">
+                  {sportPlayers.length} ATHLETES
                 </span>
                 <button
                   type="button"
                   onClick={handleOpenAddPlayer}
-                  className="flex items-center gap-1 rounded-lg bg-zinc-100 px-2.5 py-1 text-[11px] font-semibold text-zinc-950 hover:bg-zinc-200 transition-colors cursor-pointer shrink-0"
+                  className="flex items-center gap-1 rounded-sm border-2 border-zinc-100 bg-zinc-100 px-2.5 py-1 text-[11px] font-mono font-bold uppercase tracking-wider text-zinc-950 hover:bg-white active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all cursor-pointer shrink-0 shadow-[2px_2px_0px_0px_#ffffff]"
                 >
-                  <Plus className="size-3" />
+                  <Plus className="size-3 stroke-[3]" />
                   <span>Add</span>
                 </button>
               </div>
@@ -1556,10 +1555,10 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
             {/* Session Pill with Dropdown Switcher */}
             <DropdownMenu>
               <DropdownMenuTrigger
-                className="flex items-center gap-2 rounded-lg border border-zinc-800 bg-zinc-900/50 hover:bg-zinc-800/80 hover:border-zinc-700 px-3 py-1.5 text-xs font-mono text-zinc-300 transition-colors cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-zinc-400 whitespace-nowrap shrink-0"
+                className="flex items-center gap-2 rounded-sm border-2 border-zinc-700 bg-zinc-900/90 hover:border-zinc-500 px-3 py-1.5 text-xs font-mono text-zinc-100 transition-all cursor-pointer outline-none shadow-[2px_2px_0px_0px_#ffffff] whitespace-nowrap shrink-0"
                 title="Switch or open session"
               >
-                <CalendarDays className="size-3.5 text-zinc-400" />
+                <CalendarDays className="size-3.5 text-zinc-300" />
                 <span>
                   {activeSession
                     ? formatDisplayDate(activeSession.date)
@@ -1568,22 +1567,22 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                 {activeSession && (
                   <>
                     <span className="text-zinc-600">·</span>
-                    <span className="text-zinc-400 font-mono inline-flex items-center gap-1">
+                    <span className="text-zinc-300 font-mono inline-flex items-center gap-1 font-semibold">
                       {activeSession.status === "closed" ? (
                         <>
-                          <Lock className="size-3 text-zinc-500" />
-                          <span className="text-zinc-500">Closed</span>
+                          <Lock className="size-3 text-zinc-400" />
+                          <span className="text-zinc-400">Closed</span>
                         </>
                       ) : (
                         <>
-                          <Unlock className="size-3 text-zinc-300" />
-                          <span className="text-zinc-300">Open</span>
+                          <Unlock className="size-3 text-zinc-100" />
+                          <span className="text-zinc-100">Open</span>
                         </>
                       )}
                     </span>
                   </>
                 )}
-                <ChevronDown className="size-3 text-zinc-500 ml-0.5" />
+                <ChevronDown className="size-3 text-zinc-400 ml-0.5" />
               </DropdownMenuTrigger>
               {renderSessionDropdownContent()}
             </DropdownMenu>
@@ -1595,7 +1594,7 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                   <button
                     type="button"
                     onClick={() => setUnlockSessionConfirmOpen(true)}
-                    className="flex items-center gap-1.5 rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs font-medium text-zinc-200 hover:bg-zinc-700 transition-colors cursor-pointer whitespace-nowrap shrink-0"
+                    className="flex items-center gap-1.5 rounded-sm border-2 border-zinc-700 bg-zinc-900 px-3 py-1.5 text-xs font-mono font-medium text-zinc-200 hover:border-zinc-500 hover:text-white transition-all cursor-pointer whitespace-nowrap shrink-0 shadow-[2px_2px_0px_0px_#ffffff]"
                   >
                     <Unlock className="size-3.5 text-zinc-300" />
                     Unlock Session
@@ -1605,7 +1604,7 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                   <button
                     type="button"
                     onClick={handleLockSession}
-                    className="flex items-center gap-1.5 rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs font-medium text-zinc-200 hover:bg-zinc-700 transition-colors cursor-pointer whitespace-nowrap shrink-0"
+                    className="flex items-center gap-1.5 rounded-sm border-2 border-zinc-700 bg-zinc-900 px-3 py-1.5 text-xs font-mono font-medium text-zinc-200 hover:border-zinc-500 hover:text-white transition-all cursor-pointer whitespace-nowrap shrink-0 shadow-[2px_2px_0px_0px_#ffffff]"
                   >
                     <Lock className="size-3.5 text-zinc-400" />
                     Lock Session
@@ -1615,7 +1614,7 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                   <button
                     type="button"
                     onClick={() => setDeleteSessionConfirmOpen(true)}
-                    className="flex items-center justify-center size-8 rounded-lg border border-zinc-800 bg-zinc-900 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 transition-colors cursor-pointer shrink-0"
+                    className="flex items-center justify-center size-8 rounded-sm border-2 border-zinc-700 bg-zinc-900 text-zinc-400 hover:text-zinc-100 hover:border-zinc-500 transition-all cursor-pointer shrink-0 shadow-[2px_2px_0px_0px_#ffffff]"
                     title="Delete Session"
                     aria-label="Delete Session"
                   >
@@ -1625,9 +1624,9 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                 <button
                   type="button"
                   onClick={handleOpenNewSessionModal}
-                  className="flex items-center gap-1.5 rounded-lg bg-zinc-100 px-3 py-1.5 text-xs font-semibold text-zinc-950 hover:bg-zinc-200 transition-colors cursor-pointer whitespace-nowrap shrink-0"
+                  className="flex items-center gap-1.5 rounded-sm border-2 border-zinc-100 bg-zinc-100 px-3.5 py-1.5 text-xs font-mono font-bold uppercase tracking-wider text-zinc-950 shadow-[3px_3px_0px_0px_#ffffff] hover:bg-white active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all cursor-pointer whitespace-nowrap shrink-0"
                 >
-                  <Plus className="size-3.5" />
+                  <Plus className="size-3.5 stroke-[3]" />
                   Open Session
                 </button>
               </div>
@@ -1637,9 +1636,9 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
               <button
                 type="button"
                 onClick={handleOpenMatchModal}
-                className="flex items-center gap-1.5 rounded-lg bg-zinc-100 px-3 py-1.5 text-xs font-semibold text-zinc-950 hover:bg-zinc-200 transition-colors cursor-pointer whitespace-nowrap shrink-0"
+                className="flex items-center gap-1.5 rounded-sm border-2 border-zinc-100 bg-zinc-100 px-3.5 py-1.5 text-xs font-mono font-bold uppercase tracking-wider text-zinc-950 shadow-[3px_3px_0px_0px_#ffffff] hover:bg-white active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all cursor-pointer whitespace-nowrap shrink-0"
               >
-                <Plus className="size-3.5" />
+                <Plus className="size-3.5 stroke-[3]" />
                 Record Match
               </button>
             )}
@@ -1652,9 +1651,9 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                 <button
                   type="button"
                   onClick={handleOpenAddPlayer}
-                  className="flex items-center gap-1.5 rounded-lg bg-zinc-100 px-3 py-1.5 text-xs font-semibold text-zinc-950 hover:bg-zinc-200 transition-colors cursor-pointer whitespace-nowrap shrink-0"
+                  className="flex items-center gap-1.5 rounded-sm border-2 border-zinc-100 bg-zinc-100 px-3.5 py-1.5 text-xs font-mono font-bold uppercase tracking-wider text-zinc-950 shadow-[3px_3px_0px_0px_#ffffff] hover:bg-white active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all cursor-pointer whitespace-nowrap shrink-0"
                 >
-                  <Plus className="size-3.5" />
+                  <Plus className="size-3.5 stroke-[3]" />
                   Add Athlete
                 </button>
               </div>
@@ -1674,12 +1673,12 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                 </h2>
 
                 <div className="flex items-center justify-between gap-4">
-                  {/* Segmented capsules or continuous progress bar */}
+                  {/* Segmented telemetry indicators */}
                   <div className="flex items-center gap-1.5 flex-1 max-w-sm">
                     {sportPlayers.length > 12 ? (
-                      <div className="relative h-2.5 flex-1 rounded-full bg-zinc-800 overflow-hidden">
+                      <div className="relative h-2 flex-1 rounded-xs bg-zinc-900 border border-zinc-800 overflow-hidden">
                         <div
-                          className="h-full bg-zinc-100 rounded-full transition-all duration-300"
+                          className="h-full bg-zinc-100 rounded-xs transition-all duration-300"
                           style={{
                             width: `${sportPlayers.length > 0 ? Math.round((presentCount / sportPlayers.length) * 100) : 0}%`,
                           }}
@@ -1692,8 +1691,8 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                           <div
                             key={p._id?.toString() || idx}
                             className={cn(
-                              "h-2.5 flex-1 min-w-[8px] rounded-full transition-all duration-300",
-                              isPresent ? "bg-zinc-100" : "bg-zinc-800"
+                              "h-2 flex-1 min-w-[8px] rounded-xs border transition-all duration-200",
+                              isPresent ? "bg-zinc-100 border-zinc-100" : "bg-zinc-900 border-zinc-800"
                             )}
                           />
                         );
@@ -1769,9 +1768,9 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                     type="button"
                     onClick={() => handleMarkAll(true)}
                     disabled={activeSession?.status === "closed" || !activeSession}
-                    className="flex items-center gap-1.5 rounded-full border border-zinc-800 bg-zinc-900/90 px-3.5 py-1.5 text-xs font-mono font-medium text-zinc-200 hover:bg-zinc-800 transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shadow-xs"
+                    className="flex items-center gap-1.5 rounded-sm border-2 border-zinc-700 bg-zinc-900 px-3.5 py-1.5 text-xs font-mono font-bold text-zinc-100 shadow-[2px_2px_0px_0px_#ffffff] hover:border-zinc-500 hover:text-white active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed uppercase tracking-wider"
                   >
-                    <Check className="size-3.5 text-zinc-100 stroke-[2.5]" />
+                    <Check className="size-3.5 text-zinc-100 stroke-[3]" />
                     <span>All present</span>
                   </button>
 
@@ -1779,9 +1778,9 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                     type="button"
                     onClick={() => handleMarkAll(false)}
                     disabled={activeSession?.status === "closed" || !activeSession}
-                    className="flex items-center gap-1.5 rounded-full border border-zinc-800 bg-zinc-900/90 px-3.5 py-1.5 text-xs font-mono font-medium text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shadow-xs"
+                    className="flex items-center gap-1.5 rounded-sm border-2 border-zinc-800 bg-zinc-950 px-3.5 py-1.5 text-xs font-mono font-semibold text-zinc-400 hover:border-zinc-600 hover:text-zinc-200 active:translate-x-[1px] active:translate-y-[1px] transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed uppercase tracking-wider"
                   >
-                    <RotateCcw className="size-3.5" />
+                    <RotateCcw className="size-3.5 stroke-[2.5]" />
                     <span>Reset</span>
                   </button>
                 </div>
@@ -1789,10 +1788,10 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                 <button
                   type="button"
                   onClick={handleOpenAddPlayer}
-                  className="flex items-center justify-center size-8.5 rounded-xl border border-zinc-800 bg-zinc-900/90 text-zinc-300 hover:bg-zinc-800 hover:text-zinc-100 transition-colors cursor-pointer shadow-xs"
+                  className="flex items-center justify-center size-8.5 rounded-sm border-2 border-zinc-700 bg-zinc-900 text-zinc-200 hover:border-zinc-500 hover:text-white shadow-[2px_2px_0px_0px_#ffffff] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all cursor-pointer"
                   title="Enroll Athlete"
                 >
-                  <Plus className="size-4" />
+                  <Plus className="size-4 stroke-[3]" />
                 </button>
               </div>
 
@@ -1889,11 +1888,11 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                           }
                         }}
                         className={cn(
-                          "relative flex flex-col items-center justify-center text-center p-4 sm:p-5 rounded-md border-2 transition-all cursor-pointer select-none space-y-2.5 sm:space-y-3",
+                          "relative flex flex-col items-center justify-center text-center p-4 sm:p-5 rounded-sm border-2 transition-all cursor-pointer select-none space-y-2.5 sm:space-y-3",
                           present
-                            ? "border-zinc-100 bg-zinc-900 shadow-[3px_3px_0px_0px_#ffffff]"
-                            : "border-zinc-800 bg-zinc-950/90 hover:border-zinc-600 hover:bg-zinc-900/50",
-                          (isLocked || !activeSession) && "opacity-75 cursor-not-allowed hover:border-zinc-800 shadow-none"
+                            ? "border-zinc-100 bg-zinc-900 shadow-[3px_3px_0px_0px_#ffffff] -translate-x-[1px] -translate-y-[1px]"
+                            : "border-zinc-800 bg-zinc-950/90 hover:border-zinc-600 hover:bg-zinc-900/50 shadow-[2px_2px_0px_0px_#000000]",
+                          (isLocked || !activeSession) && "opacity-75 cursor-not-allowed hover:border-zinc-800 shadow-none translate-x-0 translate-y-0"
                         )}
                         title={
                           !activeSession
@@ -1918,10 +1917,10 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                           name={player.name}
                           imageUrl={player.imageUrl}
                           className={cn(
-                            "size-14 font-bold shadow-xs",
+                            "size-14 font-bold rounded-sm border-2",
                             present
-                              ? "ring-2 ring-zinc-100 shadow-md bg-zinc-100"
-                              : "border-zinc-700/80 bg-zinc-800"
+                              ? "border-zinc-100 shadow-[2px_2px_0px_0px_#ffffff] bg-zinc-100"
+                              : "border-zinc-700 bg-zinc-800"
                           )}
                           textClassName={present ? "text-zinc-950 font-bold" : "text-zinc-200"}
                         />
@@ -1947,10 +1946,10 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                             <span
                               key={i}
                               className={cn(
-                                "size-2 rounded-full transition-colors",
+                                "size-2 rounded-xs transition-colors",
                                 attended
-                                  ? "bg-zinc-100"
-                                  : "border border-zinc-600 bg-transparent"
+                                  ? "bg-zinc-100 shadow-[1px_1px_0px_0px_#ffffff]"
+                                  : "border border-zinc-700 bg-zinc-950"
                               )}
                             />
                           ))}
@@ -2073,19 +2072,19 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                           <div className="absolute -left-6 sm:-left-8 top-7 -translate-x-1/2 flex items-center justify-center z-10">
                             {outcome === "win" && (
                               <div
-                                className="size-3.5 rounded-full bg-zinc-100 ring-4 ring-zinc-950"
+                                className="size-3.5 rounded-xs bg-zinc-100 ring-4 ring-zinc-950 shadow-[1px_1px_0px_0px_#ffffff]"
                                 title="Win"
                               />
                             )}
                             {outcome === "loss" && (
                               <div
-                                className="size-3.5 rounded-full border-2 border-zinc-500 bg-zinc-950 ring-4 ring-zinc-950"
+                                className="size-3.5 rounded-xs border-2 border-zinc-500 bg-zinc-950 ring-4 ring-zinc-950"
                                 title="Loss"
                               />
                             )}
                             {outcome === "draw" && (
                               <div
-                                className="size-3.5 rounded-full ring-4 ring-zinc-950 overflow-hidden border border-zinc-400 flex"
+                                className="size-3.5 rounded-xs ring-4 ring-zinc-950 overflow-hidden border border-zinc-400 flex"
                                 title="Draw"
                               >
                                 <div className="w-1/2 h-full bg-zinc-100" />
@@ -2256,9 +2255,9 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                   <button
                     type="button"
                     onClick={handleOpenAddPlayer}
-                    className="hidden lg:flex items-center gap-1.5 rounded-lg bg-zinc-100 px-3 py-1.5 text-xs font-semibold text-zinc-950 hover:bg-zinc-200 transition-colors cursor-pointer shadow-xs whitespace-nowrap"
+                    className="hidden lg:flex items-center gap-1.5 rounded-sm border-2 border-zinc-100 bg-zinc-100 px-3.5 py-1.5 text-xs font-mono font-bold uppercase tracking-wider text-zinc-950 hover:bg-white active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all cursor-pointer shadow-[2px_2px_0px_0px_#ffffff] whitespace-nowrap"
                   >
-                    <Plus className="size-3.5 stroke-[2.5]" />
+                    <Plus className="size-3.5 stroke-[3]" />
                     <span>Add Athlete</span>
                   </button>
                 </div>
@@ -2273,12 +2272,12 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                     placeholder="Search by name, age, or bracket (U17)..."
                     value={rosterSearch}
                     onChange={(e) => setRosterSearch(e.target.value)}
-                    className="h-9 w-full rounded-lg border border-zinc-800 bg-zinc-900/60 pl-9 pr-3 text-xs text-zinc-200 placeholder:text-zinc-500 focus:border-zinc-500 focus:outline-none transition-colors"
+                    className="h-9 w-full rounded-sm border-2 border-zinc-700 bg-zinc-900/90 pl-9 pr-3 text-xs text-zinc-200 font-mono placeholder:text-zinc-500 focus:border-zinc-100 focus:outline-none transition-all shadow-[2px_2px_0px_0px_#ffffff]"
                   />
                 </div>
 
                 <div className="hidden sm:flex items-center gap-2 text-xs font-mono text-zinc-400">
-                  <span>Qualified:</span>
+                  <span className="uppercase tracking-wider">Qualified:</span>
                   <strong className="text-zinc-100">{sportQualifiedCount}</strong>
                   <span className="text-zinc-600">/</span>
                   <span>{sportPlayers.length}</span>
@@ -2287,24 +2286,24 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
 
               {/* Athlete Card Grid adhering to Monochromatic Swiss Greyscale */}
               {sportPlayers.length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-zinc-800 p-12 text-center text-zinc-500 space-y-3">
+                <div className="rounded-sm border-2 border-dashed border-zinc-800 p-12 text-center text-zinc-500 space-y-3">
                   <Users className="size-8 mx-auto text-zinc-600" />
                   <p className="text-xs font-mono">0 athletes registered in {sport}</p>
                   <button
                     type="button"
                     onClick={handleOpenAddPlayer}
-                    className="inline-flex items-center gap-1.5 rounded-lg bg-zinc-100 px-3 py-1.5 text-xs font-semibold text-zinc-950 hover:bg-zinc-200 transition-colors cursor-pointer"
+                    className="inline-flex items-center gap-1.5 rounded-sm border-2 border-zinc-100 bg-zinc-100 px-3.5 py-1.5 text-xs font-mono font-bold uppercase tracking-wider text-zinc-950 hover:bg-white transition-all cursor-pointer shadow-[2px_2px_0px_0px_#ffffff]"
                   >
-                    <Plus className="size-3.5" />
+                    <Plus className="size-3.5 stroke-[3]" />
                     <span>Add First {sport} Athlete</span>
                   </button>
                 </div>
               ) : filteredRosterPlayers.length === 0 ? (
-                <div className="rounded-2xl border border-zinc-800 bg-zinc-900/30 p-10 text-center text-zinc-500 space-y-1">
+                <div className="rounded-sm border-2 border-zinc-800 bg-zinc-900/30 p-10 text-center text-zinc-500 space-y-1">
                   <p className="text-xs font-mono text-zinc-300">
                     No athletes match &quot;{rosterSearch}&quot;
                   </p>
-                  <p className="text-[11px] text-zinc-500">
+                  <p className="text-[11px] text-zinc-500 font-mono">
                     Try searching with a different name or age group bracket.
                   </p>
                 </div>
@@ -2334,7 +2333,7 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                             handleOpenAthleteDrawer(player);
                           }
                         }}
-                        className="group relative flex flex-col justify-between p-4 sm:p-5 rounded-md border-2 border-zinc-100 bg-zinc-950 shadow-[4px_4px_0px_0px_#ffffff] hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[5px_5px_0px_0px_#ffffff] transition-all cursor-pointer text-left select-none space-y-4"
+                        className="group relative flex flex-col justify-between p-4 sm:p-5 rounded-sm border-2 border-zinc-100 bg-zinc-950 shadow-[4px_4px_0px_0px_#ffffff] hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[5px_5px_0px_0px_#ffffff] transition-all cursor-pointer text-left select-none space-y-4"
                       >
                         {/* Card Top: Avatar, Name, Age Group & Readiness Pill */}
                         <div className="flex items-start justify-between gap-3 min-w-0">
@@ -2343,8 +2342,8 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                               name={player.name}
                               imageUrl={player.imageUrl}
                               className={cn(
-                                "size-11",
-                                isReady && "ring-2 ring-zinc-300"
+                                "size-11 rounded-sm border-2",
+                                isReady ? "border-zinc-100 ring-2 ring-zinc-300" : "border-zinc-700"
                               )}
                             />
                             <div className="min-w-0 flex-1">
@@ -2352,7 +2351,7 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                                 {player.name}
                               </h3>
                               <div className="flex items-center gap-1.5 mt-0.5">
-                                <span className="inline-flex items-center rounded-md border border-zinc-800 bg-zinc-900/80 px-1.5 py-0.5 text-[10px] font-mono text-zinc-300 font-medium">
+                                <span className="inline-flex items-center rounded-xs border border-zinc-700 bg-zinc-900 px-1.5 py-0.5 text-[10px] font-mono text-zinc-200 font-semibold uppercase">
                                   {ageGroup}
                                 </span>
                                 <span className="text-[11px] text-zinc-500 font-mono">
@@ -2364,12 +2363,12 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
 
                           {/* Readiness Pill */}
                           {isReady ? (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-zinc-100 text-zinc-950 font-mono text-[10px] font-bold px-2 py-0.5 shrink-0 shadow-xs">
+                            <span className="inline-flex items-center gap-1 rounded-sm border-2 border-zinc-100 bg-zinc-100 text-zinc-950 font-mono text-[10px] font-bold px-2 py-0.5 shrink-0 shadow-[1px_1px_0px_0px_#ffffff] uppercase tracking-wider">
                               <Check className="size-2.5 stroke-[3]" />
                               Ready
                             </span>
                           ) : (
-                            <span className="inline-flex items-center rounded-full border border-zinc-800 bg-zinc-900/80 text-zinc-400 font-mono text-[10px] px-2 py-0.5 shrink-0">
+                            <span className="inline-flex items-center rounded-sm border-2 border-zinc-800 bg-zinc-900 text-zinc-400 font-mono text-[10px] font-medium px-2 py-0.5 shrink-0 uppercase tracking-wider">
                               In Progress
                             </span>
                           )}
@@ -2733,12 +2732,12 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                   )}
                 >
                   {isActive && (
-                    <span className="absolute top-0 inset-x-2 h-0.5 bg-zinc-100 rounded-full" />
+                    <span className="absolute top-0 inset-x-2 h-0.5 bg-zinc-100 shadow-[0_1px_2px_#ffffff]" />
                   )}
                   <Icon className="size-4 shrink-0" />
-                  <span className="truncate max-w-full">{item.label}</span>
+                  <span className="truncate max-w-full uppercase tracking-wider">{item.label}</span>
                   {item.id === "ready" && sportQualifiedCount > 0 && (
-                    <span className="absolute top-1.5 right-1.5 sm:right-3 flex size-3.5 items-center justify-center rounded-full bg-zinc-800 text-[8.5px] font-mono text-zinc-200 border border-zinc-700">
+                    <span className="absolute top-1.5 right-1.5 sm:right-3 flex size-3.5 items-center justify-center rounded-xs bg-zinc-100 text-[8.5px] font-mono text-zinc-950 font-bold border border-zinc-950">
                       {sportQualifiedCount}
                     </span>
                   )}

@@ -37,7 +37,7 @@ export function AthleteAvatar({
   return (
     <div
       className={cn(
-        "relative flex shrink-0 items-center justify-center rounded-full border border-zinc-800 bg-zinc-900 text-zinc-300 font-mono font-semibold overflow-hidden select-none",
+        "relative flex shrink-0 items-center justify-center rounded-sm border-2 border-zinc-700 bg-zinc-900 text-zinc-300 font-mono font-semibold overflow-hidden select-none",
         className
       )}
     >
