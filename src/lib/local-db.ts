@@ -1,6 +1,7 @@
 import { ObjectId } from "mongodb";
 import fs from "fs";
 import path from "path";
+import { SEED_PLAYERS, SEED_USERS } from "./seed-data";
 
 const DATA_DIR = path.join(process.cwd(), ".data");
 const DATA_FILE = path.join(DATA_DIR, "academy-desk.json");
@@ -13,58 +14,15 @@ interface LocalStore {
 }
 
 function getInitialStore(): LocalStore {
-  const p1Id = new ObjectId("650000000000000000000001");
-  const p2Id = new ObjectId("650000000000000000000002");
-  const p3Id = new ObjectId("650000000000000000000003");
-
   return {
-    players: [
-      {
-        _id: p1Id,
-        name: "Rohit Kumar",
-        age: 17,
-        sport: "Football",
-        imageUrl: "https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?auto=format&fit=crop&w=256&q=80",
-      },
-      {
-        _id: p2Id,
-        name: "Priya Murmu",
-        age: 16,
-        sport: "Football",
-        imageUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=256&q=80",
-      },
-      {
-        _id: p3Id,
-        name: "Amit Soren",
-        age: 18,
-        sport: "Football",
-        imageUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=256&q=80",
-      },
-    ],
-    users: [
-      {
-        _id: new ObjectId("650000000000000000000011"),
-        username: "coach",
-        password: "$2b$10$UE5oJy7Ne7ZBnYdLNMeTiOxUCS7PHlOxaHNI5iK8mc5Tx7HBUQrRW",
-        role: "coach",
-        name: "Coach",
-      },
-      {
-        _id: new ObjectId("650000000000000000000012"),
-        username: "scout",
-        password: "$2b$10$SChvTmRJKXcFWTp32DxmkuLc4law0.OxlRB0hloIYZgPNx1GP9r1C",
-        role: "scout",
-        name: "Scout",
-      },
-      {
-        _id: new ObjectId("650000000000000000000013"),
-        username: "rohit",
-        password: "$2b$10$aneNvsyTuqfHHIjRgFmNUO6455v2aFYxPWqcUm9aszVJni.c6aAnq",
-        role: "player",
-        name: "Rohit Kumar",
-        playerId: p1Id,
-      },
-    ],
+    players: SEED_PLAYERS.map((p) => ({
+      _id: p._id,
+      name: p.name,
+      age: p.age,
+      sport: p.sport,
+      imageUrl: p.imageUrl,
+    })),
+    users: SEED_USERS.map((u) => ({ ...u })),
     sessions: [],
     matches: [],
   };

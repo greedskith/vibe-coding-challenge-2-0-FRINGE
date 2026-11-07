@@ -70,30 +70,48 @@ export function LoginForm() {
   return (
     <div className="w-full max-w-sm mx-auto space-y-6">
       {/* Visual Header */}
-      <div className="flex items-center gap-2.5 rounded-md border-2 border-zinc-100 bg-zinc-950 px-3.5 py-2 shadow-[3px_3px_0px_0px_#ffffff] w-fit">
-        <div className="flex size-8 items-center justify-center rounded-sm border border-zinc-700 bg-zinc-900 text-zinc-100">
-          <Trophy className="size-4 text-zinc-100" />
+      <div className="flex items-center gap-3 rounded-xl border border-zinc-800/80 bg-zinc-950/80 px-4 py-2.5 backdrop-blur-xl shadow-lg ring-1 ring-white/5 w-fit">
+        <div className="flex size-8 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900 text-zinc-200">
+          <Trophy className="size-4 text-zinc-300" />
         </div>
         <div>
-          <h1 className="text-sm font-bold tracking-tight text-zinc-100 uppercase font-mono">
+          <h1 className="text-sm font-bold tracking-tight text-zinc-100">
             Academy Desk
           </h1>
           <p className="text-[10px] text-zinc-400 font-mono tracking-wider">ONE ACADEMY</p>
         </div>
       </div>
 
-      {/* Login Card */}
-      <div className="rounded-md border-2 border-zinc-100 bg-zinc-950 p-6 sm:p-7 shadow-[6px_6px_0px_0px_#ffffff]">
+      {/* Floating Minimal Glass Login Card */}
+      <div className="rounded-2xl border border-zinc-800/80 bg-zinc-950/80 p-6 sm:p-7 backdrop-blur-xl shadow-2xl ring-1 ring-white/5">
+        {/* Quick Role Segmented Switcher */}
+        <div className="mb-5 p-1 rounded-xl bg-zinc-900/80 border border-zinc-800/80 grid grid-cols-3 gap-1">
+          {(["coach", "scout", "player"] as const).map((role) => (
+            <button
+              key={role}
+              type="button"
+              onClick={() => selectRolePill(role)}
+              className={`h-8 rounded-lg text-xs font-medium capitalize transition-all cursor-pointer ${
+                activeRole === role
+                  ? "bg-zinc-100 text-zinc-950 font-semibold shadow-xs"
+                  : "text-zinc-400 hover:text-zinc-200"
+              }`}
+            >
+              {role}
+            </button>
+          ))}
+        </div>
+
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
-            <div className="flex items-center gap-2 rounded-sm bg-red-950/60 border-2 border-red-500 p-3 text-xs text-red-200 font-mono">
-              <AlertCircle className="size-4 shrink-0" />
+            <div className="flex items-center gap-2 rounded-xl bg-red-950/40 border border-red-900/60 p-3 text-xs text-red-300">
+              <AlertCircle className="size-4 shrink-0 text-red-400" />
               <span>{error}</span>
             </div>
           )}
 
           <div className="space-y-1.5">
-            <label className="text-[11px] font-mono uppercase tracking-wider text-zinc-300 font-medium">Username</label>
+            <label className="text-xs text-zinc-300 font-medium block">Username</label>
             <div className="relative">
               <User className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-zinc-400" />
               <input
@@ -108,13 +126,13 @@ export function LoginForm() {
                 autoCapitalize="none"
                 autoCorrect="off"
                 spellCheck={false}
-                className="h-10 w-full rounded-sm border-2 border-zinc-700 bg-zinc-900/90 pl-10 pr-3 text-sm text-zinc-100 font-mono focus:border-zinc-100 focus:outline-none transition-colors"
+                className="h-10 w-full rounded-xl border border-zinc-800 bg-zinc-900/60 pl-10 pr-3 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-zinc-400 focus:bg-zinc-900/90 focus:outline-none transition-all"
               />
             </div>
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-[11px] font-mono uppercase tracking-wider text-zinc-300 font-medium">Password</label>
+            <label className="text-xs text-zinc-300 font-medium block">Password</label>
             <div className="relative">
               <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-zinc-400" />
               <input
@@ -129,7 +147,7 @@ export function LoginForm() {
                 autoCapitalize="none"
                 autoCorrect="off"
                 spellCheck={false}
-                className="h-10 w-full rounded-sm border-2 border-zinc-700 bg-zinc-900/90 pl-10 pr-3 text-sm text-zinc-100 font-mono focus:border-zinc-100 focus:outline-none transition-colors"
+                className="h-10 w-full rounded-xl border border-zinc-800 bg-zinc-900/60 pl-10 pr-3 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-zinc-400 focus:bg-zinc-900/90 focus:outline-none transition-all"
               />
             </div>
           </div>
@@ -137,7 +155,7 @@ export function LoginForm() {
           <button
             type="submit"
             disabled={loading}
-            className="flex h-11 w-full items-center justify-center gap-2 rounded-sm border-2 border-zinc-100 bg-zinc-100 font-bold text-xs uppercase tracking-wider text-zinc-950 shadow-[3px_3px_0px_0px_#ffffff] hover:bg-white active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all cursor-pointer disabled:opacity-50 mt-3"
+            className="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-zinc-100 font-semibold text-xs tracking-wide text-zinc-950 hover:bg-white active:scale-[0.985] transition-all cursor-pointer disabled:opacity-50 mt-4 shadow-sm"
           >
             {loading ? (
               <Loader2 className="size-4 animate-spin" />
@@ -149,46 +167,6 @@ export function LoginForm() {
             )}
           </button>
         </form>
-
-        {/* Quick Demo Role Pills */}
-        <div className="mt-6 pt-4 border-t-2 border-zinc-800">
-          <p className="text-[10px] font-mono uppercase tracking-widest text-zinc-400 mb-2.5">Quick Select</p>
-          <div className="grid grid-cols-3 gap-2">
-            <button
-              type="button"
-              onClick={() => selectRolePill("coach")}
-              className={`flex h-9 items-center justify-center rounded-sm text-xs font-mono transition-all cursor-pointer uppercase tracking-wider ${
-                activeRole === "coach"
-                  ? "border-2 border-zinc-100 bg-zinc-100 text-zinc-950 font-bold shadow-[2px_2px_0px_0px_#ffffff]"
-                  : "border-2 border-zinc-800 bg-zinc-900/80 text-zinc-300 hover:border-zinc-600 hover:text-white"
-              }`}
-            >
-              coach
-            </button>
-            <button
-              type="button"
-              onClick={() => selectRolePill("scout")}
-              className={`flex h-9 items-center justify-center rounded-sm text-xs font-mono transition-all cursor-pointer uppercase tracking-wider ${
-                activeRole === "scout"
-                  ? "border-2 border-zinc-100 bg-zinc-100 text-zinc-950 font-bold shadow-[2px_2px_0px_0px_#ffffff]"
-                  : "border-2 border-zinc-800 bg-zinc-900/80 text-zinc-300 hover:border-zinc-600 hover:text-white"
-              }`}
-            >
-              scout
-            </button>
-            <button
-              type="button"
-              onClick={() => selectRolePill("player")}
-              className={`flex h-9 items-center justify-center rounded-sm text-xs font-mono transition-all cursor-pointer uppercase tracking-wider ${
-                activeRole === "player"
-                  ? "border-2 border-zinc-100 bg-zinc-100 text-zinc-950 font-bold shadow-[2px_2px_0px_0px_#ffffff]"
-                  : "border-2 border-zinc-800 bg-zinc-900/80 text-zinc-300 hover:border-zinc-600 hover:text-white"
-              }`}
-            >
-              player
-            </button>
-          </div>
-        </div>
       </div>
     </div>
   );

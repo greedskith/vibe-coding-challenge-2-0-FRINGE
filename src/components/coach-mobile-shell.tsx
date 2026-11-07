@@ -31,6 +31,7 @@ import {
 } from "lucide-react";
 import { AthleteAvatar } from "@/components/athlete-avatar";
 import { Badge } from "@/components/ui/badge";
+import { Walkthrough, WalkthroughTrigger, COACH_STEPS } from "@/components/walkthrough";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -164,17 +165,18 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
   const [matches, setMatches] = useState<Match[]>([]);
   const [readyResults, setReadyResults] = useState<ReadyResult[]>([]);
   const [activeSession, setActiveSession] = useState<Session | null>(null);
-
-  // Pointer-based long-press attendance gesture refs
-  const longPressTimers = React.useRef<Record<string, NodeJS.Timeout>>({});
-  const longPressFired = React.useRef<Record<string, boolean>>({});
-  const pointerStartPos = React.useRef<Record<string, { x: number; y: number }>>({});
+  const [tourOpen, setTourOpen] = useState(false);
 
   useEffect(() => {
-    const activeTimers = longPressTimers.current;
-    return () => {
-      Object.values(activeTimers).forEach((t) => clearTimeout(t));
-    };
+    try {
+      const seen = localStorage.getItem("academy_walkthrough_coach");
+      if (!seen) {
+        const timer = setTimeout(() => setTourOpen(true), 750);
+        return () => clearTimeout(timer);
+      }
+    } catch {
+      // Storage unavailable
+    }
   }, []);
 
   // Roster Tab State
@@ -1312,7 +1314,7 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
               </Badge>
             </div>
 
-            <div className="space-y-1.5">
+            <div data-tour="coach-discipline" className="space-y-1.5">
               <label className="text-[11px] font-mono text-zinc-400 block font-semibold uppercase tracking-wider">
                 Discipline
               </label>
@@ -1329,7 +1331,7 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
           </div>
 
           {/* Unified Navigation Links (4 First-Class Tabs) */}
-          <nav className="space-y-1">
+          <nav data-tour="coach-nav" className="space-y-1">
             {NAV_TABS.map((item) => {
               const Icon = item.icon;
               const isActive = activeTab === item.id;
@@ -1337,6 +1339,7 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                 <button
                   key={item.id}
                   type="button"
+                  data-tour={item.id === "ready" ? "coach-ready" : undefined}
                   onClick={() => handleTabChange(item.id)}
                   className={cn(
                     "flex w-full items-center gap-3 rounded-sm px-3 py-2 text-xs font-mono uppercase tracking-wider transition-all cursor-pointer",
@@ -1414,14 +1417,17 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
               </div>
             </div>
 
-            <button
-              type="button"
-              onClick={() => signOut({ callbackUrl: "/login" })}
-              className="rounded-lg border border-zinc-800 bg-zinc-900/60 p-2 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100 transition-colors cursor-pointer"
-              title="Sign Out"
-            >
-              <LogOut className="size-3.5" />
-            </button>
+            <div className="flex items-center gap-2">
+              <WalkthroughTrigger onClick={() => setTourOpen(true)} />
+              <button
+                type="button"
+                onClick={() => signOut({ callbackUrl: "/login" })}
+                className="rounded-lg border border-zinc-800 bg-zinc-900/60 p-2 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100 transition-colors cursor-pointer"
+                title="Sign Out"
+              >
+                <LogOut className="size-3.5" />
+              </button>
+            </div>
           </div>
 
           {/* Sub Bar: Discipline Toggle & Tab-Scoped Actions */}
@@ -1555,6 +1561,7 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
             {/* Session Pill with Dropdown Switcher */}
             <DropdownMenu>
               <DropdownMenuTrigger
+                data-tour="coach-session"
                 className="flex items-center gap-2 rounded-sm border-2 border-zinc-700 bg-zinc-900/90 hover:border-zinc-500 px-3 py-1.5 text-xs font-mono text-zinc-100 transition-all cursor-pointer outline-none shadow-[2px_2px_0px_0px_#ffffff] whitespace-nowrap shrink-0"
                 title="Switch or open session"
               >
@@ -1658,6 +1665,8 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                 </button>
               </div>
             )}
+
+            <WalkthroughTrigger onClick={() => setTourOpen(true)} />
           </div>
         </header>
 
@@ -1814,65 +1823,17 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                         key={pId}
                         role="button"
                         tabIndex={0}
-                        onPointerDown={(e) => {
-                          if (e.button !== 0 && e.pointerType === "mouse") return;
-                          longPressFired.current[pId] = false;
-                          pointerStartPos.current[pId] = { x: e.clientX, y: e.clientY };
-                          if (longPressTimers.current[pId]) {
-                            clearTimeout(longPressTimers.current[pId]);
+                        onClick={() => {
+                          if (!activeSession) {
+                            toast.info("Please open or select a session to mark attendance");
+                            return;
                           }
-                          if (!activeSession || isLocked) return;
-                          longPressTimers.current[pId] = setTimeout(() => {
-                            longPressFired.current[pId] = true;
-                            if (typeof window !== "undefined" && typeof navigator !== "undefined" && "vibrate" in navigator) {
-                              try {
-                                navigator.vibrate(50);
-                              } catch {}
-                            }
-                            handleToggleAttendance(pId, false);
-                          }, 500);
+                          if (isLocked) {
+                            toast.info("Session is locked (read-only)");
+                            return;
+                          }
+                          handleToggleAttendance(pId, !present);
                         }}
-                        onPointerMove={(e) => {
-                          const start = pointerStartPos.current[pId];
-                          if (!start) return;
-                          const dx = Math.abs(e.clientX - start.x);
-                          const dy = Math.abs(e.clientY - start.y);
-                          if (dx > 10 || dy > 10) {
-                            if (longPressTimers.current[pId]) {
-                              clearTimeout(longPressTimers.current[pId]);
-                            }
-                            delete pointerStartPos.current[pId];
-                          }
-                        }}
-                        onPointerUp={() => {
-                          if (longPressTimers.current[pId]) {
-                            clearTimeout(longPressTimers.current[pId]);
-                          }
-                          const start = pointerStartPos.current[pId];
-                          const fired = longPressFired.current[pId];
-                          delete pointerStartPos.current[pId];
-                          delete longPressFired.current[pId];
-
-                          if (!fired && start) {
-                            if (!activeSession) {
-                              toast.info("Please open or select a session to mark attendance");
-                              return;
-                            }
-                            if (isLocked) {
-                              toast.info("Session is locked (read-only)");
-                              return;
-                            }
-                            handleToggleAttendance(pId, true);
-                          }
-                        }}
-                        onPointerCancel={() => {
-                          if (longPressTimers.current[pId]) {
-                            clearTimeout(longPressTimers.current[pId]);
-                          }
-                          delete pointerStartPos.current[pId];
-                          delete longPressFired.current[pId];
-                        }}
-                        onContextMenu={(e) => e.preventDefault()}
                         onKeyDown={(e) => {
                           if (e.key === "Enter" || e.key === " ") {
                             e.preventDefault();
@@ -1888,18 +1849,18 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                           }
                         }}
                         className={cn(
-                          "relative flex flex-col items-center justify-center text-center p-4 sm:p-5 rounded-sm border-2 transition-all cursor-pointer select-none space-y-2.5 sm:space-y-3",
+                          "relative flex flex-col items-center justify-between text-center p-4 rounded-2xl border transition-all cursor-pointer select-none space-y-3 backdrop-blur-md",
                           present
-                            ? "border-zinc-100 bg-zinc-900 shadow-[3px_3px_0px_0px_#ffffff] -translate-x-[1px] -translate-y-[1px]"
-                            : "border-zinc-800 bg-zinc-950/90 hover:border-zinc-600 hover:bg-zinc-900/50 shadow-[2px_2px_0px_0px_#000000]",
-                          (isLocked || !activeSession) && "opacity-75 cursor-not-allowed hover:border-zinc-800 shadow-none translate-x-0 translate-y-0"
+                            ? "border-zinc-400 bg-zinc-900/95 text-zinc-100 shadow-md ring-1 ring-white/10"
+                            : "border-zinc-800/80 bg-zinc-950/70 text-zinc-400 hover:border-zinc-700 hover:bg-zinc-900/40",
+                          (isLocked || !activeSession) && "opacity-75 cursor-not-allowed hover:border-zinc-800 shadow-none"
                         )}
                         title={
                           !activeSession
                             ? `No active session for ${sport} - Open a session to mark attendance`
                             : isLocked
                               ? `Locked Session (${activeSession?.date}) - Read-only`
-                              : `Tap to mark ${present ? "absent" : "present"}`
+                              : `Click to mark ${present ? "absent" : "present"}`
                         }
                       >
                         {/* Lock indicator icon when session is closed */}
@@ -1917,10 +1878,10 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                           name={player.name}
                           imageUrl={player.imageUrl}
                           className={cn(
-                            "size-14 font-bold rounded-sm border-2",
+                            "size-14 font-bold rounded-xl border transition-all",
                             present
-                              ? "border-zinc-100 shadow-[2px_2px_0px_0px_#ffffff] bg-zinc-100"
-                              : "border-zinc-700 bg-zinc-800"
+                              ? "border-zinc-200 bg-zinc-100 shadow-xs"
+                              : "border-zinc-800 bg-zinc-900"
                           )}
                           textClassName={present ? "text-zinc-950 font-bold" : "text-zinc-200"}
                         />
@@ -1937,6 +1898,27 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                           </p>
                         </div>
 
+                        {/* Instant Status Pill */}
+                        <div className="pt-0.5">
+                          <span
+                            className={cn(
+                              "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-medium font-mono transition-colors",
+                              present
+                                ? "bg-zinc-100 text-zinc-950 font-semibold"
+                                : "bg-zinc-900 text-zinc-400 border border-zinc-800"
+                            )}
+                          >
+                            {present ? (
+                              <>
+                                <Check className="size-3 stroke-[3]" />
+                                Present
+                              </>
+                            ) : (
+                              "Absent"
+                            )}
+                          </span>
+                        </div>
+
                         {/* 5-Session Momentum Dots */}
                         <div
                           className="flex items-center justify-center gap-1.5 pt-0.5"
@@ -1946,10 +1928,10 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                             <span
                               key={i}
                               className={cn(
-                                "size-2 rounded-xs transition-colors",
+                                "size-1.5 rounded-full transition-colors",
                                 attended
-                                  ? "bg-zinc-100 shadow-[1px_1px_0px_0px_#ffffff]"
-                                  : "border border-zinc-700 bg-zinc-950"
+                                  ? "bg-zinc-200 shadow-[0_0_4px_rgba(255,255,255,0.4)]"
+                                  : "border border-zinc-700 bg-zinc-900"
                               )}
                             />
                           ))}
@@ -1965,7 +1947,7 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                 <p className="text-[11px] font-mono text-zinc-500">
                   {activeSession?.status === "closed"
                     ? "Session locked · Historical attendance is read-only"
-                    : "Tap to mark present · Long-press to mark absent"}
+                    : "Click or tap an athlete to toggle Present / Absent"}
                 </p>
               </div>
             </div>
@@ -2096,10 +2078,8 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                           {/* Fixture Card */}
                           <div
                             className={cn(
-                              "rounded-md border-2 p-4 sm:p-5 transition-all",
-                              isMarquee
-                                ? "border-zinc-100 bg-zinc-950 shadow-[5px_5px_0px_0px_#ffffff]"
-                                : "border-zinc-100 bg-zinc-950 shadow-[4px_4px_0px_0px_#ffffff]"
+                              "rounded-2xl border border-zinc-800/80 bg-zinc-950/80 p-5 backdrop-blur-md shadow-sm ring-1 ring-white/5 transition-all hover:border-zinc-700/80",
+                              isMarquee && "border-zinc-700/90"
                             )}
                           >
                             <div className="flex items-start justify-between gap-3 sm:gap-4">
@@ -2116,67 +2096,54 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                                 <div className="space-y-2.5 min-w-0 flex-1">
                                   <div className="flex items-center gap-2">
                                     <h3 className="text-base sm:text-lg font-semibold text-zinc-100 truncate leading-tight">
-                                      {m.opponent}
+                                      vs {m.opponent}
                                     </h3>
-                                    <span className="rounded border border-zinc-800 bg-zinc-900 px-1.5 py-0.2 text-[9.5px] font-mono text-zinc-400">
+                                    <span className="rounded-md border border-zinc-800 bg-zinc-900 px-2 py-0.5 text-[10px] font-mono text-zinc-400">
                                       {m.sport}
                                     </span>
                                   </div>
 
-                                  <div className="space-y-1.5 pt-0.5">
+                                  <div className="space-y-2 pt-0.5">
                                     {squad.map((playerItem) => (
                                       <div
                                         key={playerItem.id}
-                                        className="flex items-center gap-2 min-w-0"
+                                        className="flex items-center justify-between gap-2 min-w-0 py-0.5"
                                       >
-                                        <AthleteAvatar
-                                          name={playerItem.name}
-                                          imageUrl={playerItem.imageUrl}
-                                          className="size-6 text-[10px]"
-                                        />
-                                        <span
-                                          className={cn(
-                                            "text-xs truncate",
-                                            playerItem.score > 0
-                                              ? "font-medium text-zinc-200"
-                                              : "text-zinc-400 font-normal"
-                                          )}
-                                        >
-                                          {playerItem.name}
-                                        </span>
-                                        {playerItem.isOverridden && (
-                                          <span className="inline-flex items-center gap-0.5 rounded border border-zinc-700 bg-zinc-800 px-1.5 py-0.2 text-[9.5px] font-mono text-zinc-300">
-                                            <Unlock className="size-2 text-zinc-400" />
-                                            Override
-                                          </span>
-                                        )}
-                                        {playerItem.score > 0 ? (
-                                          <div
-                                            className="flex items-center gap-1 shrink-0 ml-1.5"
-                                            title={`${playerItem.score} scored`}
-                                          >
-                                            {Array.from({
-                                              length: Math.min(6, playerItem.score),
-                                            }).map((_, i) => (
-                                              <span
-                                                key={i}
-                                                className="size-1.5 rounded-full bg-zinc-100 shrink-0"
-                                              />
-                                            ))}
-                                            {playerItem.score > 6 && (
-                                              <span className="text-[10px] font-mono font-bold text-zinc-200">
-                                                +{playerItem.score - 6}
-                                              </span>
+                                        <div className="flex items-center gap-2 min-w-0">
+                                          <AthleteAvatar
+                                            name={playerItem.name}
+                                            imageUrl={playerItem.imageUrl}
+                                            className="size-6 text-[10px] rounded-lg shrink-0"
+                                          />
+                                          <span
+                                            className={cn(
+                                              "text-xs truncate",
+                                              playerItem.score > 0
+                                                ? "font-medium text-zinc-200"
+                                                : "text-zinc-400 font-normal"
                                             )}
-                                            <span className="text-[11px] font-mono text-zinc-400 ml-1">
-                                              ({playerItem.score})
-                                            </span>
-                                          </div>
-                                        ) : (
-                                          <span className="text-[10.5px] font-mono text-zinc-500 ml-1.5">
-                                            Played
+                                          >
+                                            {playerItem.name}
                                           </span>
-                                        )}
+                                          {playerItem.isOverridden && (
+                                            <span className="inline-flex items-center gap-0.5 rounded-full border border-zinc-700 bg-zinc-800 px-2 py-0.2 text-[9.5px] font-mono text-zinc-300">
+                                              <Unlock className="size-2 text-zinc-400" />
+                                              Override
+                                            </span>
+                                          )}
+                                        </div>
+
+                                        <div className="shrink-0 font-mono text-xs">
+                                          {playerItem.score > 0 ? (
+                                            <span className="font-semibold text-zinc-100 bg-zinc-900 border border-zinc-800 px-2 py-0.5 rounded-md">
+                                              {playerItem.score} {m.sport === "Football" ? (playerItem.score === 1 ? "goal" : "goals") : "runs"}
+                                            </span>
+                                          ) : (
+                                            <span className="text-[11px] text-zinc-500">
+                                              Appeared
+                                            </span>
+                                          )}
+                                        </div>
                                       </div>
                                     ))}
                                   </div>
@@ -2185,14 +2152,14 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
 
                               <div className="shrink-0 flex items-center gap-2 pt-0.5">
                                 {outcome === "win" && (
-                                  <div className="flex items-center gap-1.5 rounded-md bg-zinc-100 px-2.5 py-1 text-[10px] font-mono font-bold text-zinc-950 shadow-xs">
-                                    <span className="size-2 rounded-full bg-zinc-950" />
+                                  <div className="flex items-center gap-1.5 rounded-full bg-zinc-100 px-2.5 py-1 text-[10px] font-mono font-bold text-zinc-950 shadow-xs">
+                                    <span className="size-1.5 rounded-full bg-zinc-950" />
                                     <span>WIN</span>
                                   </div>
                                 )}
                                 {outcome === "draw" && (
-                                  <div className="flex items-center gap-1.5 rounded-md border border-zinc-700 bg-zinc-900 px-2.5 py-1 text-[10px] font-mono font-medium text-zinc-200">
-                                    <span className="size-2 rounded-full overflow-hidden border border-zinc-400 flex">
+                                  <div className="flex items-center gap-1.5 rounded-full border border-zinc-700 bg-zinc-900 px-2.5 py-1 text-[10px] font-mono font-medium text-zinc-200">
+                                    <span className="size-1.5 rounded-full overflow-hidden border border-zinc-400 flex">
                                       <span className="w-1/2 h-full bg-zinc-100" />
                                       <span className="w-1/2 h-full bg-zinc-950" />
                                     </span>
@@ -2333,7 +2300,7 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                             handleOpenAthleteDrawer(player);
                           }
                         }}
-                        className="group relative flex flex-col justify-between p-4 sm:p-5 rounded-sm border-2 border-zinc-100 bg-zinc-950 shadow-[4px_4px_0px_0px_#ffffff] hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[5px_5px_0px_0px_#ffffff] transition-all cursor-pointer text-left select-none space-y-4"
+                        className="group relative flex flex-col justify-between p-5 rounded-2xl border border-zinc-800/80 bg-zinc-950/80 backdrop-blur-md shadow-sm ring-1 ring-white/5 hover:border-zinc-700/80 transition-all cursor-pointer text-left select-none space-y-4"
                       >
                         {/* Card Top: Avatar, Name, Age Group & Readiness Pill */}
                         <div className="flex items-start justify-between gap-3 min-w-0">
@@ -2342,8 +2309,8 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                               name={player.name}
                               imageUrl={player.imageUrl}
                               className={cn(
-                                "size-11 rounded-sm border-2",
-                                isReady ? "border-zinc-100 ring-2 ring-zinc-300" : "border-zinc-700"
+                                "size-11 rounded-xl border",
+                                isReady ? "border-zinc-300 ring-2 ring-zinc-300/40" : "border-zinc-800 bg-zinc-900"
                               )}
                             />
                             <div className="min-w-0 flex-1">
@@ -2351,10 +2318,10 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
                                 {player.name}
                               </h3>
                               <div className="flex items-center gap-1.5 mt-0.5">
-                                <span className="inline-flex items-center rounded-xs border border-zinc-700 bg-zinc-900 px-1.5 py-0.5 text-[10px] font-mono text-zinc-200 font-semibold uppercase">
+                                <span className="inline-flex items-center rounded-md border border-zinc-800 bg-zinc-900 px-1.5 py-0.5 text-[10px] font-mono text-zinc-300 font-medium uppercase">
                                   {ageGroup}
                                 </span>
-                                <span className="text-[11px] text-zinc-500 font-mono">
+                                <span className="text-[11px] text-zinc-400 font-mono">
                                   {player.age} yrs
                                 </span>
                               </div>
@@ -2363,12 +2330,12 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
 
                           {/* Readiness Pill */}
                           {isReady ? (
-                            <span className="inline-flex items-center gap-1 rounded-sm border-2 border-zinc-100 bg-zinc-100 text-zinc-950 font-mono text-[10px] font-bold px-2 py-0.5 shrink-0 shadow-[1px_1px_0px_0px_#ffffff] uppercase tracking-wider">
+                            <span className="inline-flex items-center gap-1 rounded-full bg-zinc-100 text-zinc-950 font-mono text-[10px] font-bold px-2.5 py-0.5 shrink-0 shadow-xs uppercase tracking-wider">
                               <Check className="size-2.5 stroke-[3]" />
                               Ready
                             </span>
                           ) : (
-                            <span className="inline-flex items-center rounded-sm border-2 border-zinc-800 bg-zinc-900 text-zinc-400 font-mono text-[10px] font-medium px-2 py-0.5 shrink-0 uppercase tracking-wider">
+                            <span className="inline-flex items-center rounded-full border border-zinc-800 bg-zinc-900 text-zinc-400 font-mono text-[10px] font-medium px-2.5 py-0.5 shrink-0 uppercase tracking-wider">
                               In Progress
                             </span>
                           )}
@@ -4166,6 +4133,14 @@ function CoachMobileShellInner({ defaultTab }: CoachMobileShellProps) {
           </DialogFooter>
         </DialogPopup>
       </Dialog>
+
+      {/* Guided Walkthrough Modal */}
+      <Walkthrough
+        role="coach"
+        steps={COACH_STEPS}
+        isOpen={tourOpen}
+        onClose={() => setTourOpen(false)}
+      />
     </div>
   );
 }

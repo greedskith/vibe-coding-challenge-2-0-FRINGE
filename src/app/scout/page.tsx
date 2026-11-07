@@ -6,10 +6,24 @@ import { LogOut, Trophy, Check, ShieldAlert } from "lucide-react";
 import { CossBadge16 } from "@/components/p-badge-16";
 import { AthleteAvatar } from "@/components/athlete-avatar";
 import { P5ArtBackground } from "@/components/p5-art-background";
+import { Walkthrough, WalkthroughTrigger, SCOUT_STEPS } from "@/components/walkthrough";
 import { ReadyResult } from "@/lib/types";
 
 export default function ScoutPage() {
   const [candidates, setCandidates] = useState<ReadyResult[]>([]);
+  const [tourOpen, setTourOpen] = useState(false);
+
+  useEffect(() => {
+    try {
+      const seen = localStorage.getItem("academy_walkthrough_scout");
+      if (!seen) {
+        const timer = setTimeout(() => setTourOpen(true), 750);
+        return () => clearTimeout(timer);
+      }
+    } catch {
+      // Storage unavailable
+    }
+  }, []);
 
   useEffect(() => {
     let ignore = false;
@@ -65,6 +79,7 @@ export default function ScoutPage() {
           </div>
 
           <div className="flex items-center gap-3">
+            <WalkthroughTrigger onClick={() => setTourOpen(true)} />
             <span className="rounded-md border border-zinc-800 bg-zinc-900/80 px-2 py-0.5 text-xs font-mono text-zinc-300">
               Scout
             </span>
@@ -84,7 +99,7 @@ export default function ScoutPage() {
       <main className="relative z-10 flex-1 px-4 py-6 sm:px-8 sm:py-8">
         <div className="mx-auto max-w-6xl space-y-6">
           {/* Header & Overview */}
-          <div className="flex items-center justify-between">
+          <div data-tour="scout-header" className="flex items-center justify-between">
             <h1 className="text-xl sm:text-2xl font-black tracking-tight text-zinc-100 uppercase font-mono">
               Trial Roster
             </h1>
@@ -102,7 +117,7 @@ export default function ScoutPage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {candidates.map((item) => {
+              {candidates.map((item, idx) => {
                 const pId = item.player._id?.toString() || "";
                 const initials = item.player.name
                   .split(" ")
@@ -114,6 +129,7 @@ export default function ScoutPage() {
                 return (
                   <div
                     key={pId}
+                    data-tour={idx === 0 ? "scout-candidate" : undefined}
                     className="rounded-md border-2 border-zinc-100 bg-zinc-950 p-4 sm:p-5 space-y-4 shadow-[4px_4px_0px_0px_#ffffff]"
                   >
                     {/* Header */}
@@ -139,7 +155,7 @@ export default function ScoutPage() {
                     </div>
 
                     {/* 75% Tick Threshold Progress Bar */}
-                    <div className="space-y-1.5 pt-1">
+                    <div data-tour={idx === 0 ? "scout-metrics" : undefined} className="space-y-1.5 pt-1">
                       <div className="flex justify-between text-xs font-mono">
                         <span className="text-zinc-400">
                           Attendance: <strong className="text-zinc-100 font-bold">{item.attendancePct}%</strong>
@@ -183,6 +199,14 @@ export default function ScoutPage() {
           )}
         </div>
       </main>
+
+      {/* Guided Walkthrough Modal */}
+      <Walkthrough
+        role="scout"
+        steps={SCOUT_STEPS}
+        isOpen={tourOpen}
+        onClose={() => setTourOpen(false)}
+      />
     </div>
   );
 }

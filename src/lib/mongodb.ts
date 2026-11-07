@@ -11,7 +11,9 @@ if (uri) {
   };
   if (!globalWithMongo._mongoClientPromise) {
     const client = new MongoClient(uri, options);
-    globalWithMongo._mongoClientPromise = client.connect();
+    const promise = client.connect();
+    promise.catch(() => {});
+    globalWithMongo._mongoClientPromise = promise;
   }
   clientPromise = globalWithMongo._mongoClientPromise;
 } else {
